@@ -1,0 +1,8 @@
+---
+collections:
+  - name: ansible.posix
+  - name: ansible.netcommon
+  - name: cisco.ios
+  - name: cisco.iosxr
+  - name: cisco.nso
+  - name: community.general

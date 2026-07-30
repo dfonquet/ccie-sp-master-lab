@@ -1,0 +1,35 @@
+# AUTO1 Automation Workstation
+
+`AUTO1` is a disposable but reproducible Linux automation workstation attached
+to the lab management network at `10.201.255.150`.
+
+Access from Windows:
+
+```powershell
+ssh student@10.201.255.150
+```
+
+Password: `ccie@123`
+
+First checks:
+
+```bash
+cd /workspace
+ansible-inventory --graph
+ansible-playbook playbooks/precheck.yml
+python3 scripts/hello_netmiko.py
+ansible-playbook playbooks/backup.yml
+```
+
+Installed tool families:
+
+- Python, Jinja2, YAML, JSON, XML and pytest.
+- Ansible with IOS, IOS XR, NSO and network-common collections.
+- Netmiko, Scrapli, Nornir and NTC templates.
+- NETCONF with ncclient.
+- gNMI/gRPC with pyGNMI and grpcio.
+- Cisco pyATS and Genie.
+
+NSO itself is not included because Cisco distributes it separately. `AUTO1`
+already includes the Ansible NSO collection and can act as an NSO northbound
+client when an authorized NSO installation is added later.

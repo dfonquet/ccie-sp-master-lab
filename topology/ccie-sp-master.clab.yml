@@ -1,0 +1,161 @@
+name: ccie-sp-master
+
+mgmt:
+  network: ccie-sp-master-mgmt
+  ipv4-subnet: 10.201.255.0/24
+
+topology:
+  kinds:
+    cisco_xrd:
+      image: ios-xr/xrd-control-plane:24.2.11
+    cisco_iol:
+      image: vrnetlab/cisco_iol:17.12.01
+
+  nodes:
+    P1:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.101
+      startup-delay: 0
+    P2:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.102
+      startup-delay: 0
+    P3:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.103
+      startup-delay: 15
+    P4:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.104
+      startup-delay: 15
+    P5:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.105
+      startup-delay: 30
+    P6:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.106
+      startup-delay: 30
+    PE1:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.111
+      startup-delay: 45
+    PE2:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.112
+      startup-delay: 45
+    PE3:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.113
+      startup-delay: 60
+    PE4:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.114
+      startup-delay: 60
+    PE5:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.115
+      startup-delay: 75
+    PE6:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.116
+      startup-delay: 75
+    RR1:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.121
+      startup-delay: 90
+    RR2:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.122
+      startup-delay: 90
+    CE1:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.131
+      startup-delay: 105
+    CE2:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.132
+      startup-delay: 105
+    CE3:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.133
+      startup-delay: 105
+    CE4:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.134
+      startup-delay: 105
+    CE5:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.135
+      startup-delay: 105
+    CE6:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.136
+      startup-delay: 105
+    CE7:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.137
+      startup-delay: 105
+    CE8:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.138
+      startup-delay: 105
+    CE9:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.139
+      startup-delay: 105
+    C1:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.141
+      startup-delay: 105
+    C2:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.142
+      startup-delay: 105
+    AUTO1:
+      kind: linux
+      image: ccie-sp-automation:1.0
+      mgmt-ipv4: 10.201.255.150
+      binds:
+        - ../automation:/workspace
+
+  links:
+    - endpoints: ["P1:Gi0-0-0-0", "P3:Gi0-0-0-0"]
+    - endpoints: ["P3:Gi0-0-0-1", "P5:Gi0-0-0-0"]
+    - endpoints: ["P2:Gi0-0-0-0", "P4:Gi0-0-0-0"]
+    - endpoints: ["P4:Gi0-0-0-1", "P6:Gi0-0-0-0"]
+    - endpoints: ["P1:Gi0-0-0-1", "P2:Gi0-0-0-1"]
+    - endpoints: ["P3:Gi0-0-0-2", "P4:Gi0-0-0-2"]
+    - endpoints: ["P5:Gi0-0-0-1", "P6:Gi0-0-0-1"]
+    - endpoints: ["P1:Gi0-0-0-2", "P4:Gi0-0-0-3"]
+    - endpoints: ["P2:Gi0-0-0-2", "P3:Gi0-0-0-3"]
+    - endpoints: ["PE1:Gi0-0-0-0", "P1:Gi0-0-0-3"]
+    - endpoints: ["PE1:Gi0-0-0-1", "P2:Gi0-0-0-3"]
+    - endpoints: ["PE2:Gi0-0-0-0", "P1:Gi0-0-0-4"]
+    - endpoints: ["PE2:Gi0-0-0-1", "P2:Gi0-0-0-4"]
+    - endpoints: ["PE3:Gi0-0-0-0", "P3:Gi0-0-0-4"]
+    - endpoints: ["PE3:Gi0-0-0-1", "P4:Gi0-0-0-4"]
+    - endpoints: ["PE4:Gi0-0-0-0", "P3:Gi0-0-0-5"]
+    - endpoints: ["PE4:Gi0-0-0-1", "P4:Gi0-0-0-5"]
+    - endpoints: ["PE5:Gi0-0-0-0", "P5:Gi0-0-0-2"]
+    - endpoints: ["PE5:Gi0-0-0-1", "P6:Gi0-0-0-2"]
+    - endpoints: ["PE6:Gi0-0-0-0", "P5:Gi0-0-0-3"]
+    - endpoints: ["PE6:Gi0-0-0-1", "P6:Gi0-0-0-3"]
+    - endpoints: ["RR1:Gi0-0-0-0", "P3:Gi0-0-0-6"]
+    - endpoints: ["RR1:Gi0-0-0-1", "P5:Gi0-0-0-4"]
+    - endpoints: ["RR2:Gi0-0-0-0", "P4:Gi0-0-0-6"]
+    - endpoints: ["RR2:Gi0-0-0-1", "P6:Gi0-0-0-4"]
+    - endpoints: ["PE1:Gi0-0-0-2", "CE1:Ethernet0/1"]
+    - endpoints: ["PE1:Gi0-0-0-3", "CE2:Ethernet0/1"]
+    - endpoints: ["PE2:Gi0-0-0-2", "CE2:Ethernet0/2"]
+    - endpoints: ["PE2:Gi0-0-0-3", "CE3:Ethernet0/1"]
+    - endpoints: ["PE3:Gi0-0-0-2", "CE4:Ethernet0/1"]
+    - endpoints: ["PE3:Gi0-0-0-3", "CE5:Ethernet0/1"]
+    - endpoints: ["PE4:Gi0-0-0-2", "CE5:Ethernet0/2"]
+    - endpoints: ["PE4:Gi0-0-0-3", "CE6:Ethernet0/1"]
+    - endpoints: ["PE5:Gi0-0-0-2", "CE7:Ethernet0/1"]
+    - endpoints: ["PE5:Gi0-0-0-3", "CE8:Ethernet0/1"]
+    - endpoints: ["PE6:Gi0-0-0-2", "CE8:Ethernet0/2"]
+    - endpoints: ["PE6:Gi0-0-0-3", "CE9:Ethernet0/1"]
+    - endpoints: ["CE1:Ethernet0/2", "C1:Ethernet0/1"]
+    - endpoints: ["CE9:Ethernet0/2", "C2:Ethernet0/1"]

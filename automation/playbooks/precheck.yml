@@ -1,0 +1,35 @@
+---
+- name: Capture IOS XR provider state
+  hosts: provider
+  gather_facts: false
+  tasks:
+    - name: Run dual-stack and underlay checks
+      cisco.iosxr.iosxr_command:
+        commands:
+          - show ipv4 interface brief
+          - show ipv6 interface brief
+          - show isis neighbors
+          - show isis database summary
+          - show isis segment-routing label table
+          - show bfd session
+      register: provider_state
+
+    - name: Display provider state
+      ansible.builtin.debug:
+        var: provider_state.stdout_lines
+
+- name: Capture IOS XE customer state
+  hosts: customer
+  gather_facts: false
+  tasks:
+    - name: Run customer edge checks
+      cisco.ios.ios_command:
+        commands:
+          - show ip interface brief
+          - show ipv6 interface brief
+          - show version
+      register: customer_state
+
+    - name: Display customer state
+      ansible.builtin.debug:
+        var: customer_state.stdout_lines

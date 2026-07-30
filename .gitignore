@@ -1,0 +1,32 @@
+# Runtime and generated caches
+__pycache__/
+*.py[cod]
+.pytest_cache/
+artifacts/
+topology/clab-*/
+**/xr-storage/
+
+# Temporary access and credentials
+.temporary-access/
+.env
+*.key
+*.pem
+*.ppk
+known_hosts
+
+# Licensed or large network images
+*.qcow2
+*.tgz
+*.tar.gz
+*.iso
+*.img
+*.vmdk
+*.vmx
+
+# Local tooling
+.venv/
+venv/
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store

@@ -1,0 +1,38 @@
+---
+- name: Back up all router running configurations
+  hosts: provider:customer
+  gather_facts: false
+  tasks:
+    - name: Create the local backup directory
+      ansible.builtin.file:
+        path: /workspace/artifacts/backups
+        state: directory
+        mode: "0755"
+      delegate_to: localhost
+      run_once: true
+
+    - name: Read IOS XR running configuration
+      cisco.iosxr.iosxr_command:
+        commands:
+          - show running-config
+      register: xr_running
+      when: ansible_network_os == "cisco.iosxr.iosxr"
+
+    - name: Read IOS XE running configuration
+      cisco.ios.ios_command:
+        commands:
+          - show running-config
+      register: xe_running
+      when: ansible_network_os == "cisco.ios.ios"
+
+    - name: Save configuration to the AUTO1 workspace
+      ansible.builtin.copy:
+        content: >-
+          {{
+            xr_running.stdout[0]
+            if ansible_network_os == "cisco.iosxr.iosxr"
+            else xe_running.stdout[0]
+          }}
+        dest: "/workspace/artifacts/backups/{{ inventory_hostname }}.cfg"
+        mode: "0644"
+      delegate_to: localhost

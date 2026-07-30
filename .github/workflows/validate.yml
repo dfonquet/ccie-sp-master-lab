@@ -1,0 +1,26 @@
+name: Validate generated lab
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile Python tools
+        run: python -m py_compile tools/*.py
+
+      - name: Regenerate topology and configurations
+        run: python tools/build_lab.py
+
+      - name: Verify generated files are committed
+        run: git diff --exit-code
