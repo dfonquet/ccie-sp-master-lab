@@ -11,7 +11,7 @@
           - router_id is ansible.utils.ipv4
           - cluster_id is ansible.utils.ipv4
           - update_source | length > 0
-          - pe_neighbors | length == 6
+          - pe_neighbors | length == 8
     - name: Validate every neighbor
       ansible.builtin.assert:
         that:

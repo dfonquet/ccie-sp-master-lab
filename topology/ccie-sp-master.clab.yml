@@ -36,6 +36,14 @@ topology:
       kind: cisco_xrd
       mgmt-ipv4: 10.201.255.106
       startup-delay: 30
+    P7:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.107
+      startup-delay: 45
+    P8:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.108
+      startup-delay: 45
     PE1:
       kind: cisco_xrd
       mgmt-ipv4: 10.201.255.111
@@ -60,6 +68,14 @@ topology:
       kind: cisco_xrd
       mgmt-ipv4: 10.201.255.116
       startup-delay: 75
+    PE7:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.117
+      startup-delay: 90
+    PE8:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.118
+      startup-delay: 90
     RR1:
       kind: cisco_xrd
       mgmt-ipv4: 10.201.255.121
@@ -159,3 +175,11 @@ topology:
     - endpoints: ["PE6:Gi0-0-0-3", "CE9:Ethernet0/1"]
     - endpoints: ["CE1:Ethernet0/2", "C1:Ethernet0/1"]
     - endpoints: ["CE9:Ethernet0/2", "C2:Ethernet0/1"]
+    - endpoints: ["P5:Gi0-0-0-5", "P7:Gi0-0-0-0"]
+    - endpoints: ["P6:Gi0-0-0-5", "P8:Gi0-0-0-0"]
+    - endpoints: ["P7:Gi0-0-0-1", "P8:Gi0-0-0-1"]
+    - endpoints: ["P6:Gi0-0-0-6", "P7:Gi0-0-0-2"]
+    - endpoints: ["PE7:Gi0-0-0-0", "P5:Gi0-0-0-6"]
+    - endpoints: ["PE7:Gi0-0-0-1", "P7:Gi0-0-0-3"]
+    - endpoints: ["PE8:Gi0-0-0-0", "P6:Gi0-0-0-7"]
+    - endpoints: ["PE8:Gi0-0-0-1", "P8:Gi0-0-0-3"]

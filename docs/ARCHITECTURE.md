@@ -4,14 +4,14 @@
 
 | Role | Nodes | Platform | Purpose |
 |---|---|---|---|
-| Provider core | P1-P6 | XRd 24.2.11 | Dual-plane transit backbone |
-| Provider edge | PE1-PE6 | XRd 24.2.11 | VPN, multicast and customer services |
+| Provider core | P1-P8 | XRd 24.2.11 | Dual-plane transit backbone |
+| Provider edge | PE1-PE8 | XRd 24.2.11 | VPN, multicast and customer services |
 | RR/PCE | RR1-RR2 | XRd 24.2.11 | Redundant MP-BGP reflection and PCE |
 | Customer edge | CE1-CE9 | IOL-XE 17.12.1 | PE-CE and access scenarios |
 | Test endpoints | C1-C2 | IOL-XE 17.12.1 | End-to-end and multicast tests |
 | Automation | AUTO1 | Ubuntu 24.04 | Ansible, Python, NETCONF, gNMI and pyATS |
 
-Total: 26 nodes and 39 data-plane links.
+Total: 30 nodes and 47 data-plane links.
 
 ## Backbone design
 

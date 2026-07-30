@@ -1,6 +1,6 @@
 ---
 bgp_as: 500
-router_id: 10.0.0.14
+router_id: 10.0.0.13
 update_source: Loopback0
 cluster_id: 10.0.0.100
 address_families: [vpnv4, vpnv6]
