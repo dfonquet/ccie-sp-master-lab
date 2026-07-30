@@ -1,0 +1,13 @@
+---
+bgp_as: 500
+router_id: 10.0.0.14
+update_source: Loopback0
+cluster_id: 10.0.0.100
+address_families: [vpnv4, vpnv6]
+pe_neighbors:
+  - {name: PE1, ipv4: 10.0.0.7}
+  - {name: PE2, ipv4: 10.0.0.8}
+  - {name: PE3, ipv4: 10.0.0.9}
+  - {name: PE4, ipv4: 10.0.0.10}
+  - {name: PE5, ipv4: 10.0.0.11}
+  - {name: PE6, ipv4: 10.0.0.12}

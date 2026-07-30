@@ -1,0 +1,14 @@
+---
+- name: Deploy reviewed RR2 BGP candidate
+  hosts: RR2
+  gather_facts: false
+  tasks:
+    - ansible.builtin.assert:
+        that: deploy_confirm | default(false) | bool
+        fail_msg: "Use -e deploy_confirm=true after reviewing --check --diff."
+    - cisco.iosxr.iosxr_config:
+        content: "{{ lookup('ansible.builtin.file', '../rendered/RR2_bgp.cfg') }}"
+        match: line
+        replace: line
+        backup: true
+        comment: "Ansible deployment - RR2 BGP Route Reflector"

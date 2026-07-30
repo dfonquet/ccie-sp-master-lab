@@ -1,0 +1,21 @@
+router bgp {{ bgp_as }}
+ bgp router-id {{ router_id }}
+ bgp cluster-id {{ cluster_id }}
+ address-family vpnv4 unicast
+ !
+ address-family vpnv6 unicast
+ !
+{% for neighbor in pe_neighbors %}
+ neighbor {{ neighbor.ipv4 }}
+  remote-as {{ bgp_as }}
+  description {{ neighbor.name }}
+  update-source {{ update_source }}
+  address-family vpnv4 unicast
+   route-reflector-client
+  !
+  address-family vpnv6 unicast
+   route-reflector-client
+  !
+ !
+{% endfor %}
+!

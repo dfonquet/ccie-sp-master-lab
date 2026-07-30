@@ -1,0 +1,10 @@
+---
+bgp_as: 500
+bgp_update_source: Loopback0
+bgp_log_neighbor_changes_detail: true
+bgp_address_families:
+  - vpnv4
+  - vpnv6
+route_reflectors:
+  - {name: RR1, ipv4: 10.0.0.13}
+  - {name: RR2, ipv4: 10.0.0.14}

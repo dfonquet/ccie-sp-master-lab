@@ -1,0 +1,15 @@
+---
+- name: Discover PE Loopback0 addresses
+  hosts: pe
+  gather_facts: false
+  tasks:
+    - name: Read Loopback0
+      cisco.iosxr.iosxr_command:
+        commands: [show running-config interface Loopback0]
+      register: loopback_output
+    - name: Extract addresses
+      ansible.builtin.set_fact:
+        loopback_ipv4: "{{ loopback_output.stdout[0] | regex_findall('ipv4 address ([0-9.]+)') | first }}"
+        loopback_ipv6: "{{ loopback_output.stdout[0] | regex_findall('ipv6 address ([0-9a-fA-F:]+/[0-9]+)') | first }}"
+    - ansible.builtin.debug:
+        msg: {device: "{{ inventory_hostname }}", ipv4: "{{ loopback_ipv4 }}", ipv6: "{{ loopback_ipv6 }}"}

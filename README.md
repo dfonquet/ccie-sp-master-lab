@@ -24,6 +24,7 @@ services, Segment Routing and a dedicated automation workstation.
 | [Architecture](docs/ARCHITECTURE.md) | Nodes, roles, redundancy and study modules |
 | [Addressing](docs/ADDRESSING.md) | Management, loopbacks, links, IS-IS and SIDs |
 | [Automation](docs/AUTOMATION.md) | AUTO1 design, tools and learning path |
+| [AUTO1 Source of Truth](docs/AUTO1-SOURCE-OF-TRUTH.md) | BGP render, validation, diff, deploy and post-check workflow |
 | [Validation](docs/VALIDATION.md) | Repeatable health and protocol checks |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Errors encountered and their resolutions |
 | [IPv6 standard](IPV6-STANDARD.md) | Provider-specific IPv6 control-plane standard |

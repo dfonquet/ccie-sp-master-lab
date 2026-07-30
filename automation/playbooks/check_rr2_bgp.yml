@@ -1,0 +1,10 @@
+---
+- name: Check RR2 BGP without commit
+  hosts: RR2
+  gather_facts: false
+  tasks:
+    - cisco.iosxr.iosxr_config:
+        content: "{{ lookup('ansible.builtin.file', '../rendered/RR2_bgp.cfg') }}"
+        match: line
+        replace: line
+      check_mode: true

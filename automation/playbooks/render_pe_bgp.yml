@@ -1,0 +1,10 @@
+---
+- name: Render BGP configuration for all PE routers
+  hosts: pe
+  gather_facts: false
+  tasks:
+    - ansible.builtin.template:
+        src: ../templates/pe_bgp.j2
+        dest: "../rendered/{{ inventory_hostname }}_bgp.cfg"
+        mode: "0600"
+      delegate_to: localhost
