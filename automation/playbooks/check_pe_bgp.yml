@@ -1,0 +1,10 @@
+---
+- name: Check PE BGP without commit
+  hosts: pe
+  gather_facts: false
+  tasks:
+    - cisco.iosxr.iosxr_config:
+        content: "{{ lookup('ansible.builtin.file', '../rendered/' + inventory_hostname + '_bgp.cfg') }}"
+        match: line
+        replace: line
+      check_mode: true

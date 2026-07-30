@@ -1,5 +1,5 @@
 ---
-- name: Compare PE loopbacks with the source of truth
+- name: Discover PE Loopback0 addresses
   hosts: pe
   gather_facts: false
   tasks:
@@ -7,7 +7,22 @@
       cisco.iosxr.iosxr_command:
         commands: show running-config interface Loopback0
       register: loopback_state
-    - name: Require the expected router ID
+    - name: Extract Loopback0 IPv4
+      ansible.builtin.set_fact:
+        discovered_loopback_ipv4: "{{ loopback_state.stdout[0] | regex_findall('ipv4 address ([0-9.]+)') | first }}"
+    - name: Validate discovered address
       ansible.builtin.assert:
-        that: router_id in loopback_state.stdout[0]
-        fail_msg: "{{ inventory_hostname }} does not contain expected Loopback0 {{ router_id }}"
+        that:
+          - discovered_loopback_ipv4 is ansible.utils.ipv4
+          - discovered_loopback_ipv4 == router_id
+
+- name: Compare RR2 neighbors with discovered PE addresses
+  hosts: RR2
+  gather_facts: false
+  tasks:
+    - ansible.builtin.assert:
+        that:
+          - hostvars[item.name].discovered_loopback_ipv4 is defined
+          - item.ipv4 == hostvars[item.name].discovered_loopback_ipv4
+        fail_msg: "{{ item.name }} differs between RR2 source of truth and the router."
+      loop: "{{ pe_neighbors }}"

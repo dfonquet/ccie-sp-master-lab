@@ -1,12 +1,19 @@
-router bgp {{ bgp_asn }}
+router bgp {{ bgp_as }}
  bgp router-id {{ router_id }}
-{% for rr in rr_neighbors %}
- neighbor {{ rr.address }}
-  description {{ rr.description }}
-  remote-as {{ bgp_asn }}
-  update-source Loopback0
-{% for af in address_families %}
-  address-family {{ af }}
+{% if bgp_log_neighbor_changes_detail %}
+ bgp log neighbor changes detail
+{% endif %}
+{% for af in bgp_address_families %}
+ address-family {{ af }} unicast
+ !
+{% endfor %}
+{% for rr in route_reflectors %}
+ neighbor {{ rr.ipv4 }}
+  remote-as {{ bgp_as }}
+  description {{ rr.name }}
+  update-source {{ bgp_update_source }}
+{% for af in bgp_address_families %}
+  address-family {{ af }} unicast
   !
 {% endfor %}
  !

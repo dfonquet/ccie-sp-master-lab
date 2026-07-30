@@ -1,17 +1,25 @@
 ---
-- name: Validate BGP source of truth
-  hosts: RR2,pe
+- name: Validate RR2 source of truth
+  hosts: RR2
   gather_facts: false
   connection: local
   tasks:
-    - name: Validate common values
+    - name: Validate required values
       ansible.builtin.assert:
         that:
-          - bgp_asn | int > 0
+          - bgp_as | int == 500
           - router_id is ansible.utils.ipv4
-        fail_msg: "Invalid BGP ASN or router ID for {{ inventory_hostname }}"
-    - name: Validate RR2 client list
+          - cluster_id is ansible.utils.ipv4
+          - update_source | length > 0
+          - pe_neighbors | length == 6
+    - name: Validate every neighbor
       ansible.builtin.assert:
         that:
-          - rr_clients | length == 6
-      when: inventory_hostname == 'RR2'
+          - item.name | length > 0
+          - item.ipv4 is ansible.utils.ipv4
+      loop: "{{ pe_neighbors }}"
+    - name: Require unique names and addresses
+      ansible.builtin.assert:
+        that:
+          - pe_neighbors | map(attribute='name') | list | unique | length == pe_neighbors | length
+          - pe_neighbors | map(attribute='ipv4') | list | unique | length == pe_neighbors | length

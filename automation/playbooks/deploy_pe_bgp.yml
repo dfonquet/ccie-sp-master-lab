@@ -1,0 +1,15 @@
+---
+- name: Deploy reviewed PE BGP candidates
+  hosts: pe
+  gather_facts: false
+  serial: 1
+  tasks:
+    - ansible.builtin.assert:
+        that: deploy_confirm | default(false) | bool
+        fail_msg: "Use -e deploy_confirm=true after reviewing --check --diff."
+    - cisco.iosxr.iosxr_config:
+        content: "{{ lookup('ansible.builtin.file', '../rendered/' + inventory_hostname + '_bgp.cfg') }}"
+        match: line
+        replace: line
+        backup: true
+        comment: "Ansible deployment - PE MP-BGP configuration"
