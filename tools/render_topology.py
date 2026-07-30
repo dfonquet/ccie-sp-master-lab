@@ -14,12 +14,14 @@ LINKS_CSV = ROOT / "inventory" / "links.csv"
 OUTPUT = ROOT / "docs" / "topology.svg"
 
 WIDTH = 1800
-HEIGHT = 1320
+HEIGHT = 1380
+
+EXPANSION_NODES = {"P7", "P8", "PE7", "PE8"}
 
 POSITIONS = {
-    "AUTO1": (150, 105),
-    "RR1": (740, 115),
-    "RR2": (1080, 115),
+    "AUTO1": (150, 150),
+    "RR1": (740, 150),
+    "RR2": (1080, 150),
     "P1": (250, 330),
     "P3": (650, 330),
     "P5": (1050, 330),
@@ -108,10 +110,19 @@ def node_element(node: dict[str, str]) -> str:
     top = y - height / 2
     role = esc(node["role"])
     mgmt = esc(node["mgmt_ipv4"])
+    expansion = ""
+    if name in EXPANSION_NODES:
+        expansion = (
+            f'<rect x="{left + width - 48}" y="{top - 12}" width="48" height="20" '
+            f'rx="10" fill="#f97316"/>'
+            f'<text x="{left + width - 24}" y="{top + 2}" '
+            f'class="expansion-label">NEW</text>'
+        )
     return (
         f'<g class="node"><rect x="{left}" y="{top}" width="{width}" '
         f'height="{height}" rx="14" fill="{fill}" stroke="{stroke}" '
         f'stroke-width="3"/>'
+        f'{expansion}'
         f'<text x="{x}" y="{y - 13}" class="node-name">{esc(name)}</text>'
         f'<text x="{x}" y="{y + 10}" class="node-role">{role}</text>'
         f'<text x="{x}" y="{y + 30}" class="node-mgmt">{mgmt}</text></g>'
@@ -144,7 +155,7 @@ def render() -> str:
 
     return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-labelledby="title desc">
   <title id="title">CCIE Service Provider master lab topology</title>
-  <desc id="desc">Thirty-node dual-plane service provider topology with eight P routers, eight PE routers, two route reflectors and PCEs, nine customer edges, two clients and one automation workstation.</desc>
+  <desc id="desc">Validated thirty-node dual-plane service provider topology with eight P routers, eight PE routers, two route reflectors and PCEs, nine customer edges, two clients and one automation workstation. P7, P8, PE7 and PE8 are the expansion nodes.</desc>
   <style>
     .background {{ fill: #f8fafc; }}
     .zone {{ fill: none; stroke: #cbd5e1; stroke-width: 2; stroke-dasharray: 8 8; }}
@@ -156,23 +167,38 @@ def render() -> str:
     .node-role {{ font: 13px system-ui, sans-serif; fill: #334155; text-anchor: middle; }}
     .node-mgmt {{ font: 12px ui-monospace, monospace; fill: #475569; text-anchor: middle; }}
     .legend {{ font: 13px system-ui, sans-serif; fill: #334155; }}
+    .protocol {{ font: 600 14px system-ui, sans-serif; fill: #0f172a; text-anchor: middle; }}
+    .expansion-label {{ font: 700 9px system-ui, sans-serif; fill: #ffffff; text-anchor: middle; }}
+    .status {{ font: 600 13px system-ui, sans-serif; fill: #166534; }}
   </style>
   <rect class="background" width="100%" height="100%"/>
   <text x="55" y="48" class="title">CCIE SP v5.1 Master Lab</text>
-  <text x="55" y="76" class="subtitle">18 XRd + 11 IOL + AUTO1 | 47 data-plane links | dual-stack IS-IS and SR-MPLS</text>
-  <rect x="285" y="245" width="1250" height="390" rx="24" class="zone"/>
-  <text x="305" y="278" class="zone-label">Provider core</text>
-  <rect x="55" y="680" width="1690" height="165" rx="24" class="zone"/>
-  <text x="75" y="713" class="zone-label">Provider edge</text>
-  <rect x="45" y="915" width="1710" height="170" rx="24" class="zone"/>
-  <text x="65" y="948" class="zone-label">Customer edge</text>
-  <path d="M235 105 H470" stroke="#64748b" stroke-width="2" stroke-dasharray="6 6"/>
-  <rect x="470" y="77" width="205" height="56" rx="28" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
-  <text x="572" y="101" class="node-role">Management network</text>
-  <text x="572" y="120" class="node-mgmt">10.201.255.0/24</text>
+  <text x="55" y="76" class="subtitle">30 nodes | 18 XRd + 11 IOL + AUTO1 | 47 links | expanded underlay validated 2026-07-30</text>
+  <rect x="1360" y="30" width="385" height="58" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+  <text x="1380" y="54" class="status">✓ Validated: 30/30 containers · 0 swap</text>
+  <text x="1380" y="74" class="status">✓ IS-IS · SR-MPLS · PE7/PE8 dual-RR</text>
+
+  <rect x="600" y="95" width="585" height="120" rx="22" class="zone"/>
+  <text x="900" y="116" class="zone-label" text-anchor="middle">Control plane</text>
+  <text x="900" y="208" class="protocol">VPNv4/VPNv6 route reflection · redundant PCE roles</text>
+
+  <rect x="45" y="235" width="1710" height="410" rx="24" class="zone"/>
+  <text x="65" y="270" class="zone-label">Provider core · IS-IS Level 2 · IPv4/IPv6 · SR-MPLS</text>
+  <rect x="55" y="655" width="1690" height="205" rx="24" class="zone"/>
+  <text x="75" y="685" class="zone-label">Provider edge · dual-homed PEs · VPN service foundation</text>
+  <rect x="45" y="890" width="1710" height="210" rx="24" class="zone"/>
+  <text x="65" y="920" class="zone-label">Customer edge · single/dual-homed CE · L2VPN/L3VPN/EVPN practice</text>
+  <path d="M238 150 H330" stroke="#64748b" stroke-width="2" stroke-dasharray="6 6"/>
+  <rect x="330" y="122" width="220" height="56" rx="28" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+  <text x="440" y="146" class="node-role">Management network</text>
+  <text x="440" y="165" class="node-mgmt">10.201.255.0/24</text>
   {''.join(lines)}
   {''.join(node_shapes)}
   {''.join(legend)}
+  <rect x="310" y="1315" width="48" height="20" rx="10" fill="#f97316"/>
+  <text x="334" y="1329" class="expansion-label">NEW</text>
+  <text x="370" y="1330" class="legend">2026 expansion: P7, P8, PE7 and PE8 · links L040-L047</text>
+  <text x="55" y="1360" class="subtitle">Source of truth: inventory/nodes.csv + inventory/links.csv · generated by tools/render_topology.py</text>
 </svg>
 """
 

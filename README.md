@@ -6,6 +6,10 @@ services, Segment Routing and a dedicated automation workstation.
 
 ![CCIE SP master topology](docs/topology.svg)
 
+The diagram is generated from the authoritative node and link inventories.
+Orange `NEW` markers identify the validated 2026 expansion: P7, P8, PE7 and
+PE8, connected through links `L040-L047`.
+
 ## Current implementation status
 
 The 30-node `master` profile is deployed and its expanded IS-IS, SR-MPLS and
