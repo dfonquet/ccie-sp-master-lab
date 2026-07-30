@@ -105,7 +105,7 @@ topology:
       image: ccie-sp-automation:1.0
       mgmt-ipv4: 10.202.255.250
       binds:
-        - ../automation:/workspace
+        - ..:/workspace
 
   links:
     - endpoints: ["P1:Gi0-0-0-0", "P3:Gi0-0-0-0"]

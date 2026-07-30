@@ -307,7 +307,7 @@ def write_topology() -> None:
     lines += [
         "    AUTO1:", "      kind: linux", f"      image: {AUTO_IMAGE}",
         "      mgmt-ipv4: 10.202.255.250", "      binds:",
-        "        - ../automation:/workspace", "", "  links:",
+        "        - ..:/workspace", "", "  links:",
     ]
     for link in LINKS:
         lines.append(f'    - endpoints: ["{link.a}:{link.a_if}", "{link.b}:{link.b_if}"]')

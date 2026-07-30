@@ -133,9 +133,25 @@ def main() -> int:
         choices=("master", "inter-as"),
         default="master",
     )
+    parser.add_argument(
+        "--sources",
+        help="Comma-separated source node names. Default: every link source.",
+    )
     args = parser.parse_args()
 
     nodes, links_by_source = load_data(args.profile)
+    if args.sources:
+        selected = {
+            name.strip() for name in args.sources.split(",") if name.strip()
+        }
+        unknown = selected - set(nodes)
+        if unknown:
+            raise SystemExit(f"Unknown source nodes: {', '.join(sorted(unknown))}")
+        links_by_source = {
+            name: links
+            for name, links in links_by_source.items()
+            if name in selected
+        }
     results: list[dict[str, str]] = []
     families = ("ipv4", "ipv6") if args.family == "both" else (args.family,)
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
@@ -146,7 +162,12 @@ def main() -> int:
         for future in as_completed(futures):
             results.extend(future.result())
 
-    results.sort(key=lambda item: (int(item["id"][1:]), item["family"]))
+    results.sort(
+        key=lambda item: (
+            int("".join(character for character in item["id"] if character.isdigit())),
+            item["family"],
+        )
+    )
     for result in results:
         print(
             f"{result['id']}|{result['family']}|"
