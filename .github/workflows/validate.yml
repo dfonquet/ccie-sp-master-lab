@@ -20,7 +20,11 @@ jobs:
         run: python -m py_compile tools/*.py
 
       - name: Regenerate topology and configurations
-        run: python tools/build_lab.py
+        run: |
+          python tools/build_lab.py
+          python tools/render_topology.py
+          python tools/build_inter_as.py
+          python tools/render_inter_as.py
 
       - name: Verify generated files are committed
         run: git diff --exit-code

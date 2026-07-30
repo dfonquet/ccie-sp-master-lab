@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Apply a generated configuration phase to selected master-lab nodes."""
+"""Apply a generated configuration phase to selected lab-profile nodes."""
 
 from __future__ import annotations
 
@@ -12,9 +12,6 @@ from netmiko import ConnectHandler
 
 
 ROOT = Path(__file__).resolve().parents[1]
-INVENTORY = ROOT / "inventory" / "nodes.csv"
-
-
 def compile_interactive_commands(text: str, *, is_xrd: bool) -> list[str]:
     """Convert indented IOS-style config into safe interactive CLI commands."""
     parsed: list[tuple[int, str]] = []
@@ -77,7 +74,11 @@ def connect_params(row: dict[str, str]) -> dict[str, object]:
     }
 
 
-def apply_one(row: dict[str, str], phase_dir: Path) -> dict[str, str]:
+def apply_one(
+    row: dict[str, str],
+    phase_dir: Path,
+    profile: str,
+) -> dict[str, str]:
     name = row["name"]
     config_path = phase_dir / f"{name}.cfg"
     result = {"name": name, "status": "skipped", "details": ""}
@@ -107,7 +108,7 @@ def apply_one(row: dict[str, str], phase_dir: Path) -> dict[str, str]:
         )
         if is_xrd:
             output += session.commit(
-                comment=f"CCIE-SP master {phase_dir.name}",
+                comment=f"CCIE-SP {profile} {phase_dir.name}",
                 read_timeout=120,
             )
             session.exit_config_mode()
@@ -162,17 +163,28 @@ def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("phase", help="Configuration phase directory, e.g. 00-base")
     parser.add_argument(
+        "--profile",
+        choices=("master", "inter-as"),
+        default="master",
+        help="Inventory/configuration profile. Default: master.",
+    )
+    parser.add_argument(
         "--nodes",
         help="Comma-separated node names. Default: all nodes with phase configs.",
     )
     parser.add_argument("--workers", type=int, default=2)
     args = parser.parse_args()
 
-    phase_dir = ROOT / "configs" / args.phase
+    config_root = ROOT / "configs"
+    inventory = ROOT / "inventory" / "nodes.csv"
+    if args.profile != "master":
+        config_root = config_root / args.profile
+        inventory = ROOT / "profiles" / args.profile / "nodes.csv"
+    phase_dir = config_root / args.phase
     if not phase_dir.is_dir():
         raise SystemExit(f"Phase directory not found: {phase_dir}")
 
-    with INVENTORY.open(newline="", encoding="utf-8") as file:
+    with inventory.open(newline="", encoding="utf-8") as file:
         rows = list(csv.DictReader(file))
 
     if args.nodes:
@@ -186,7 +198,8 @@ def main() -> int:
     results: list[dict[str, str]] = []
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
         futures = {
-            executor.submit(apply_one, row, phase_dir): row["name"] for row in rows
+            executor.submit(apply_one, row, phase_dir, args.profile): row["name"]
+            for row in rows
         }
         for future in as_completed(futures):
             results.append(future.result())

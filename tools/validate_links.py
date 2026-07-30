@@ -15,14 +15,17 @@ from netmiko import ConnectHandler
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def load_data() -> tuple[dict[str, dict[str, str]], dict[str, list[dict[str, str]]]]:
-    with (ROOT / "inventory" / "nodes.csv").open(
+def load_data(
+    profile: str,
+) -> tuple[dict[str, dict[str, str]], dict[str, list[dict[str, str]]]]:
+    inventory = ROOT / "inventory" if profile == "master" else ROOT / "profiles" / profile
+    with (inventory / "nodes.csv").open(
         newline="", encoding="utf-8"
     ) as file:
         nodes = {row["name"]: row for row in csv.DictReader(file)}
 
     links_by_source: dict[str, list[dict[str, str]]] = defaultdict(list)
-    with (ROOT / "inventory" / "links.csv").open(
+    with (inventory / "links.csv").open(
         newline="", encoding="utf-8"
     ) as file:
         for row in csv.DictReader(file):
@@ -125,9 +128,14 @@ def main() -> int:
         default="both",
     )
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument(
+        "--profile",
+        choices=("master", "inter-as"),
+        default="master",
+    )
     args = parser.parse_args()
 
-    nodes, links_by_source = load_data()
+    nodes, links_by_source = load_data(args.profile)
     results: list[dict[str, str]] = []
     families = ("ipv4", "ipv6") if args.family == "both" else (args.family,)
     with ThreadPoolExecutor(max_workers=args.workers) as executor:

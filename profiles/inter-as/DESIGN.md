@@ -30,3 +30,16 @@ Option C and labeled-unicast; they are never required for Option A.
 
 The profile has its own addressing and generated configurations; it never
 overwrites the master profile.
+
+## Generated implementation
+
+`tools/build_inter_as.py` generates:
+
+- `topology/ccie-sp-inter-as.clab.yml`
+- `profiles/inter-as/nodes.csv` and `links.csv`
+- `configs/inter-as/00-base`
+- `configs/inter-as/10-igp`
+- `configs/inter-as/20-bgp`
+
+The implementation deliberately separates the phases. OSPFv3 and BGP syntax
+are canary-tested on XRd before being expanded to all nodes.

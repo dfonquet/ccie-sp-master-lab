@@ -7,7 +7,7 @@ profile-specific.
 | Profile | Main purpose | IGP/BGP model |
 |---|---|---|
 | `master` | Stable ISP services, AAA, RPKI, EVPN and multicast | AS 500, IS-IS, dual RR/PCE |
-| `inter-as` | Options A/B/C and extensive policy practice | Three AS, one RR per AS, IS-IS plus OSPFv3 |
+| `inter-as` | Runnable foundation for Options A/B/C and policy practice | Three AS, one RR per AS, IS-IS plus OSPFv3 |
 | `srv6` | SRv6 capabilities, policies and VPN services | IPv6-first IS-IS and SRv6 locators |
 
 Lifecycle is controlled with `labctl`; it refuses to deploy a second profile
