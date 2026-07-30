@@ -6,6 +6,17 @@ services, Segment Routing and a dedicated automation workstation.
 
 ![CCIE SP master topology](docs/topology.svg)
 
+## Current implementation status
+
+The 30-node `master` profile is deployed and its expanded IS-IS, SR-MPLS and
+RR control plane has been validated. P7, P8, PE7 and PE8 are included in the
+diagram and use link identifiers `L040-L047`.
+
+The Inter-AS and SRv6 profiles currently have approved design documents but
+are not yet runnable topologies. AAA/RPKI and the remaining service phases are
+also intentionally pending. See [Deployment status](STATUS.md) for the exact
+acceptance boundary before moving to the next profile.
+
 ## What this repository contains
 
 - A 30-node Containerlab topology generated from Python.
