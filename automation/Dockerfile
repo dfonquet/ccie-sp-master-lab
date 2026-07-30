@@ -2,6 +2,7 @@ FROM ubuntu:24.04
 
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/opt/venv/bin:$PATH \
+    ANSIBLE_COLLECTIONS_PATH=/usr/share/ansible/collections \
     PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1
 
@@ -37,7 +38,10 @@ COPY requirements.txt requirements.yml /tmp/
 RUN python3 -m venv /opt/venv \
     && pip install --no-cache-dir --upgrade pip setuptools wheel \
     && pip install --no-cache-dir -r /tmp/requirements.txt \
-    && ansible-galaxy collection install -r /tmp/requirements.yml \
+    && mkdir -p /usr/share/ansible/collections \
+    && ansible-galaxy collection install \
+        -p /usr/share/ansible/collections \
+        -r /tmp/requirements.yml \
     && useradd --create-home --shell /bin/bash student \
     && echo 'student:ccie@123' | chpasswd \
     && usermod -aG sudo student \
