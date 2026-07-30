@@ -20,18 +20,22 @@ POSITIONS = {
     "AUTO1": (150, 105),
     "RR1": (740, 115),
     "RR2": (1080, 115),
-    "P1": (380, 330),
-    "P3": (900, 330),
-    "P5": (1420, 330),
-    "P2": (380, 540),
-    "P4": (900, 540),
-    "P6": (1420, 540),
-    "PE1": (160, 760),
-    "PE2": (500, 760),
-    "PE3": (670, 760),
-    "PE4": (1010, 760),
-    "PE5": (1180, 760),
-    "PE6": (1520, 760),
+    "P1": (250, 330),
+    "P3": (650, 330),
+    "P5": (1050, 330),
+    "P7": (1500, 330),
+    "P2": (250, 540),
+    "P4": (650, 540),
+    "P6": (1050, 540),
+    "P8": (1500, 540),
+    "PE1": (100, 760),
+    "PE2": (320, 760),
+    "PE3": (540, 760),
+    "PE4": (760, 760),
+    "PE5": (980, 760),
+    "PE6": (1200, 760),
+    "PE7": (1420, 760),
+    "PE8": (1640, 760),
     "CE1": (120, 1000),
     "CE2": (310, 1000),
     "CE3": (500, 1000),
@@ -140,7 +144,7 @@ def render() -> str:
 
     return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-labelledby="title desc">
   <title id="title">CCIE Service Provider master lab topology</title>
-  <desc id="desc">Twenty-six node dual-plane service provider topology with six P routers, six PE routers, two route reflectors and PCEs, nine customer edges, two clients and one automation workstation.</desc>
+  <desc id="desc">Thirty-node dual-plane service provider topology with eight P routers, eight PE routers, two route reflectors and PCEs, nine customer edges, two clients and one automation workstation.</desc>
   <style>
     .background {{ fill: #f8fafc; }}
     .zone {{ fill: none; stroke: #cbd5e1; stroke-width: 2; stroke-dasharray: 8 8; }}
@@ -155,7 +159,7 @@ def render() -> str:
   </style>
   <rect class="background" width="100%" height="100%"/>
   <text x="55" y="48" class="title">CCIE SP v5.1 Master Lab</text>
-  <text x="55" y="76" class="subtitle">14 XRd + 11 IOL + AUTO1 | 39 data-plane links | dual-stack IS-IS and SR-MPLS</text>
+  <text x="55" y="76" class="subtitle">18 XRd + 11 IOL + AUTO1 | 47 data-plane links | dual-stack IS-IS and SR-MPLS</text>
   <rect x="285" y="245" width="1250" height="390" rx="24" class="zone"/>
   <text x="305" y="278" class="zone-label">Provider core</text>
   <rect x="55" y="680" width="1690" height="165" rx="24" class="zone"/>

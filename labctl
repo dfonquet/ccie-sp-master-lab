@@ -1,0 +1,60 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ACTION="${1:-status}"
+PROFILE="${2:-}"
+
+declare -A TOPOLOGIES=(
+  [master]="topology/ccie-sp-master.clab.yml"
+  [inter-as]="topology/ccie-sp-inter-as.clab.yml"
+  [srv6]="topology/ccie-sp-srv6.clab.yml"
+)
+
+usage() {
+  echo "Usage: ./labctl {status|deploy|destroy|inspect} {master|inter-as|srv6}"
+}
+
+active_labs() {
+  docker ps --format '{{.Names}}' |
+    sed -n 's/^clab-\(ccie-sp-[^-]*\).*/\1/p' |
+    sort -u
+}
+
+[[ "$ACTION" == "status" ]] && {
+  active_labs
+  exit 0
+}
+
+[[ -n "$PROFILE" && -n "${TOPOLOGIES[$PROFILE]:-}" ]] || {
+  usage
+  exit 2
+}
+
+TOPOLOGY="$ROOT/${TOPOLOGIES[$PROFILE]}"
+[[ -f "$TOPOLOGY" ]] || {
+  echo "Profile '$PROFILE' is documented but its topology has not been generated."
+  exit 3
+}
+
+case "$ACTION" in
+  deploy)
+    mapfile -t active < <(active_labs)
+    if ((${#active[@]})); then
+      echo "Refusing deploy: active lab(s): ${active[*]}"
+      echo "Destroy the active profile first."
+      exit 4
+    fi
+    sudo containerlab deploy -t "$TOPOLOGY"
+    ;;
+  destroy)
+    sudo containerlab destroy -t "$TOPOLOGY"
+    ;;
+  inspect)
+    containerlab inspect -t "$TOPOLOGY"
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

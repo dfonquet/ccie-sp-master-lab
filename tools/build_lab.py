@@ -166,12 +166,16 @@ NODES = [
     Node("P4", "P", "cisco_xrd", "10.201.255.104", 4, 15),
     Node("P5", "P", "cisco_xrd", "10.201.255.105", 5, 30),
     Node("P6", "P", "cisco_xrd", "10.201.255.106", 6, 30),
+    Node("P7", "P", "cisco_xrd", "10.201.255.107", 15, 45),
+    Node("P8", "P", "cisco_xrd", "10.201.255.108", 16, 45),
     Node("PE1", "PE", "cisco_xrd", "10.201.255.111", 7, 45),
     Node("PE2", "PE", "cisco_xrd", "10.201.255.112", 8, 45),
     Node("PE3", "PE", "cisco_xrd", "10.201.255.113", 9, 60),
     Node("PE4", "PE", "cisco_xrd", "10.201.255.114", 10, 60),
     Node("PE5", "PE", "cisco_xrd", "10.201.255.115", 11, 75),
     Node("PE6", "PE", "cisco_xrd", "10.201.255.116", 12, 75),
+    Node("PE7", "PE", "cisco_xrd", "10.201.255.117", 17, 90),
+    Node("PE8", "PE", "cisco_xrd", "10.201.255.118", 18, 90),
     Node("RR1", "RR-PCE", "cisco_xrd", "10.201.255.121", 13, 90),
     Node("RR2", "RR-PCE", "cisco_xrd", "10.201.255.122", 14, 90),
     Node("CE1", "CE", "cisco_iol", "10.201.255.131", 1, 105),
@@ -237,6 +241,15 @@ def build_links() -> list[Link]:
         # Multicast and service test endpoints.
         ("CE1", "Ethernet0/2", "C1", "Ethernet0/1", "client", 10, 501),
         ("CE9", "Ethernet0/2", "C2", "Ethernet0/1", "client", 10, 502),
+        # Expansion links are appended to preserve all original link IDs/IPs.
+        ("P5", "Gi0-0-0-5", "P7", "Gi0-0-0-0", "core-plane-a", 10, 103),
+        ("P6", "Gi0-0-0-5", "P8", "Gi0-0-0-0", "core-plane-b", 10, 104),
+        ("P7", "Gi0-0-0-1", "P8", "Gi0-0-0-1", "core-rung", 20, 160),
+        ("P6", "Gi0-0-0-6", "P7", "Gi0-0-0-2", "core-diagonal", 30, 170),
+        ("PE7", "Gi0-0-0-0", "P5", "Gi0-0-0-6", "pe-core", 10, 213),
+        ("PE7", "Gi0-0-0-1", "P7", "Gi0-0-0-3", "pe-core", 10, 214),
+        ("PE8", "Gi0-0-0-0", "P6", "Gi0-0-0-7", "pe-core", 10, 215),
+        ("PE8", "Gi0-0-0-1", "P8", "Gi0-0-0-3", "pe-core", 10, 216),
     ]
     return [
         Link(index, *link)

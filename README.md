@@ -1,6 +1,6 @@
 # CCIE SP v5.1 Master Lab
 
-Reproducible 26-node service-provider lab for Cisco CCIE Service Provider
+Reproducible 30-node service-provider lab for Cisco CCIE Service Provider
 v5.1 practice. It combines a redundant dual-stack ISP backbone, customer
 services, Segment Routing and a dedicated automation workstation.
 
@@ -8,8 +8,8 @@ services, Segment Routing and a dedicated automation workstation.
 
 ## What this repository contains
 
-- A 26-node Containerlab topology generated from Python.
-- Six P, six PE and two redundant RR/PCE XRd nodes.
+- A 30-node Containerlab topology generated from Python.
+- Eight P, eight PE and two redundant RR/PCE XRd nodes.
 - Nine customer-edge and two client IOL-XE nodes.
 - `AUTO1`, a reproducible Ansible/Python/pyATS automation workstation.
 - IPv4/IPv6 addressing, IS-IS and SR-MPLS configuration phases.
@@ -25,6 +25,7 @@ services, Segment Routing and a dedicated automation workstation.
 | [Addressing](docs/ADDRESSING.md) | Management, loopbacks, links, IS-IS and SIDs |
 | [Automation](docs/AUTOMATION.md) | AUTO1 design, tools and learning path |
 | [AUTO1 Source of Truth](docs/AUTO1-SOURCE-OF-TRUTH.md) | BGP render, validation, diff, deploy and post-check workflow |
+| [Multi-profile roadmap](docs/MULTI-PROFILE-ROADMAP.md) | Master, Inter-AS and SRv6 design and acceptance gates |
 | [Validation](docs/VALIDATION.md) | Repeatable health and protocol checks |
 | [Troubleshooting](docs/TROUBLESHOOTING.md) | Errors encountered and their resolutions |
 | [IPv6 standard](IPV6-STANDARD.md) | Provider-specific IPv6 control-plane standard |
@@ -36,14 +37,14 @@ services, Segment Routing and a dedicated automation workstation.
 
 | Role | Platform | Nodes |
 |---|---|---|
-| Provider core | XRd 24.2.11 | P1-P6 |
-| Provider edge | XRd 24.2.11 | PE1-PE6 |
+| Provider core | XRd 24.2.11 | P1-P8 |
+| Provider edge | XRd 24.2.11 | PE1-PE8 |
 | Route reflector and PCE | XRd 24.2.11 | RR1-RR2 |
 | Customer edge | IOL-XE 17.12.1 | CE1-CE9 |
 | Customer test endpoints | IOL-XE 17.12.1 | C1-C2 |
 | Automation workstation | Ubuntu 24.04 container | AUTO1 |
 
-Total: 14 XRd nodes, 11 IOL nodes, one automation workstation, and 39
+Total: 18 XRd nodes, 11 IOL nodes, one automation workstation, and 47
 data-plane links.
 
 The P backbone has two longitudinal planes, three inter-plane rungs, and two

@@ -11,3 +11,5 @@ pe_neighbors:
   - {name: PE4, ipv4: 10.0.0.10}
   - {name: PE5, ipv4: 10.0.0.11}
   - {name: PE6, ipv4: 10.0.0.12}
+  - {name: PE7, ipv4: 10.0.0.17}
+  - {name: PE8, ipv4: 10.0.0.18}
