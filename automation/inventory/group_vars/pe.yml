@@ -1,0 +1,10 @@
+---
+bgp_asn: 65000
+rr_neighbors:
+  - address: 10.0.0.13
+    description: RR1
+  - address: 10.0.0.14
+    description: RR2
+address_families:
+  - vpnv4 unicast
+  - vpnv6 unicast

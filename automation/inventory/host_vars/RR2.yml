@@ -1,0 +1,10 @@
+---
+router_id: 10.0.0.14
+bgp_asn: 65000
+rr_clients:
+  - {name: PE1, address: 10.0.0.7}
+  - {name: PE2, address: 10.0.0.8}
+  - {name: PE3, address: 10.0.0.9}
+  - {name: PE4, address: 10.0.0.10}
+  - {name: PE5, address: 10.0.0.11}
+  - {name: PE6, address: 10.0.0.12}

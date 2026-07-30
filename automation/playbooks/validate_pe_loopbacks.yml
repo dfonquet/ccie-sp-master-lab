@@ -1,0 +1,13 @@
+---
+- name: Compare PE loopbacks with the source of truth
+  hosts: pe
+  gather_facts: false
+  tasks:
+    - name: Read Loopback0
+      cisco.iosxr.iosxr_command:
+        commands: show running-config interface Loopback0
+      register: loopback_state
+    - name: Require the expected router ID
+      ansible.builtin.assert:
+        that: router_id in loopback_state.stdout[0]
+        fail_msg: "{{ inventory_hostname }} does not contain expected Loopback0 {{ router_id }}"

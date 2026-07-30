@@ -21,6 +21,9 @@ python3 scripts/hello_netmiko.py
 ansible-playbook playbooks/backup.yml
 ```
 
+The reviewed Source of Truth/Jinja2 BGP workflow is documented in
+[`../docs/AUTO1-SOURCE-OF-TRUTH.md`](../docs/AUTO1-SOURCE-OF-TRUTH.md).
+
 Installed tool families:
 
 - Python, Jinja2, YAML, JSON, XML and pytest.

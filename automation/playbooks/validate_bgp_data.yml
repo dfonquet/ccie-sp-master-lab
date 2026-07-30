@@ -1,0 +1,17 @@
+---
+- name: Validate BGP source of truth
+  hosts: RR2,pe
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Validate common values
+      ansible.builtin.assert:
+        that:
+          - bgp_asn | int > 0
+          - router_id is ansible.utils.ipv4
+        fail_msg: "Invalid BGP ASN or router ID for {{ inventory_hostname }}"
+    - name: Validate RR2 client list
+      ansible.builtin.assert:
+        that:
+          - rr_clients | length == 6
+      when: inventory_hostname == 'RR2'

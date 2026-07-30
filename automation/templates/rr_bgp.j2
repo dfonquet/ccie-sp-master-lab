@@ -1,0 +1,15 @@
+router bgp {{ bgp_asn }}
+ bgp router-id {{ router_id }}
+{% for client in rr_clients %}
+ neighbor {{ client.address }}
+  description {{ client.name }} RR-CLIENT
+  remote-as {{ bgp_asn }}
+  update-source Loopback0
+{% for af in ['vpnv4 unicast', 'vpnv6 unicast'] %}
+  address-family {{ af }}
+   route-reflector-client
+  !
+{% endfor %}
+ !
+{% endfor %}
+!

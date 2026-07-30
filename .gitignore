@@ -3,16 +3,23 @@ __pycache__/
 *.py[cod]
 .pytest_cache/
 artifacts/
+automation/rendered/*
+!automation/rendered/.gitkeep
+*.retry
+*.log
 topology/clab-*/
 **/xr-storage/
 
 # Temporary access and credentials
 .temporary-access/
 .env
+.env.*
+!.env.example
 *.key
 *.pem
 *.ppk
 known_hosts
+vault-password*
 
 # Licensed or large network images
 *.qcow2
@@ -26,6 +33,8 @@ known_hosts
 # Local tooling
 .venv/
 venv/
+.ansible/
+.cache/
 .idea/
 .vscode/
 Thumbs.db

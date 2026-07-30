@@ -1,0 +1,14 @@
+---
+- name: Deploy the previously reviewed BGP candidate
+  hosts: RR2,pe
+  gather_facts: false
+  serial: 1
+  tasks:
+    - name: Require explicit deployment approval
+      ansible.builtin.assert:
+        that: deploy_confirm | default(false) | bool
+        fail_msg: "Add -e deploy_confirm=true only after reviewing check mode and diff."
+    - name: Commit rendered configuration
+      cisco.iosxr.iosxr_config:
+        src: "{{ playbook_dir }}/../rendered/{{ inventory_hostname }}_bgp.cfg"
+        backup: true

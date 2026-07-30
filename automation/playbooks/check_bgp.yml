@@ -1,0 +1,9 @@
+---
+- name: Check BGP candidate without committing
+  hosts: RR2,pe
+  gather_facts: false
+  tasks:
+    - name: Load rendered candidate in check mode
+      cisco.iosxr.iosxr_config:
+        src: "{{ playbook_dir }}/../rendered/{{ inventory_hostname }}_bgp.cfg"
+      check_mode: true

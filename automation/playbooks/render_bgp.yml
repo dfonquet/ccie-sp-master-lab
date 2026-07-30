@@ -1,0 +1,11 @@
+---
+- name: Render reviewed BGP candidates
+  hosts: RR2,pe
+  gather_facts: false
+  connection: local
+  tasks:
+    - name: Render candidate for each node
+      ansible.builtin.template:
+        src: "{{ playbook_dir }}/../templates/{{ 'rr_bgp.j2' if inventory_hostname == 'RR2' else 'pe_bgp.j2' }}"
+        dest: "{{ playbook_dir }}/../rendered/{{ inventory_hostname }}_bgp.cfg"
+        mode: "0600"
