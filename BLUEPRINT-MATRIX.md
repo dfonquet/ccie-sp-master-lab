@@ -31,53 +31,58 @@ exam domains.
 
 ## 3. Access Connectivity — 10%
 
-CE2, CE5 and CE8 are dual-homed. They are used for Q-in-Q, E-Line access,
-EVPN multihoming, MC-LAG design, PE-CE loop prevention and access failure
-drills. Cloud-native BNG, CUPS and timing are treated as design modules unless
-a suitable BNG image is added later.
+| Topic | Master-lab use |
+|---|---|
+| Dual-homed access | CE2, CE5 and CE8 attach to two PEs for access-failure and loop-prevention drills |
+| Ethernet access | Q-in-Q, E-Line, VPWS and service-delimiting tag exercises |
+| EVPN multihoming | Ethernet Segment, ESI, Designated Forwarder and all-active/single-active practice |
+| MC-LAG | Control-plane design, split-brain analysis and comparison with EVPN multihoming |
+| PE-CE routing | Static, OSPF, eBGP, multihop and Site-of-Origin loop-prevention scenarios |
+| BNG and subscriber access | PPPoE/IPoE, DHCP, subscriber policy and scale treated as design modules until a suitable BNG image is available |
+| CUPS and timing | Architecture and troubleshooting exercises; hardware timing behavior is not emulated |
 
 ## 4. High Availability and Fast Convergence — 10%
 
-The two-plane P core provides deterministic failure points for:
-
-- NSR, NSF and graceful restart.
-- IGP/LDP convergence tuning.
-- BGP-PIC.
-- BFD.
-- LFA, remote LFA and TI-LFA.
-- RSVP-TE FRR.
-- PCE and route-reflector failure.
+| Topic | Master-lab use |
+|---|---|
+| Stateful control-plane resiliency | NSR, NSF and graceful-restart behavior and verification |
+| IGP convergence | IS-IS/OSPF timer tuning, overload behavior and deterministic link/node failures |
+| MPLS convergence | LDP synchronization, graceful restart and label-path verification |
+| BGP convergence | BGP-PIC, next-hop tracking, multipath and RR failure scenarios |
+| Failure detection | BFD configuration and comparison with XRd Control Plane platform limitations |
+| IP fast reroute | LFA, remote LFA and TI-LFA coverage over rings, rungs and diagonal paths |
+| RSVP-TE protection | Link/node protection and fast-reroute design exercises |
+| SR-TE/PCE resiliency | Candidate-path fallback, disjointness and PCE failover between RR1 and RR2 |
+| Service resiliency | Dual-homed CE, PE failure and end-to-end VPN recovery measurements |
 
 ## 5. Security — 10%
 
-Planned services:
-
-- IS-IS, OSPF, BGP, LDP and PCEP authentication.
-- LPTS/CoPP, MPP, SSH and VTY hardening.
-- Central AAA with RADIUS and TACACS+ test services.
-- Secure syslog and SNMP.
-- RPKI origin validation with Routinator.
-- uRPF, RTBH, FlowSpec, ACL object groups and router hardening.
-- TLS/mTLS for gNMI and gRPC.
-- MACsec as configuration/design coverage where virtual interfaces permit.
+| Topic | Master-lab use |
+|---|---|
+| Control-plane authentication | IS-IS, OSPF, BGP, LDP and PCEP authentication exercises |
+| Infrastructure protection | LPTS/CoPP, MPP, SSH, VTY and management-plane hardening |
+| AAA | Central RADIUS and TACACS+ services with local fallback and authorization testing |
+| Routing security | RPKI origin validation with Routinator, prefix filtering and policy enforcement |
+| DDoS response | uRPF, RTBH, FlowSpec, ACL object groups and mitigation workflows |
+| Secure operations | Secure syslog, SNMPv3, role separation and auditable configuration changes |
+| Model-driven security | TLS/mTLS for NETCONF, gNMI and gRPC management channels |
+| Data-link security | MACsec configuration and design coverage where virtual interfaces permit |
 
 ## 6. Assurance and Automation — 20%
 
-Deployed on `AUTO1`:
-
-- Python 3.12 with Jinja2, YAML, JSON, XML and pytest.
-- Ansible 2.21 with IOS, IOS XR, NSO and network-common collections.
-- Netmiko, Scrapli, Nornir and NTC templates.
-- ncclient for NETCONF and pyGNMI/grpcio for model-driven interfaces.
-- Cisco pyATS and Genie 26.6.
-- Reusable inventory, pre-check, backup and verification examples.
-
-Next assurance services:
-
-- Syslog, SNMP, NetFlow/IPFIX and model-driven telemetry collectors.
-- SR performance measurement and TWAMP.
-- An authorized Cisco NSO installation for service-package exercises.
-- Secure ZTP and automated fault-injection workflows.
+| Topic | Master-lab use |
+|---|---|
+| Python and data formats | Python 3.12, Jinja2, YAML, JSON, XML and pytest on `AUTO1` |
+| Configuration automation | Ansible 2.21 with IOS, IOS XR, NSO and network-common collections |
+| Device access frameworks | Netmiko, Scrapli, Nornir and NTC templates |
+| Model-driven interfaces | ncclient for NETCONF and pyGNMI/grpcio for gNMI |
+| State validation | Cisco pyATS and Genie 26.6 parsers and reusable verification jobs |
+| Source-of-truth workflow | Inventory, variables, Jinja2 render, validation, check/diff, canary deployment and post-check |
+| Change safety | Pre-checks, explicit confirmation, serial deployment, backups and rollback evidence |
+| Monitoring | Syslog, SNMP, NetFlow/IPFIX and model-driven telemetry collector exercises |
+| Performance assurance | SR performance measurement and TWAMP design and validation |
+| Service orchestration | Authorized Cisco NSO installation and service-package exercises |
+| Provisioning and faults | Secure ZTP and automated fault-injection workflows |
 
 ## Recommended study order
 
