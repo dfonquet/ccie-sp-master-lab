@@ -6,6 +6,12 @@ services, Segment Routing and a dedicated automation workstation.
 
 ![CCIE SP master topology](docs/topology.svg)
 
+> **Start here:** read the
+> [Professional lab operating guide](docs/LAB-OPERATING-GUIDE.md) before
+> deploying a profile. It explains the repository, source of truth, profiles,
+> addressing, configuration phases, deployment, validation, exercises,
+> troubleshooting and safe synchronization from `AUTO1`.
+
 The diagram is generated from the authoritative node and link inventories.
 Orange `NEW` markers identify the validated 2026 expansion: P7, P8, PE7 and
 PE8, connected through links `L040-L047`.
@@ -16,10 +22,11 @@ The 30-node `master` profile is deployed and its expanded IS-IS, SR-MPLS and
 RR control plane has been validated. P7, P8, PE7 and PE8 are included in the
 diagram and use link identifiers `L040-L047`.
 
-The Inter-AS and SRv6 profiles currently have approved design documents but
-are not yet runnable topologies. AAA/RPKI and the remaining service phases are
-also intentionally pending. See [Deployment status](STATUS.md) for the exact
-acceptance boundary before moving to the next profile.
+The `master` and `inter-as` profiles are runnable and have validated baselines.
+The SRv6 profile currently remains an approved design and is not yet a runnable
+topology. AAA/RPKI and the remaining advanced service phases are intentionally
+incremental. See [Deployment status](STATUS.md) for the exact acceptance
+boundary before moving to the next profile.
 
 ## What this repository contains
 
@@ -35,6 +42,10 @@ acceptance boundary before moving to the next profile.
 
 | Guide | Purpose |
 |---|---|
+| [Professional operating guide](docs/LAB-OPERATING-GUIDE.md) | Start-to-finish explanation and safe operating workflow |
+| [Lab 1 — Master ISP](profiles/master/README.md) | Complete master topology, operation and study order |
+| [Lab 2 — Inter-AS](profiles/inter-as/README.md) | Complete multi-AS topology, addressing and workflow |
+| [Laboratory profiles](profiles/README.md) | Profile isolation and one-lab-at-a-time model |
 | [Complete build guide](docs/BUILD-GUIDE.md) | Step-by-step history, resources and design decisions |
 | [Architecture](docs/ARCHITECTURE.md) | Nodes, roles, redundancy and study modules |
 | [Addressing](docs/ADDRESSING.md) | Management, loopbacks, links, IS-IS and SIDs |

@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Generate the 25-node CCIE SP master Containerlab topology and baselines."""
+"""Generate the 30-node CCIE SP master Containerlab topology and baselines."""
 
 from __future__ import annotations
 

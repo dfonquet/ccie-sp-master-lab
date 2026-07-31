@@ -15,14 +15,17 @@ from netmiko import ConnectHandler
 ROOT = Path(__file__).resolve().parents[1]
 
 
-def load_data() -> tuple[dict[str, dict[str, str]], dict[str, list[dict[str, str]]]]:
-    with (ROOT / "inventory" / "nodes.csv").open(
+def load_data(
+    profile: str,
+) -> tuple[dict[str, dict[str, str]], dict[str, list[dict[str, str]]]]:
+    inventory = ROOT / "inventory" if profile == "master" else ROOT / "profiles" / profile
+    with (inventory / "nodes.csv").open(
         newline="", encoding="utf-8"
     ) as file:
         nodes = {row["name"]: row for row in csv.DictReader(file)}
 
     links_by_source: dict[str, list[dict[str, str]]] = defaultdict(list)
-    with (ROOT / "inventory" / "links.csv").open(
+    with (inventory / "links.csv").open(
         newline="", encoding="utf-8"
     ) as file:
         for row in csv.DictReader(file):
@@ -125,9 +128,30 @@ def main() -> int:
         default="both",
     )
     parser.add_argument("--workers", type=int, default=2)
+    parser.add_argument(
+        "--profile",
+        choices=("master", "inter-as"),
+        default="master",
+    )
+    parser.add_argument(
+        "--sources",
+        help="Comma-separated source node names. Default: every link source.",
+    )
     args = parser.parse_args()
 
-    nodes, links_by_source = load_data()
+    nodes, links_by_source = load_data(args.profile)
+    if args.sources:
+        selected = {
+            name.strip() for name in args.sources.split(",") if name.strip()
+        }
+        unknown = selected - set(nodes)
+        if unknown:
+            raise SystemExit(f"Unknown source nodes: {', '.join(sorted(unknown))}")
+        links_by_source = {
+            name: links
+            for name, links in links_by_source.items()
+            if name in selected
+        }
     results: list[dict[str, str]] = []
     families = ("ipv4", "ipv6") if args.family == "both" else (args.family,)
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
@@ -138,7 +162,12 @@ def main() -> int:
         for future in as_completed(futures):
             results.extend(future.result())
 
-    results.sort(key=lambda item: (int(item["id"][1:]), item["family"]))
+    results.sort(
+        key=lambda item: (
+            int("".join(character for character in item["id"] if character.isdigit())),
+            item["family"],
+        )
+    )
     for result in results:
         print(
             f"{result['id']}|{result['family']}|"
