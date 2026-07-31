@@ -35,6 +35,9 @@ acceptance boundary before moving to the next profile.
 
 | Guide | Purpose |
 |---|---|
+| [Lab 1 — Master ISP](profiles/master/README.md) | Complete master topology, operation and study order |
+| [Lab 2 — Inter-AS](profiles/inter-as/README.md) | Complete multi-AS topology, addressing and workflow |
+| [Laboratory profiles](profiles/README.md) | Profile isolation and one-lab-at-a-time model |
 | [Complete build guide](docs/BUILD-GUIDE.md) | Step-by-step history, resources and design decisions |
 | [Architecture](docs/ARCHITECTURE.md) | Nodes, roles, redundancy and study modules |
 | [Addressing](docs/ADDRESSING.md) | Management, loopbacks, links, IS-IS and SIDs |

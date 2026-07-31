@@ -13,6 +13,13 @@ inventory, addressing and configuration phases.
 
 ![Inter-AS topology](topology.svg)
 
+## Documentation map
+
+- [Design and protocol intent](DESIGN.md)
+- [Addressing, loopbacks and identifiers](ADDRESSING.md)
+- [Observed errors and solutions](TROUBLESHOOTING.md)
+- [Cisco and IETF references](REFERENCES.md)
+
 ## Controlled lifecycle
 
 Never deploy this profile while another `clab-ccie-sp-*` lab is running.
@@ -37,6 +44,10 @@ all directly connected links with:
 python3 tools/validate_links.py --profile inter-as --family both --workers 2
 ```
 
+The phase priority is deliberate: base addressing, then IGP, then local iBGP,
+then external eBGP, and only afterwards Options A/B/C. A service phase must not
+be used to hide an underlay failure.
+
 ## Acceptance gates
 
 1. 23/23 containers running, zero restarts and zero OOM events.
@@ -46,3 +57,19 @@ python3 tools/validate_links.py --profile inter-as --family both --workers 2
 5. Every PE/ASBR has redundant reachability to its local RR.
 6. IPv4/IPv6 eBGP is established on the five external links.
 7. Options A, B and C are introduced separately, with rollback between them.
+
+## Last validated baseline
+
+The latest integral test of this profile confirmed:
+
+- 23/23 nodes running.
+- 70/70 directional tests over directly connected links.
+- AS500: ten operational IS-IS links and 16/16 loopback reachability tests.
+- AS65100 and AS65200: 14/14 directional OSPFv2 adjacencies and 14/14
+  OSPFv3 adjacencies per domain; 8/8 loopback tests in each AS.
+- RR-based iBGP: 6/6, 4/4 and 4/4 sessions per VPN address family.
+- Inter-AS eBGP: 10/10 IPv4 endpoints and 10/10 IPv6 endpoints established.
+
+This is the known-good baseline, not a replacement for testing after each
+change. See [TROUBLESHOOTING.md](TROUBLESHOOTING.md) for commands, symptoms and
+recovery procedures.
