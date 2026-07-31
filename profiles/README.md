@@ -14,6 +14,7 @@ Profile guides:
 
 - [Lab 1 — Master ISP](master/README.md)
 - [Lab 2 — Inter-AS](inter-as/README.md)
+- [Professional end-to-end operating guide](../docs/LAB-OPERATING-GUIDE.md)
 
 Lifecycle is controlled with `labctl`; it refuses to deploy a second profile
 while another Containerlab profile is running.
