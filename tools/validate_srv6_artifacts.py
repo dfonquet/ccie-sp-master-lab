@@ -51,6 +51,13 @@ def main() -> int:
 
     for node in nodes:
         name = node["name"]
+        canary_config = (CONFIG / "00-canary" / f"{name}.cfg").read_text(
+            encoding="utf-8"
+        )
+        if "GigabitEthernet" in canary_config:
+            raise SystemExit(f"{name} canary config must not reference data interfaces")
+        if f"ipv6 address {node['loopback_ipv6']}" not in canary_config:
+            raise SystemExit(f"{name} canary config is missing its loopback")
         locator_config = (CONFIG / "20-srv6-locator" / f"{name}.cfg").read_text(
             encoding="utf-8"
         )

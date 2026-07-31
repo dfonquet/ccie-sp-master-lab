@@ -60,6 +60,12 @@ def back_up(row: dict[str, str], output_dir: Path) -> tuple[str, str]:
 
 def main() -> int:
     parser = argparse.ArgumentParser()
+    parser.add_argument(
+        "--inventory",
+        type=Path,
+        default=INVENTORY,
+        help="Node inventory CSV. Default: master inventory.",
+    )
     parser.add_argument("--nodes", help="Comma-separated XR node names")
     parser.add_argument("--workers", type=int, default=2)
     parser.add_argument(
@@ -69,7 +75,7 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    with INVENTORY.open(newline="", encoding="utf-8") as file:
+    with args.inventory.open(newline="", encoding="utf-8") as file:
         rows = [
             row for row in csv.DictReader(file) if row["kind"] == "cisco_xrd"
         ]

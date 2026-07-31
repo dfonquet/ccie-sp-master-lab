@@ -20,6 +20,7 @@ provides SRv6 packet forwarding merely because commands parse or commit.
 | `nodes.csv` | Node, management, loopback and locator Source of Truth |
 | `links.csv` | Interface and IPv6 /127 Source of Truth |
 | `../../topology/ccie-sp-srv6.clab.yml` | Containerlab topology |
+| `../../configs/srv6/00-canary/` | Link-independent one-node baseline |
 | `../../configs/srv6/00-base/` | IPv6 loopbacks and interfaces |
 | `../../configs/srv6/10-isis-ipv6/` | IS-IS Level 2 IPv6 underlay |
 | `../../configs/srv6/20-srv6-locator/` | Experimental locator and IS-IS advertisement phase |
@@ -39,12 +40,13 @@ Confirm `./labctl status` returns no nodes. Then deploy only P1:
 ```bash
 ./labctl canary srv6
 python3 tools/validate_nodes.py --inventory profiles/srv6/nodes.csv --nodes P1 --workers 1
-python3 tools/apply_phase.py 00-base --profile srv6 --nodes P1 --workers 1
+python3 tools/backup_provider.py --inventory profiles/srv6/nodes.csv --nodes P1 --workers 1 --label before-srv6-canary
+python3 tools/apply_phase.py 00-canary --profile srv6 --nodes P1 --workers 1
 python3 tools/apply_phase.py 20-srv6-locator --profile srv6 --nodes P1 --workers 1
 ```
 
-Do not apply `10-isis-ipv6` in the one-node canary; there is no peer to form an
-adjacency with.
+Do not apply `00-base` or `10-isis-ipv6` in the one-node canary. Node filtering
+omits the peer links, so only the link-independent `00-canary` phase is valid.
 
 Destroy the canary after evidence collection:
 

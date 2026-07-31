@@ -7,7 +7,7 @@
 | Isolation | Docker container inventory | No other `clab-ccie-sp-*` node is running |
 | Image identity | Docker image inspection | Exact local SHA-256 recorded in `READINESS.md` |
 | Management | TCP/22 and IOS XR prompt | P1 reachable without retry storms |
-| Base IPv6 | Running configuration and interface brief | Loopback committed; no CLI errors |
+| Base IPv6 | `00-canary` running configuration and interface brief | Loopback committed; no data-interface references or CLI errors |
 | Locator parser | Configuration session output | Entire locator hierarchy accepted |
 | Locator commit | Commit output and failed-config check | Commit succeeds; failed configuration is empty |
 | Operational state | SRv6 locator and SID show commands | Output recorded even if feature is unsupported |
