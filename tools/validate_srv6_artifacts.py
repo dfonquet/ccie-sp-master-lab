@@ -61,15 +61,22 @@ def main() -> int:
         locator_config = (CONFIG / "20-srv6-locator" / f"{name}.cfg").read_text(
             encoding="utf-8"
         )
+        isis_config = (CONFIG / "21-srv6-isis" / f"{name}.cfg").read_text(
+            encoding="utf-8"
+        )
         for command in (
             "segment-routing",
             " srv6",
             "   locator MAIN",
             f"    prefix {node['locator']}",
-            "  segment-routing srv6",
         ):
             if command not in locator_config:
                 raise SystemExit(f"{name} missing generated command: {command.strip()}")
+        if "router isis" in locator_config:
+            raise SystemExit(f"{name} locator phase must not create an IS-IS process")
+        for command in ("router isis SRV6", "segment-routing srv6", "locator MAIN"):
+            if command not in isis_config:
+                raise SystemExit(f"{name} missing IS-IS SRv6 command: {command}")
 
     print("SRv6 artifact validation passed: 3 nodes, 2 links, unique /64 locators")
     return 0

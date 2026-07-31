@@ -24,6 +24,7 @@ provides SRv6 packet forwarding merely because commands parse or commit.
 | `../../configs/srv6/00-base/` | IPv6 loopbacks and interfaces |
 | `../../configs/srv6/10-isis-ipv6/` | IS-IS Level 2 IPv6 underlay |
 | `../../configs/srv6/20-srv6-locator/` | Experimental locator and IS-IS advertisement phase |
+| `../../configs/srv6/21-srv6-isis/` | Locator advertisement under an existing IS-IS process |
 
 Regenerate and validate without deploying:
 
@@ -47,6 +48,8 @@ python3 tools/apply_phase.py 20-srv6-locator --profile srv6 --nodes P1 --workers
 
 Do not apply `00-base` or `10-isis-ipv6` in the one-node canary. Node filtering
 omits the peer links, so only the link-independent `00-canary` phase is valid.
+The `21-srv6-isis` phase is also excluded until the three-node IS-IS underlay
+has passed its own acceptance gate.
 
 Destroy the canary after evidence collection:
 
