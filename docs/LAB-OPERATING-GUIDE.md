@@ -15,7 +15,7 @@ same time.
 |---|---|---|
 | `master` | Runnable and validated | Redundant ISP backbone, SR-MPLS, RR/PCE, VPN, multicast, EVPN, AAA, and RPKI |
 | `inter-as` | Runnable and validated | Three autonomous systems, multiple IGPs, eBGP, and Options A/B/C |
-| `srv6` | Generated capability profile; canary pending | IPv6 IS-IS and SRv6 locator capability gates |
+| `srv6` | Full 21-node profile; capability gates passed | Redundant IPv6 IS-IS and SRv6 study environment |
 
 The primary operational rule is simple: **only one heavy profile may be active
 at a time**. This preserves RAM for XRd, prevents overlapping names and

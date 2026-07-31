@@ -8,7 +8,7 @@ profile-specific.
 |---|---|---|
 | `master` | Stable ISP services, AAA, RPKI, EVPN and multicast | AS 500, IS-IS, dual RR/PCE |
 | `inter-as` | Runnable foundation for Options A/B/C and policy practice | Three AS, one RR per AS, IS-IS plus OSPFv2/OSPFv3 |
-| `srv6` | Generated capability profile; live validation pending | IPv6-first IS-IS and SRv6 locators |
+| `srv6` | 21-node full study profile; staged rollout required | IPv6 IS-IS, SRv6 locators, RR/PE/CE practice |
 
 Profile guides:
 

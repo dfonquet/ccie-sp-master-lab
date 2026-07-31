@@ -1,19 +1,23 @@
-# SRv6 capability profile
+# Full SRv6 study profile
 
-This profile determines what `ios-xr/xrd-control-plane:24.2.11` actually
-supports before a full SRv6 lab is designed. It is not evidence that the image
-provides SRv6 packet forwarding merely because commands parse or commit.
+This profile turns the validated XRd capability canary into a complete,
+redundant study environment. The generated baseline provides working links,
+IPv6, IS-IS and SRv6 locators; students build BGP, VPN, SRv6-TE, multicast,
+TI-LFA and failure scenarios themselves.
 
 Stage A results are recorded in [FINDINGS.md](FINDINGS.md).
 
-## Scope
+## Final scope
 
-- P1, P2 and PE1 running IOS XRd Control Plane.
+- Six P, six PE and two RR nodes running IOS XRd Control Plane.
+- Six IOL-XE CE nodes; CE2 and CE5 are dual-homed.
+- AUTO1 with the repository automation workspace mounted.
 - IPv6-only IS-IS Level 2 underlay.
 - One /64 SRv6 locator per node from the common `2001:db8:600::/40` block.
 - Dedicated management network `10.203.255.0/24`.
 - One-node P1 canary before the three-node capability deployment.
-- No CE service, SRv6-TE policy, uSID or resiliency claim at this stage.
+- 21 nodes and 33 links, with one heavy profile active at a time.
+- No pre-solved BGP service, SRv6-TE policy or VPN exercise.
 
 ## Generated artifacts
 
