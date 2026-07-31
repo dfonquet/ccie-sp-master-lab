@@ -1,32 +1,32 @@
-# AUTO1: Source of Truth y automatización BGP
+# AUTO1: Source of Truth and BGP Automation
 
-Este módulo formaliza el flujo construido en `AUTO1` para RR2 y los seis PE:
+This module formalizes the workflow built in `AUTO1` for RR2 and the six PEs:
 
 ```text
 Source of Truth → Jinja2 → Render → Validate → Check/Diff
-                → Deploy controlado → Post-check BGP
+                → Controlled Deploy → BGP Post-check
 ```
 
-La implementación proviene de los archivos utilizados realmente en
-`Automation-Notes/LAB-Container`. Se normalizaron sus nombres y carpetas para
-evitar duplicados: `group_vars-pe.yml` pasó a
-`inventory/group_vars/pe.yml`, `host_varsRR2.yml` a
-`inventory/host_vars/RR2.yml`, y los archivos prefijados con
-`playbooks-`/`templates-` están ahora en sus directorios nativos.
+The implementation comes from the files used in
+`Automation-Notes/LAB-Container`. Names and folders were normalized to avoid
+duplicates: `group_vars-pe.yml` became `inventory/group_vars/pe.yml`,
+`host_varsRR2.yml` became `inventory/host_vars/RR2.yml`, and files prefixed
+with `playbooks-` or `templates-` now live in their native directories.
 
-Los datos viven junto al inventario en `automation/inventory/group_vars/` y
-`automation/inventory/host_vars/`, para que Ansible los cargue automáticamente. Las
-plantillas están en `automation/templates/`. `rendered/` contiene candidatos
-locales y está excluido de Git: se versionan las fuentes, no sus derivados.
+Data resides next to the inventory under `automation/inventory/group_vars/`
+and `automation/inventory/host_vars/` so Ansible loads it automatically.
+Templates are stored in `automation/templates/`. The `rendered/` directory
+contains local candidates and is excluded from Git: source files are versioned,
+not their derivatives.
 
-## Qué ya tenía AUTO1
+## Existing AUTO1 capabilities
 
-La imagen reproducible ya incluía Ansible, las colecciones Cisco IOS/IOS XR,
-Python, Jinja2, pyATS/Genie, Netmiko, Nornir, Scrapli, ncclient y pyGNMI.
-También existían inventario, prechecks y backups. Este módulo añade el ciclo
-de cambio BGP basado en datos, plantillas y controles previos.
+The reproducible image already included Ansible, Cisco IOS/IOS XR collections,
+Python, Jinja2, pyATS/Genie, Netmiko, Nornir, Scrapli, ncclient, and pyGNMI.
+Inventory, pre-checks, and backups also existed. This module adds a
+data-driven BGP change cycle with templates and pre-deployment controls.
 
-## Ejecución desde `/workspace/automation`
+## Run from `/workspace/automation`
 
 ```bash
 ansible-inventory -i inventory/hosts.yml --host RR2
@@ -45,7 +45,7 @@ ansible-playbook -i inventory/hosts.yml playbooks/check_rr2_bgp.yml --check --di
 ansible-playbook -i inventory/hosts.yml playbooks/check_pe_bgp.yml --check --diff
 ```
 
-Hasta aquí no debe existir ningún cambio real. Tras la revisión humana:
+No real change should exist at this point. After human review:
 
 ```bash
 ansible-playbook -i inventory/hosts.yml playbooks/deploy_rr2_bgp.yml \
@@ -55,12 +55,12 @@ ansible-playbook -i inventory/hosts.yml playbooks/deploy_pe_bgp.yml \
 ansible-playbook -i inventory/hosts.yml playbooks/postcheck_bgp.yml
 ```
 
-El diseño conserva los valores comprobados en el lab: AS 500, RR2
-`10.0.0.14`, cluster ID `10.0.0.100`, PE1–PE6 `10.0.0.7–12` y
-`Loopback0` como update-source. Los PE se despliegan con `serial: 1`; ambos
-playbooks exigen confirmación explícita y crean backup.
+The design preserves the values verified in the lab: AS 500, RR2
+`10.0.0.14`, cluster ID `10.0.0.100`, PE1-PE6 `10.0.0.7-12`, and
+`Loopback0` as the update source. PEs deploy with `serial: 1`; both playbooks
+require explicit confirmation and create a backup.
 
-## Encendido y apagado
+## Startup and shutdown
 
 ```bash
 cd /srv/netlab/labs/ccie-sp-master/topology
@@ -70,5 +70,6 @@ sudo docker ps -a --filter "name=clab-ccie-sp-master"
 sudo shutdown -h now
 ```
 
-No use `containerlab destroy` sin `-t` desde un directorio ambiguo. Los
-artefactos renderizados, backups, logs, claves e imágenes Cisco no se publican.
+Do not run `containerlab destroy` without `-t` from an ambiguous directory.
+Rendered artifacts, backups, logs, keys, and proprietary Cisco images must not
+be published.

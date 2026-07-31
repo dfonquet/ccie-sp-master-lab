@@ -1,152 +1,154 @@
-# Guía profesional de operación del CCIE SP Master Lab
+# Professional CCIE SP Master Lab Operating Guide
 
-Esta es la guía de entrada para comprender, desplegar, validar, modificar y
-recuperar el laboratorio. El repositorio no es solamente un conjunto de
-topologías: implementa un flujo reproducible donde inventarios y generadores
-producen configuraciones, diagramas y archivos de Containerlab verificables.
+This is the entry point for understanding, deploying, validating, modifying,
+and recovering the lab. The repository is not merely a collection of
+topologies: it implements a reproducible workflow in which inventories and
+generators produce verifiable configurations, diagrams, and Containerlab files.
 
-## 1. Objetivo
+## 1. Purpose
 
-El proyecto permite practicar el blueprint de CCIE Service Provider y
-escenarios más cercanos a una red real sin encender varios laboratorios pesados
-simultáneamente.
+The project supports CCIE Service Provider blueprint practice and realistic
+service-provider scenarios without running several resource-heavy labs at the
+same time.
 
-| Perfil | Estado | Propósito |
+| Profile | Status | Purpose |
 |---|---|---|
-| `master` | Ejecutable y validado | Backbone ISP redundante, SR-MPLS, RR/PCE, VPN, multicast, EVPN, AAA y RPKI |
-| `inter-as` | Ejecutable y validado | Tres sistemas autónomos, varios IGP, eBGP y Options A/B/C |
-| `srv6` | Diseño aprobado | Locators, SRv6, políticas y servicios IPv6-first |
+| `master` | Runnable and validated | Redundant ISP backbone, SR-MPLS, RR/PCE, VPN, multicast, EVPN, AAA, and RPKI |
+| `inter-as` | Runnable and validated | Three autonomous systems, multiple IGPs, eBGP, and Options A/B/C |
+| `srv6` | Approved design | Locators, SRv6, policies, and IPv6-first services |
 
-La regla operativa principal es sencilla: **solo un perfil pesado puede estar
-activo a la vez**. Así se conserva RAM para XRd, se evitan nombres y redes
-solapadas y cada práctica empieza desde un estado conocido.
+The primary operational rule is simple: **only one heavy profile may be active
+at a time**. This preserves RAM for XRd, prevents overlapping names and
+networks, and ensures that every exercise starts from a known state.
 
-## 2. Cómo está organizado el repositorio
+## 2. Repository layout
 
 ```text
 ccie-sp-master-lab/
-├── README.md                    Portada y estado resumido
-├── labctl                       Control seguro del ciclo de vida
-├── inventory/                   Inventario autoritativo del Lab 1
+├── README.md                    Project entry point and summary
+├── labctl                       Safe lifecycle controller
+├── inventory/                   Authoritative Lab 1 inventory
 ├── profiles/
-│   ├── master/                  Diseño y manual específico del Lab 1
-│   ├── inter-as/                Inventarios y manual del Lab 2
-│   └── srv6/                    Diseño del futuro Lab 3
-├── tools/                       Generadores y validadores
-├── templates/                   Plantillas Jinja2
-├── configs/                     Configuraciones renderizadas por fases
-├── topology/                    Topologías Containerlab generadas
-├── automation/                  Imagen y ejemplos para AUTO1
-└── docs/                        Arquitectura, operación y troubleshooting
+│   ├── master/                  Lab 1 design and operating guide
+│   ├── inter-as/                Lab 2 inventory and operating guide
+│   └── srv6/                    Future Lab 3 design
+├── tools/                       Generators and validators
+├── templates/                   Jinja2 templates
+├── configs/                     Phase-based rendered configurations
+├── topology/                    Generated Containerlab topologies
+├── automation/                  AUTO1 image and examples
+└── docs/                        Architecture, operations, and troubleshooting
 ```
 
-Los documentos específicos están en:
+Profile-specific entry points:
 
 - [Lab 1 — Master ISP](../profiles/master/README.md)
 - [Lab 2 — Inter-AS](../profiles/inter-as/README.md)
-- [Estado de aceptación](../STATUS.md)
-- [Matriz del blueprint](../BLUEPRINT-MATRIX.md)
+- [Acceptance status](../STATUS.md)
+- [Blueprint matrix](../BLUEPRINT-MATRIX.md)
 
-## 3. Fuente de verdad y flujo de cambios
+## 3. Source of truth and change flow
 
-El diseño sigue esta cadena:
+The design follows this chain:
 
 ```text
-Inventarios + generador + plantillas
+Inventories + generator + templates
                  ↓
-      configuraciones renderizadas
+       rendered configurations
                  ↓
-       topología Containerlab
+       Containerlab topology
                  ↓
-      despliegue y validación
+       deployment and validation
 ```
 
-Para `master`, la fuente principal está en `tools/build_lab.py`,
-`inventory/nodes.csv` e `inventory/links.csv`. Para `inter-as`, se utiliza
-`tools/build_inter_as.py`, `profiles/inter-as/nodes.csv` y
+For `master`, the primary sources are `tools/build_lab.py`,
+`inventory/nodes.csv`, and `inventory/links.csv`. For `inter-as`, they are
+`tools/build_inter_as.py`, `profiles/inter-as/nodes.csv`, and
 `profiles/inter-as/links.csv`.
 
-No se deben editar manualmente los archivos generados para hacer permanente un
-cambio. La modificación correcta se realiza en el inventario, generador o
-plantilla; después se renderiza y se revisa el diff. Esto mantiene alineados:
+Do not manually edit generated files to make a persistent change. Update the
+inventory, generator, or template, then render and inspect the diff. This keeps
+the following artifacts aligned:
 
-- Diagrama.
-- Topología.
-- Direccionamiento.
-- Descripciones de interfaces.
-- Configuraciones por fase.
-- Documentación.
+- Diagram.
+- Topology.
+- Addressing.
+- Interface descriptions.
+- Phase-based configurations.
+- Documentation.
 
-## 4. Perfiles y arquitectura
+## 4. Profiles and architecture
 
 ### 4.1 Lab 1 — Master ISP
 
-El Lab 1 contiene 30 nodos y 47 enlaces:
+Lab 1 contains 30 nodes and 47 links:
 
-- P1-P8: routers de tránsito.
-- PE1-PE8: borde del proveedor y terminación de servicios.
-- RR1-RR2: Route Reflectors redundantes y PCE.
-- CE1-CE9 y C1-C2: clientes y extremos para pruebas.
-- AUTO1: estación Ubuntu de automatización.
+- P1-P8: transit routers.
+- PE1-PE8: provider edge and service termination.
+- RR1-RR2: redundant Route Reflectors and PCE nodes.
+- CE1-CE9 and C1-C2: customers and test endpoints.
+- AUTO1: Ubuntu automation workstation.
 
-Su underlay usa IS-IS Level 2 dual-stack y SR-MPLS. La separación entre
-underlay, RR/iBGP y servicios permite practicar fallos sin mezclar causas.
-Consulte el [diagrama y direccionamiento del Master](../profiles/master/README.md).
+Its underlay uses dual-stack IS-IS Level 2 and SR-MPLS. Separating the
+underlay, RR/iBGP, and services makes it possible to practice failures without
+mixing root causes. See the
+[Master diagram and addressing guide](../profiles/master/README.md).
 
 ### 4.2 Lab 2 — Inter-AS
 
-El Lab 2 contiene 23 nodos y 35 enlaces distribuidos así:
+Lab 2 contains 23 nodes and 35 links:
 
-- AS500: IS-IS dual-stack, RR500 y cuatro P/ASBR más cuatro PE.
-- AS65100: OSPFv2/OSPFv3, RR65100, dos P/ASBR y dos PE.
-- AS65200: OSPFv2/OSPFv3, RR65200, dos P/ASBR y dos PE.
-- Cinco enlaces externos permiten practicar política y diversidad física.
-- Tres CE permiten validar servicios extremo a extremo.
+- AS500: dual-stack IS-IS, RR500, four P/ASBR nodes, and four PEs.
+- AS65100: OSPFv2/OSPFv3, RR65100, two P/ASBR nodes, and two PEs.
+- AS65200: OSPFv2/OSPFv3, RR65200, two P/ASBR nodes, and two PEs.
+- Five external links provide routing-policy and physical-diversity exercises.
+- Three CEs support end-to-end service validation.
 
-La topología y las redes exactas están en:
+The exact topology and networks are documented in:
 
-- [Operación Inter-AS](../profiles/inter-as/README.md)
-- [Direccionamiento Inter-AS](../profiles/inter-as/ADDRESSING.md)
-- [Diseño y opciones](../profiles/inter-as/DESIGN.md)
+- [Inter-AS operations](../profiles/inter-as/README.md)
+- [Inter-AS addressing](../profiles/inter-as/ADDRESSING.md)
+- [Design and options](../profiles/inter-as/DESIGN.md)
 
-## 5. Direccionamiento
+## 5. Addressing model
 
-Cada perfil tiene una red de gestión independiente y direccionamiento de datos
-propio. No se deben reutilizar direcciones de gestión entre perfiles activos.
+Each profile has an independent management network and data-plane addressing
+plan. Management addresses must not be reused by simultaneously active
+profiles.
 
-En `master`:
+The `master` profile uses:
 
 ```text
-Gestión:             10.201.255.0/24
-Loopbacks IPv4:      10.0.0.<id>/32
-Enlaces IPv4:        10.255.0.0/31 en adelante
-Loopbacks IPv6:      2001:db8:500:abcd::<id>/128
-Enlaces IPv6 core:   2001:db8:1000:<id-enlace>::/127
+Management:          10.201.255.0/24
+IPv4 loopbacks:      10.0.0.<id>/32
+IPv4 links:          10.255.0.0/31 onward
+IPv6 loopbacks:      2001:db8:500:abcd::<id>/128
+IPv6 core links:     2001:db8:1000:<link-id>::/127
 ```
 
-Los prefijos `/31` y `/127` representan enlaces punto a punto y evitan
-desperdicio de direcciones. Los loopbacks permanecen estables y sirven como
-router-id, endpoint BGP, Prefix-SID y destino de pruebas de convergencia.
+The `/31` and `/127` prefixes represent point-to-point links without wasting
+addresses. Loopbacks remain stable and serve as router IDs, BGP endpoints,
+Prefix-SIDs, and convergence-test destinations.
 
-## 6. Preparación del servidor
+## 6. Server readiness
 
-Antes de desplegar:
+Run these checks before deployment:
 
 ```bash
 cd /srv/netlab/labs/ccie-sp-master
 docker ps --format '{{.Names}}' | grep '^clab-ccie-sp-' || \
-  echo "No hay labs activos"
+  echo "No active labs"
 free -h
 uptime
 df -h /srv/netlab
 ./labctl status
 ```
 
-No despliegue si existe otro `clab-ccie-sp-*`, hay swap activa, la memoria
-disponible está por debajo del gate del perfil o el host mantiene una carga
-anormal. El gate recomendado para Inter-AS es un mínimo de 12 GiB disponibles.
+Do not deploy when another `clab-ccie-sp-*` lab exists, swap is in use,
+available memory is below the profile gate, or host load remains abnormal.
+The recommended Inter-AS gate is at least 12 GiB of available RAM.
 
-## 7. Generación reproducible
+## 7. Reproducible generation
 
 ### Master
 
@@ -162,7 +164,7 @@ python3 tools/build_inter_as.py
 python3 tools/render_inter_as.py
 ```
 
-Después de generar:
+Inspect all generated changes:
 
 ```bash
 git status --short
@@ -170,51 +172,51 @@ git diff --check
 git diff -- inventory profiles topology configs docs
 ```
 
-Un cambio inesperado en numerosos archivos suele indicar que se modificó una
-regla global. Revise el diff antes de aplicar configuraciones.
+An unexpected change across many files usually indicates a modified global
+rule. Review the diff before applying any configuration.
 
-## 8. Ciclo de vida seguro
+## 8. Safe lifecycle
 
-### Consultar el estado
+### Check active profiles
 
 ```bash
 ./labctl status
 ```
 
-### Desplegar un perfil
+### Deploy one profile
 
 ```bash
 ./labctl deploy master
-# o, con el Master destruido:
+# or, after destroying Master:
 ./labctl deploy inter-as
 ```
 
-`labctl` rechaza el despliegue cuando detecta otro perfil activo.
+`labctl` rejects deployment when another profile is active.
 
-### Inspeccionar
+### Inspect
 
 ```bash
 ./labctl inspect master
 ./labctl inspect inter-as
 ```
 
-### Destruir
+### Destroy
 
 ```bash
 ./labctl destroy master
-# o:
+# or:
 ./labctl destroy inter-as
 ```
 
-Destruir un lab elimina sus contenedores y enlaces efímeros. Las fuentes,
-configuraciones generadas y documentación permanecen en el repositorio.
+Destroying a lab removes its ephemeral containers and links. Source files,
+generated configurations, and documentation remain in the repository.
 
-## 9. Aplicación de configuraciones por fases
+## 9. Phase-based configuration
 
-Nunca aplique todo de una vez. Primero use uno o dos nodos canario, valide y
-después amplíe la misma fase.
+Never apply every phase at once. Start with one or two canary nodes, validate
+them, and only then expand the same phase.
 
-Ejemplo para Inter-AS:
+Inter-AS example:
 
 ```bash
 python3 tools/apply_phase.py 00-base \
@@ -227,39 +229,39 @@ python3 tools/apply_phase.py 20-bgp \
   --profile inter-as --nodes P3,RR500
 ```
 
-Orden operativo:
+Operational order:
 
-1. `00-base`: hostname, loopbacks, interfaces y direccionamiento.
-2. IGP: IS-IS u OSPF según el dominio.
-3. Transporte: SR-MPLS, labels y reachability de loopbacks.
-4. iBGP/RR: familias requeridas y redundancia.
-5. eBGP: sesiones externas y políticas explícitas.
-6. Servicios: L3VPN, L2VPN/EVPN, multicast o Inter-AS.
-7. Seguridad y assurance: AAA, RPKI, telemetría y pruebas.
-8. Fallos: convergencia, rollback y recuperación.
+1. `00-base`: hostname, loopbacks, interfaces, and addressing.
+2. IGP: IS-IS or OSPF according to the domain.
+3. Transport: SR-MPLS, labels, and loopback reachability.
+4. iBGP/RR: required address families and redundancy.
+5. eBGP: external sessions and explicit routing policies.
+6. Services: L3VPN, L2VPN/EVPN, multicast, or Inter-AS.
+7. Security and assurance: AAA, RPKI, telemetry, and tests.
+8. Failure drills: convergence, rollback, and recovery.
 
-Esta prioridad evita diagnosticar BGP cuando el problema real está en una
-interfaz, el IGP o la reachability del next-hop.
+This order prevents troubleshooting BGP when the actual problem is an
+interface, IGP adjacency, label, or next-hop reachability failure.
 
-## 10. Validación
+## 10. Validation
 
-### Estado de nodos
+### Node management and CLI
 
 ```bash
 python3 tools/validate_nodes.py \
   --inventory profiles/inter-as/nodes.csv --workers 4
 ```
 
-### Enlaces directamente conectados
+### Directly connected links
 
 ```bash
 python3 tools/validate_links.py \
   --profile inter-as --family both --workers 2
 ```
 
-### Verificaciones de control plane
+### Control-plane checks
 
-En IOS XR:
+Useful IOS XR commands:
 
 ```text
 show interfaces brief
@@ -274,117 +276,118 @@ show bgp vpnv6 unicast summary
 show mpls forwarding
 ```
 
-La salida esperada depende del perfil y la fase. Compare siempre contra el
-inventario, no contra un número memorizado de otra topología.
+Expected output depends on the profile and phase. Always compare results with
+the inventory rather than a memorized count from another topology.
 
-La línea base Inter-AS actualmente validada es:
+The current validated Inter-AS baseline is:
 
-- 23/23 nodos.
-- 70/70 pruebas direccionales IPv4/IPv6.
-- Conteos IS-IS, OSPFv2 y OSPFv3 acordes con el inventario.
-- iBGP RR 6/6, 4/4 y 4/4 por familia VPN.
-- eBGP 10/10 extremos IPv4 y 10/10 IPv6.
+- 23/23 running nodes.
+- 70/70 directional IPv4/IPv6 tests.
+- IS-IS, OSPFv2, and OSPFv3 counts matching the inventory.
+- RR-based iBGP at 6/6, 4/4, and 4/4 per VPN address family.
+- eBGP at 10/10 IPv4 and 10/10 IPv6 endpoints.
 
-## 11. Práctica Inter-AS
+## 11. Inter-AS practice workflow
 
-Conserve un snapshot lógico conocido antes de cada opción:
+Preserve a known-good logical baseline before testing each option:
 
-1. Valide interfaces, loopbacks, IGP e iBGP.
-2. Configure eBGP IPv4/IPv6 y políticas de prefijos/comunidades.
-3. Practique Option A y documente VRF, RD, RT y rutas PE-CE.
-4. Retire Option A o restaure la base.
-5. Practique Option B con VPNv4/VPNv6 entre ASBR.
-6. Restaure la base.
-7. Practique Option C con labeled-unicast y MP-BGP multihop.
-8. Introduzca fallos de enlace, RR y ASBR individualmente.
-9. Registre estado anterior, hipótesis, comandos y resultado.
+1. Validate interfaces, loopbacks, IGP, and iBGP.
+2. Configure IPv4/IPv6 eBGP and prefix/community policies.
+3. Practice Option A and document VRFs, RDs, RTs, and PE-CE routes.
+4. Remove Option A or restore the baseline.
+5. Practice Option B with VPNv4/VPNv6 between ASBRs.
+6. Restore the baseline.
+7. Practice Option C with labeled unicast and multihop MP-BGP.
+8. Introduce link, RR, and ASBR failures individually.
+9. Record previous state, hypothesis, commands, and result.
 
-No mezcle Options A, B y C durante la primera validación. El objetivo es
-entender qué información intercambia cada modelo y dónde vive el control plane.
+Do not mix Options A, B, and C during initial validation. The objective is to
+understand which information each model exchanges and where its control plane
+resides.
 
-## 12. AUTO1 y sincronización
+## 12. AUTO1 and synchronization
 
-AUTO1 ejecuta Ansible, Python, pyATS/Genie, Netmiko, Nornir, Scrapli, NETCONF y
-gNMI. El flujo recomendado es:
+AUTO1 runs Ansible, Python, pyATS/Genie, Netmiko, Nornir, Scrapli, NETCONF,
+and gNMI. The recommended workflow is:
 
-1. Sincronizar o montar el repositorio en AUTO1.
-2. Cambiar inventario, variables o plantillas.
-3. Renderizar.
-4. Revisar el diff.
-5. Ejecutar check-mode o pre-check.
-6. Aplicar a canarios.
-7. Ejecutar post-check.
-8. Aplicar al resto del alcance.
-9. Confirmar solamente fuentes reproducibles en Git.
+1. Synchronize or mount the repository in AUTO1.
+2. Modify inventory, variables, or templates.
+3. Render candidates.
+4. Inspect the diff.
+5. Run check mode or a pre-check.
+6. Apply to canaries.
+7. Run the post-check.
+8. Expand to the remaining scope.
+9. Commit only reproducible source files to Git.
 
-La explicación detallada está en
+The detailed process is documented in
 [AUTO1 Source of Truth](AUTO1-SOURCE-OF-TRUTH.md).
 
-## 13. Troubleshooting y recuperación
+## 13. Troubleshooting and recovery
 
-Diagnostique de abajo hacia arriba:
+Troubleshoot from the lowest layer upward:
 
 ```text
-contenedor → interfaz → direccionamiento → IGP → labels/next-hop
-→ iBGP/RR → eBGP/política → VPN/servicio
+container → interface → addressing → IGP → labels/next hop
+→ iBGP/RR → eBGP/policy → VPN/service
 ```
 
-Errores ya documentados:
+Documented failure modes include:
 
-- Lab ya desplegado con el mismo nombre.
-- Enlace añadido que obliga a recrear un nodo XRd/IOL.
-- Interfaces IOL en `administratively down`.
-- Diálogo inicial o NVRAM de IOL.
-- Limitaciones BFD de XRd Control Plane.
-- Colisión de Prefix-SID IPv4/IPv6.
-- OSPFv2/OSPFv3 aplicado a una familia incorrecta.
-- Política RPL ausente que bloquea BGP.
-- Sesión BGP sin la address-family activada.
-- Falsos negativos en validadores IPv6.
+- A lab already deployed under the same name.
+- An added link that requires XRd/IOL node recreation.
+- IOL interfaces left `administratively down`.
+- IOL initial dialog or NVRAM state.
+- XRd Control Plane BFD limitations.
+- IPv4/IPv6 Prefix-SID collision.
+- OSPFv2/OSPFv3 applied to the wrong address family.
+- A missing RPL policy that blocks BGP.
+- BGP neighbor without its address family activated.
+- False negatives in IPv6 parsers.
 
-Consulte:
+See:
 
-- [Troubleshooting general](TROUBLESHOOTING.md)
-- [Troubleshooting Master](../profiles/master/TROUBLESHOOTING.md)
-- [Troubleshooting Inter-AS](../profiles/inter-as/TROUBLESHOOTING.md)
+- [General troubleshooting](TROUBLESHOOTING.md)
+- [Master troubleshooting](../profiles/master/TROUBLESHOOTING.md)
+- [Inter-AS troubleshooting](../profiles/inter-as/TROUBLESHOOTING.md)
 
-## 14. Flujo Git profesional
+## 14. Professional Git workflow
 
-Desde AUTO1 o el servidor:
+From AUTO1 or the server:
 
 ```bash
 git status --short --branch
 git pull --ff-only
-git switch -c agent/nombre-del-cambio
+git switch -c agent/change-name
 ```
 
-Después de modificar y validar:
+After modifying and validating:
 
 ```bash
 git diff --check
 git status --short
-git add <archivos-del-cambio>
-git commit -m "Descripción breve y concreta"
-git push -u origin agent/nombre-del-cambio
+git add <files-in-scope>
+git commit -m "Brief concrete description"
+git push -u origin agent/change-name
 ```
 
-No incluya imágenes Cisco, claves privadas, contraseñas, tokens, backups de
-configuración con secretos ni artefactos pesados. Revise
-[`SECURITY.md`](../SECURITY.md) y `.gitignore` antes de publicar.
+Do not commit Cisco images, private keys, passwords, tokens, configuration
+backups containing secrets, or heavy artifacts. Review
+[`SECURITY.md`](../SECURITY.md) and `.gitignore` before publishing.
 
-## 15. Criterio de finalización
+## 15. Completion criteria
 
-Una práctica se considera completa cuando:
+An exercise is complete when:
 
-- El perfil correcto es el único activo.
-- El host mantiene memoria, CPU y swap dentro del gate.
-- La fuente de verdad reproduce los archivos generados.
-- Enlaces, IGP y BGP cumplen el inventario.
-- El servicio funciona de extremo a extremo.
-- El fallo y el rollback fueron probados.
-- La documentación refleja el estado real.
-- Git no contiene secretos ni binarios propietarios.
+- The intended profile is the only active profile.
+- Host memory, CPU, and swap remain within the gate.
+- The source of truth reproduces every generated artifact.
+- Links, IGP, and BGP match the inventory.
+- The service works end to end.
+- Failure and rollback have been tested.
+- Documentation reflects the actual state.
+- Git contains no secrets or proprietary binaries.
 
-Las referencias técnicas oficiales de cada perfil están en
-[Master REFERENCES](../profiles/master/REFERENCES.md) e
+Official technical references are listed in
+[Master REFERENCES](../profiles/master/REFERENCES.md) and
 [Inter-AS REFERENCES](../profiles/inter-as/REFERENCES.md).

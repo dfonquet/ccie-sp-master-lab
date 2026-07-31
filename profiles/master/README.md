@@ -1,79 +1,77 @@
 # Lab 1 — CCIE SP Master ISP
 
-El perfil `master` es el laboratorio principal de servicios de un ISP. Está
-pensado para practicar el blueprint de CCIE Service Provider y extenderlo con
-operación realista: redundancia, automatización, AAA, RPKI, observabilidad y
-pruebas de fallo.
+The `master` profile is the primary ISP services lab. It is designed for the
+CCIE Service Provider blueprint and extends it with realistic operations:
+redundancy, automation, AAA, RPKI, observability, and failure testing.
 
-![Topología del Lab 1](../../docs/topology.svg)
+![Lab 1 topology](../../docs/topology.svg)
 
-## Resumen
+## Summary
 
-| Elemento | Implementación |
+| Item | Implementation |
 |---|---|
-| Escala | 30 nodos y 47 enlaces |
-| Core | P1–P8, dos planos longitudinales, rungs y diagonales |
-| Edge | PE1–PE8 con doble conexión al core |
-| Control plane | RR1/RR2 como RR y PCE redundantes |
-| Clientes | CE1–CE9, C1/C2 |
-| Automatización | AUTO1 |
-| IGP | IS-IS Level 2 dual-stack |
-| Transporte | SR-MPLS, SR-TE y base para TI-LFA |
-| Servicios | L3VPN, L2VPN/EVPN, multicast y PE-CE |
+| Scale | 30 nodes and 47 links |
+| Core | P1-P8, two longitudinal planes, rungs, and diagonals |
+| Edge | PE1-PE8, each dual-homed to the core |
+| Control plane | RR1/RR2 as redundant RR and PCE nodes |
+| Customers | CE1-CE9, C1/C2 |
+| Automation | AUTO1 |
+| IGP | Dual-stack IS-IS Level 2 |
+| Transport | SR-MPLS, SR-TE, and a TI-LFA foundation |
+| Services | L3VPN, L2VPN/EVPN, multicast, and PE-CE routing |
 
-La descripción completa de roles y grupos de enlaces está en
-[`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md). El inventario
-`inventory/nodes.csv` y `inventory/links.csv` es la fuente de verdad.
+The complete role and link-group description is in
+[`docs/ARCHITECTURE.md`](../../docs/ARCHITECTURE.md). The
+`inventory/nodes.csv` and `inventory/links.csv` files are authoritative.
 
-## Direccionamiento e identificadores
+## Addressing and identifiers
 
-| Uso | Plan |
+| Use | Plan |
 |---|---|
-| Gestión | `10.201.255.0/24` |
-| Loopback provider IPv4 | `10.0.0.<ID>/32` |
-| Loopback provider IPv6 | `2001:db8:500:abcd::<ID>/128` |
-| Loopback cliente IPv4 | `10.100.0.<ID>/32` |
-| Loopback cliente IPv6 | `2001:db8:100::<ID>/128` |
-| P2P provider IPv4 | `/31` desde `10.255.0.0/31` |
-| P2P provider IPv6 | `2001:db8:1000:<link-id>::/127` |
-| SRGB | `16000–23999` |
+| Management | `10.201.255.0/24` |
+| Provider IPv4 loopback | `10.0.0.<ID>/32` |
+| Provider IPv6 loopback | `2001:db8:500:abcd::<ID>/128` |
+| Customer IPv4 loopback | `10.100.0.<ID>/32` |
+| Customer IPv6 loopback | `2001:db8:100::<ID>/128` |
+| Provider IPv4 P2P | `/31` starting at `10.255.0.0/31` |
+| Provider IPv6 P2P | `2001:db8:1000:<link-id>::/127` |
+| SRGB | `16000-23999` |
 
-Los IDs 1–18 identifican P, PE y RR. El Prefix-SID IPv4 usa el ID; el
-Prefix-SID IPv6 usa `600 + ID`, evitando la colisión observada en XRd.
-Consulta la tabla completa en
-[`docs/ADDRESSING.md`](../../docs/ADDRESSING.md).
+IDs 1-18 identify P, PE, and RR nodes. The IPv4 Prefix-SID uses the ID; the
+IPv6 Prefix-SID uses `600 + ID`, avoiding the collision observed on XRd. See
+the complete table in [`docs/ADDRESSING.md`](../../docs/ADDRESSING.md).
 
-## Cómo funciona
+## How it works
 
-1. IS-IS Level 2 descubre la topología dual-stack y anuncia loopbacks.
-2. SR-MPLS asigna un Node-SID estable a cada loopback provider.
-3. RR1/RR2 eliminan la necesidad de un full mesh MP-BGP entre PEs.
-4. Cada PE tiene dos caminos hacia el core; las métricas distinguen camino
-   primario, rung y diagonal.
-5. Los CE multihomed permiten practicar SoO, sham-links, BGP multipath,
-   EVPN multihoming y fallos de acceso.
-6. AUTO1 renderiza, aplica, verifica y respalda cambios de forma repetible.
+1. IS-IS Level 2 discovers the dual-stack topology and advertises loopbacks.
+2. SR-MPLS assigns a stable Node-SID to every provider loopback.
+3. RR1 and RR2 remove the requirement for a full-mesh MP-BGP topology.
+4. Every PE has two paths into the core; metrics distinguish primary, rung,
+   and diagonal paths.
+5. Multihomed CEs support SoO, sham-link, BGP multipath, EVPN multihoming, and
+   access-failure exercises.
+6. AUTO1 renders, applies, verifies, and backs up changes reproducibly.
 
-## Prioridad de configuración
+## Configuration priority
 
-No se aplican servicios antes de estabilizar el transporte:
+Services are not applied until transport is stable:
 
-1. `00-base`: hostname, loopbacks y enlaces.
-2. `10-isis`: IS-IS dual-stack.
-3. `15-provider-standard`: estándar IPv6, LFA y SR.
-4. `20-sr-mpls`: SRGB y Prefix-SIDs.
-5. MP-BGP/RR y políticas.
-6. L3VPN, L2VPN/EVPN, multicast y servicios de gestión.
-7. Fallos controlados y validación de convergencia.
+1. `00-base`: hostnames, loopbacks, and links.
+2. `10-isis`: dual-stack IS-IS.
+3. `15-provider-standard`: IPv6 standard, LFA, and SR foundation.
+4. `20-sr-mpls`: SRGB and Prefix-SIDs.
+5. MP-BGP/RR and routing policies.
+6. L3VPN, L2VPN/EVPN, multicast, and management services.
+7. Controlled failures and convergence validation.
 
-Use uno o dos nodos canario antes de expandir una fase:
+Use one or two canary nodes before expanding a phase:
 
 ```bash
 python3 tools/apply_phase.py 10-isis --nodes P1,P3 --workers 1
 python3 tools/validate_links.py --family both --workers 2
 ```
 
-## Operación segura
+## Safe operation
 
 ```bash
 ./labctl status
@@ -82,25 +80,25 @@ python3 tools/validate_links.py --family both --workers 2
 ./labctl destroy master
 ```
 
-Sólo un perfil pesado puede estar activo. No use `--cleanup` salvo que quiera
-eliminar también el estado persistente de los routers.
+Only one heavy profile may be active. Do not use `--cleanup` unless persistent
+router state is intentionally being removed.
 
-## Validación mínima
+## Minimum validation
 
-- 30/30 contenedores ejecutándose y sin OOM.
-- Todos los enlaces directos pasan IPv4 e IPv6.
-- Adyacencias IS-IS iguales al inventario.
-- Loopbacks provider alcanzables dual-stack.
-- Node-SIDs únicos e instalados.
-- PEs con sesiones VPNv4/VPNv6 redundantes hacia RR1/RR2.
-- Cero swap y al menos 12 GiB disponibles en la VM.
+- 30/30 containers running with no OOM events.
+- Every directly connected link passes IPv4 and IPv6 tests.
+- IS-IS adjacency counts match the inventory.
+- All provider loopbacks are reachable over both families.
+- Node-SIDs are unique and installed.
+- PEs have redundant VPNv4/VPNv6 sessions to RR1 and RR2.
+- No swap is used and at least 12 GiB remains available in the VM.
 
-El runbook detallado está en
+The detailed runbook is in
 [`docs/VALIDATION.md`](../../docs/VALIDATION.md).
 
-## Troubleshooting y referencias
+## Troubleshooting and references
 
-- [Errores conocidos y soluciones](TROUBLESHOOTING.md)
-- [Referencias Cisco y RFC](REFERENCES.md)
-- [Operación general](../../OPERATIONS.md)
-- [Automatización desde AUTO1](../../docs/AUTO1-SOURCE-OF-TRUTH.md)
+- [Known errors and solutions](TROUBLESHOOTING.md)
+- [Cisco and RFC references](REFERENCES.md)
+- [General operations](../../OPERATIONS.md)
+- [Automation from AUTO1](../../docs/AUTO1-SOURCE-OF-TRUTH.md)

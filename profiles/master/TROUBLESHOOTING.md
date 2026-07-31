@@ -1,42 +1,42 @@
 # Troubleshooting — Lab 1 Master
 
-## Prefix-SID duplicado
+## Duplicate Prefix-SID
 
-**Síntoma:** `Nodal sid is already in use`.
+**Symptom:** `Nodal sid is already in use`.
 
-**Causa:** XRd 24.2.11 rechazó reutilizar el mismo índice para IPv4 e IPv6.
+**Cause:** XRd 24.2.11 rejected reuse of the same index for IPv4 and IPv6.
 
-**Solución:** IDs 1–18 para IPv4 y 601–618 para IPv6. Verifique con:
+**Solution:** use IDs 1-18 for IPv4 and 601-618 for IPv6. Verify with:
 
 ```text
 show isis segment-routing label table
 show mpls forwarding prefix 10.0.0.18/32
 ```
 
-## IS-IS permanece en Init con BFD
+## IS-IS remains in Init with BFD
 
-**Causa:** XRd Control Plane acepta el CLI de BFD, pero no crea sesiones BFD
-en estos enlaces virtuales.
+**Cause:** XRd Control Plane accepts the BFD CLI but does not create BFD
+sessions on these virtual links.
 
-**Solución:** retire `bfd fast-detect` del baseline XRd y conserve
-LFA/per-prefix FRR. Practique BFD en una plataforma cuyo dataplane lo soporte.
+**Solution:** remove `bfd fast-detect` from the XRd baseline and retain
+LFA/per-prefix FRR. Practice BFD on a platform whose data plane supports it.
 
-## Timeout del banner SSH
+## SSH banner timeout
 
-**Causa:** demasiadas sesiones simultáneas contra el mismo XRd.
+**Cause:** too many simultaneous sessions to the same XRd node.
 
-**Solución:** reutilizar una conexión por router para IPv4/IPv6 y mantener
-`--workers 1` o `2` durante arranque y convergencia.
+**Solution:** reuse one connection per router for IPv4 and IPv6, and keep
+`--workers` at `1` or `2` during startup and convergence.
 
-## Containerlab indica que el lab ya existe
+## Containerlab reports that the lab already exists
 
-No despliegue otro nodo con el mismo nombre de lab mediante `--node-filter`.
-Use `labctl`, que impide dos perfiles simultáneos. Si sólo AUTO1 falta, siga el
-procedimiento controlado de `OPERATIONS.md`.
+Do not deploy another node with the same lab name through `--node-filter`.
+Use `labctl`, which prevents simultaneous profiles. If only AUTO1 is missing,
+follow the controlled procedure in `OPERATIONS.md`.
 
-## AUTO1 no encuentra Ansible o colecciones
+## AUTO1 cannot find Ansible or its collections
 
-Compruebe:
+Check:
 
 ```bash
 which ansible
@@ -44,12 +44,12 @@ ansible-galaxy collection list
 echo "$ANSIBLE_COLLECTIONS_PATH"
 ```
 
-La imagen instala las colecciones compartidas bajo
+The image installs shared collections under
 `/usr/share/ansible/collections`.
 
-## Un enlace aparece Up/Up pero no pasa tráfico
+## A link is Up/Up but does not pass traffic
 
-Compruebe ambos namespaces y luego IOS XR:
+Check both namespaces and then IOS XR:
 
 ```bash
 docker exec clab-ccie-sp-master-P1 ip -br link
@@ -61,9 +61,9 @@ show ipv6 interface brief
 show interfaces accounting
 ```
 
-Un veth agregado en caliente puede ser visible en Linux pero no quedar unido
-al dataplane XRd. Use `containerlab restart --node <nodo>`, nunca
-`docker stop/start`, para conservar y restaurar enlaces.
+A hot-added veth can be visible in Linux without being attached to the XRd
+data plane. Use `containerlab restart --node <node>`, never
+`docker stop/start`, to preserve and restore links.
 
-Los hallazgos comunes adicionales están en
+Additional common findings are recorded in
 [`docs/TROUBLESHOOTING.md`](../../docs/TROUBLESHOOTING.md).
