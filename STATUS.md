@@ -85,7 +85,8 @@ Date: 2026-07-31
 - Three-node P1-P2-PE1 Source of Truth and generated topology are available.
 - Management network `10.203.255.0/24` is isolated from Master and Inter-AS.
 - XRd image ID, KVM nesting, host resources and Docker storage passed readiness.
-- The first live gate is a P1-only parser, commit, rollback and restart canary.
+- The P1-only parser, commit, rollback and restart canary passed. The next gate
+  is the three-node IPv6/IS-IS control plane.
 - No End, End.X, End.DT4, End.DT6, SRv6-TE, uSID or TI-LFA support is claimed.
 
 ## Inter-AS profile validated baseline

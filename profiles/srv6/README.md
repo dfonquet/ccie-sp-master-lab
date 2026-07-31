@@ -4,6 +4,8 @@ This profile determines what `ios-xr/xrd-control-plane:24.2.11` actually
 supports before a full SRv6 lab is designed. It is not evidence that the image
 provides SRv6 packet forwarding merely because commands parse or commit.
 
+Stage A results are recorded in [FINDINGS.md](FINDINGS.md).
+
 ## Scope
 
 - P1, P2 and PE1 running IOS XRd Control Plane.
