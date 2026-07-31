@@ -1,6 +1,6 @@
 # Deployment Status
 
-Date: 2026-07-30
+Date: 2026-07-31
 
 ## Master profile validated baseline
 
@@ -76,8 +76,17 @@ Date: 2026-07-30
 - Implement and validate AAA with local fallback and the RPKI lab services.
 - Implement the service phases for Inter-AS Options A, B and C independently,
   preserving the validated underlay and BGP baseline between exercises.
-- Develop the runnable SRv6 profile from its approved design. Only one heavy
-  profile may run at a time.
+- Execute the generated one-node SRv6 parser/commit canary, then classify XRd
+  support before the three-node control-plane profile. Only one heavy profile
+  may run at a time.
+
+## SRv6 capability readiness
+
+- Three-node P1-P2-PE1 Source of Truth and generated topology are available.
+- Management network `10.203.255.0/24` is isolated from Master and Inter-AS.
+- XRd image ID, KVM nesting, host resources and Docker storage passed readiness.
+- The first live gate is a P1-only parser, commit, rollback and restart canary.
+- No End, End.X, End.DT4, End.DT6, SRv6-TE, uSID or TI-LFA support is claimed.
 
 ## Inter-AS profile validated baseline
 

@@ -83,11 +83,19 @@ def validate(row: dict[str, str]) -> dict[str, str]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--inventory", type=Path, default=DEFAULT_INVENTORY)
+    parser.add_argument("--nodes", help="Comma-separated node names. Default: all.")
     parser.add_argument("--workers", type=int, default=8)
     args = parser.parse_args()
 
     with args.inventory.open(newline="", encoding="utf-8") as file:
         rows = list(csv.DictReader(file))
+    if args.nodes:
+        selected = {name.strip() for name in args.nodes.split(",") if name.strip()}
+        known = {row["name"] for row in rows}
+        unknown = selected - known
+        if unknown:
+            raise SystemExit(f"Unknown nodes: {', '.join(sorted(unknown))}")
+        rows = [row for row in rows if row["name"] in selected]
 
     results: list[dict[str, str]] = []
     with ThreadPoolExecutor(max_workers=args.workers) as executor:

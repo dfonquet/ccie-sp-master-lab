@@ -12,7 +12,7 @@ declare -A TOPOLOGIES=(
 )
 
 usage() {
-  echo "Usage: ./labctl {status|deploy|destroy|inspect} {master|inter-as|srv6}"
+  echo "Usage: ./labctl {status|canary|deploy|destroy|inspect} {master|inter-as|srv6}"
 }
 
 active_labs() {
@@ -38,6 +38,18 @@ TOPOLOGY="$ROOT/${TOPOLOGIES[$PROFILE]}"
 }
 
 case "$ACTION" in
+  canary)
+    [[ "$PROFILE" == "srv6" ]] || {
+      echo "The canary action is available only for the srv6 profile."
+      exit 5
+    }
+    mapfile -t active < <(active_labs)
+    if ((${#active[@]})); then
+      echo "Refusing canary: active lab node(s): ${active[*]}"
+      exit 4
+    fi
+    sudo containerlab deploy -t "$TOPOLOGY" --node-filter P1
+    ;;
   deploy)
     mapfile -t active < <(active_labs)
     if ((${#active[@]})); then
