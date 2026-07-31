@@ -11,6 +11,8 @@ from pathlib import Path
 
 from netmiko import ConnectHandler
 
+from credentials import connection_credentials
+
 
 ROOT = Path(__file__).resolve().parents[1]
 DEFAULT_INVENTORY = ROOT / "inventory" / "nodes.csv"
@@ -33,22 +35,19 @@ def validate(row: dict[str, str]) -> dict[str, str]:
     if kind == "cisco_xrd":
         params = {
             "device_type": "cisco_xr",
-            "username": "clab",
-            "password": "clab@123",
+            **connection_credentials(kind),
             "command": "show version | include Version",
         }
     elif kind == "cisco_iol":
         params = {
             "device_type": "cisco_ios",
-            "username": "admin",
-            "password": "admin",
+            **connection_credentials(kind),
             "command": "show version | include Cisco IOS Software|Version",
         }
     else:
         params = {
             "device_type": "linux",
-            "username": "student",
-            "password": "ccie@123",
+            **connection_credentials(kind),
             "command": "python3 --version && ansible --version | head -1",
         }
 

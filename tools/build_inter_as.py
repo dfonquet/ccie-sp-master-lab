@@ -307,7 +307,8 @@ def write_topology() -> None:
                   f"      mgmt-ipv4: {node.mgmt}", f"      startup-delay: {(index // 2) * 15}"]
     lines += [
         "    AUTO1:", "      kind: linux", f"      image: {AUTO_IMAGE}",
-        "      mgmt-ipv4: 10.202.255.250", "      binds:",
+        "      mgmt-ipv4: 10.202.255.250", "      env:",
+        "        AUTO1_PASSWORD: ${CCIE_AUTO_PASSWORD}", "      binds:",
         "        - ..:/workspace", "", "  links:",
     ]
     for link in LINKS:

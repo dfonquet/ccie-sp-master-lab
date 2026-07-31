@@ -132,7 +132,18 @@ Prefix-SIDs, and convergence-test destinations.
 
 ## 6. Server readiness
 
-Run these checks before deployment:
+Create and load the local credential file before deployment:
+
+```bash
+cp .env.example .env
+# Replace every placeholder in .env, then:
+set -a
+source .env
+set +a
+```
+
+The real `.env` file is ignored by Git. Never place production credentials or
+provider tokens in it. Then run the host checks:
 
 ```bash
 cd /srv/netlab/labs/ccie-sp-master

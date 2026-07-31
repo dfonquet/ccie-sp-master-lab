@@ -11,6 +11,8 @@ from pathlib import Path
 
 from netmiko import ConnectHandler
 
+from credentials import connection_credentials
+
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -38,13 +40,11 @@ def connect_params(node: dict[str, str]) -> dict[str, object]:
     if node["kind"] == "cisco_xrd":
         return {
             "device_type": "cisco_xr",
-            "username": "clab",
-            "password": "clab@123",
+            **connection_credentials(node["kind"]),
         }
     return {
         "device_type": "cisco_ios",
-        "username": "admin",
-        "password": "admin",
+        **connection_credentials(node["kind"]),
     }
 
 

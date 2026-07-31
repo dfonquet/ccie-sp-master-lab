@@ -9,7 +9,19 @@ Access from Windows:
 ssh student@10.201.255.150
 ```
 
-Password: `ccie@123`
+Credentials are never stored in the repository. Before deploying, copy the
+root `.env.example` file to `.env`, replace every placeholder, and load the
+variables into the current shell:
+
+```bash
+set -a
+source .env
+set +a
+```
+
+`CCIE_AUTO_PASSWORD` is passed to the container at runtime. The same file
+provides the XRd and IOL credentials consumed by Ansible and the Python tools.
+The `.env` file is ignored by Git and must never be committed.
 
 First checks:
 

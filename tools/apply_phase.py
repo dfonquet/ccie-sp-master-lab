@@ -10,6 +10,8 @@ from pathlib import Path
 
 from netmiko import ConnectHandler
 
+from credentials import connection_credentials
+
 
 ROOT = Path(__file__).resolve().parents[1]
 def compile_interactive_commands(text: str, *, is_xrd: bool) -> list[str]:
@@ -99,13 +101,11 @@ def connect_params(row: dict[str, str]) -> dict[str, object]:
     if row["kind"] == "cisco_xrd":
         return {
             "device_type": "cisco_xr",
-            "username": "clab",
-            "password": "clab@123",
+            **connection_credentials(row["kind"]),
         }
     return {
         "device_type": "cisco_ios",
-        "username": "admin",
-        "password": "admin",
+        **connection_credentials(row["kind"]),
     }
 
 

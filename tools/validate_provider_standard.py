@@ -12,6 +12,8 @@ from pathlib import Path
 
 from netmiko import ConnectHandler
 
+from credentials import connection_credentials
+
 
 ROOT = Path(__file__).resolve().parents[1]
 PROVIDER_GROUPS = {
@@ -86,8 +88,7 @@ def validate_node(
         session = ConnectHandler(
             host=row["mgmt_ipv4"],
             device_type="cisco_xr",
-            username="clab",
-            password="clab@123",
+            **connection_credentials(row["kind"]),
             conn_timeout=10,
             auth_timeout=15,
             banner_timeout=25,

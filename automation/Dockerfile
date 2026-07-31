@@ -43,7 +43,6 @@ RUN python3 -m venv /opt/venv \
         -p /usr/share/ansible/collections \
         -r /tmp/requirements.yml \
     && useradd --create-home --shell /bin/bash student \
-    && echo 'student:ccie@123' | chpasswd \
     && usermod -aG sudo student \
     && printf 'student ALL=(ALL) NOPASSWD:ALL\n' >/etc/sudoers.d/student \
     && chmod 0440 /etc/sudoers.d/student \

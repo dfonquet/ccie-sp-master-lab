@@ -2,14 +2,28 @@
 
 ## Current access
 
-| Nodes | Management addresses | Username | Password |
+| Nodes | Management addresses | Username source | Password source |
 |---|---|---|---|
-| P1-P6 | `10.201.255.101-106` | `clab` | `clab@123` |
-| PE1-PE6 | `10.201.255.111-116` | `clab` | `clab@123` |
-| RR1-RR2 | `10.201.255.121-122` | `clab` | `clab@123` |
-| CE1-CE9 | `10.201.255.131-139` | `admin` | `admin` |
-| C1-C2 | `10.201.255.141-142` | `admin` | `admin` |
-| AUTO1 | `10.201.255.150` | `student` | `ccie@123` |
+| P1-P8 | `10.201.255.101-108` | `CCIE_XRD_USERNAME` | `CCIE_XRD_PASSWORD` |
+| PE1-PE8 | `10.201.255.111-118` | `CCIE_XRD_USERNAME` | `CCIE_XRD_PASSWORD` |
+| RR1-RR2 | `10.201.255.121-122` | `CCIE_XRD_USERNAME` | `CCIE_XRD_PASSWORD` |
+| CE1-CE9 | `10.201.255.131-139` | `CCIE_IOL_USERNAME` | `CCIE_IOL_PASSWORD` |
+| C1-C2 | `10.201.255.141-142` | `CCIE_IOL_USERNAME` | `CCIE_IOL_PASSWORD` |
+| AUTO1 | `10.201.255.150` | `CCIE_AUTO_USERNAME` | `CCIE_AUTO_PASSWORD` |
+
+Create the ignored runtime credential file before operating the lab:
+
+```bash
+cp .env.example .env
+# Replace every placeholder, then load it:
+set -a
+source .env
+set +a
+```
+
+These variables supply credentials to automation clients; they do not modify
+accounts on XRd or IOL. Rotate the live node credentials separately and keep
+the management networks isolated from untrusted hosts.
 
 Examples from Windows:
 
@@ -141,6 +155,7 @@ docker run -d \
   --label clab-node-longname=clab-ccie-sp-master-AUTO1 \
   --label clab-node-kind=linux \
   --label clab-owner=daniel \
+  --env AUTO1_PASSWORD="$CCIE_AUTO_PASSWORD" \
   --volume /srv/netlab/labs/ccie-sp-master/automation:/workspace \
   ccie-sp-automation:1.0
 ```

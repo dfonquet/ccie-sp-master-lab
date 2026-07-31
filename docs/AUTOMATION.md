@@ -32,7 +32,9 @@ ssh student@10.201.255.150
 cd /workspace
 ```
 
-The committed credentials are lab-only. Review `SECURITY.md` before sharing.
+Credentials are loaded from the `CCIE_*` environment variables documented in
+`.env.example`; no functional password is committed. Review `SECURITY.md`
+before sharing or deploying outside an isolated lab network.
 
 ## First exercises
 
