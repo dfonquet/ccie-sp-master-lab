@@ -79,16 +79,16 @@ NODES = [
     Node("PE3", "PE", 500, "isis", 13, "10.202.255.113"),
     Node("PE4", "PE", 500, "isis", 14, "10.202.255.114"),
     Node("RR500", "RR", 500, "isis", 50, "10.202.255.150"),
-    Node("P5", "ASBR", 65100, "ospfv3", 5, "10.202.255.105"),
-    Node("P7", "ASBR", 65100, "ospfv3", 7, "10.202.255.107"),
-    Node("PE5", "PE", 65100, "ospfv3", 15, "10.202.255.115"),
-    Node("PE7", "PE", 65100, "ospfv3", 17, "10.202.255.117"),
-    Node("RR65100", "RR", 65100, "ospfv3", 51, "10.202.255.151"),
-    Node("P6", "ASBR", 65200, "ospfv3", 6, "10.202.255.106"),
-    Node("P8", "ASBR", 65200, "ospfv3", 8, "10.202.255.108"),
-    Node("PE6", "PE", 65200, "ospfv3", 16, "10.202.255.116"),
-    Node("PE8", "PE", 65200, "ospfv3", 18, "10.202.255.118"),
-    Node("RR65200", "RR", 65200, "ospfv3", 52, "10.202.255.152"),
+    Node("P5", "ASBR", 65100, "ospf", 5, "10.202.255.105"),
+    Node("P7", "ASBR", 65100, "ospf", 7, "10.202.255.107"),
+    Node("PE5", "PE", 65100, "ospf", 15, "10.202.255.115"),
+    Node("PE7", "PE", 65100, "ospf", 17, "10.202.255.117"),
+    Node("RR65100", "RR", 65100, "ospf", 51, "10.202.255.151"),
+    Node("P6", "ASBR", 65200, "ospf", 6, "10.202.255.106"),
+    Node("P8", "ASBR", 65200, "ospf", 8, "10.202.255.108"),
+    Node("PE6", "PE", 65200, "ospf", 16, "10.202.255.116"),
+    Node("PE8", "PE", 65200, "ospf", 18, "10.202.255.118"),
+    Node("RR65200", "RR", 65200, "ospf", 52, "10.202.255.152"),
     Node("CE-A", "CE", None, "none", 1, "10.202.255.201", "cisco_iol"),
     Node("CE-B", "CE", None, "none", 2, "10.202.255.202", "cisco_iol"),
     Node("CE-C", "CE", None, "none", 3, "10.202.255.203", "cisco_iol"),
@@ -104,12 +104,12 @@ def make_links() -> list[Link]:
         ("PE1", "P1", "internal"), ("PE2", "P2", "internal"),
         ("PE3", "P3", "internal"), ("PE4", "P4", "internal"),
         ("RR500", "P3", "internal"), ("RR500", "P4", "internal"),
-        # AS65100: OSPFv3 dual-stack domain.
+        # AS65100: OSPFv2 IPv4 plus OSPFv3 IPv6 domain.
         ("P5", "P7", "internal"), ("PE5", "P5", "internal"),
         ("PE5", "P7", "internal"), ("PE7", "P5", "internal"),
         ("PE7", "P7", "internal"), ("RR65100", "P5", "internal"),
         ("RR65100", "P7", "internal"),
-        # AS65200: OSPFv3 dual-stack domain.
+        # AS65200: OSPFv2 IPv4 plus OSPFv3 IPv6 domain.
         ("P6", "P8", "internal"), ("PE6", "P6", "internal"),
         ("PE6", "P8", "internal"), ("PE8", "P6", "internal"),
         ("PE8", "P8", "internal"), ("RR65200", "P6", "internal"),
@@ -218,17 +218,17 @@ def render_igp(node: Node) -> str:
 
     process = str(node.asn)
     lines = [
-        f"router ospfv3 {process}", f" router-id {node.loopback4}",
-        " address-family ipv4 unicast", "  area 0",
-        "   interface Loopback0", "    passive", "   !",
+        f"router ospf {process}", f" router-id {node.loopback4}",
+        " area 0", "  interface Loopback0", "   passive enable", "  !",
     ]
     for _link, interface, *_ in internal_records(node):
-        lines += [f"   interface {xrd_if(interface)}", "    network point-to-point", "   !"]
-    lines += ["  !", " !", " address-family ipv6 unicast", "  area 0",
-              "   interface Loopback0", "    passive", "   !"]
+        lines += [f"  interface {xrd_if(interface)}", "   network point-to-point", "  !"]
+    lines += [" !", "!", f"router ospfv3 {process}", f" router-id {node.loopback4}",
+              " address-family ipv6 unicast", " !", " area 0",
+              "  interface Loopback0", "   passive", "  !"]
     for _link, interface, *_ in internal_records(node):
-        lines += [f"   interface {xrd_if(interface)}", "    network point-to-point", "   !"]
-    return "\n".join(lines + ["  !", " !", "!", ""])
+        lines += [f"  interface {xrd_if(interface)}", "   network point-to-point", "  !"]
+    return "\n".join(lines + [" !", "!", ""])
 
 
 def bgp_clients(asn: int) -> list[Node]:
@@ -256,6 +256,7 @@ def render_bgp(node: Node) -> str:
     else:
         rr = rr_for(node.asn or 0)
         lines += [
+            " address-family ipv4 unicast", " !", " address-family ipv6 unicast", " !",
             " address-family vpnv4 unicast", " !", " address-family vpnv6 unicast", " !",
             f" neighbor {rr.loopback4}", f"  remote-as {node.asn}",
             "  update-source Loopback0", "  address-family vpnv4 unicast", "  !",

@@ -76,9 +76,9 @@ def render() -> str:
 <rect x="35" y="95" width="765" height="690" rx="24" class="zone" stroke="#1d4ed8"/>
 <text x="55" y="128" class="zone-title" fill="#1d4ed8">AS500 · IS-IS L2 dual-stack · RR500</text>
 <rect x="930" y="90" width="820" height="540" rx="24" class="zone" stroke="#15803d"/>
-<text x="950" y="123" class="zone-title" fill="#15803d">AS65100 · OSPFv3 IPv4/IPv6 AF · RR65100</text>
+<text x="950" y="123" class="zone-title" fill="#15803d">AS65100 · OSPFv2 IPv4 + OSPFv3 IPv6 · RR65100</text>
 <rect x="930" y="785" width="820" height="470" rx="24" class="zone" stroke="#b45309"/>
-<text x="950" y="818" class="zone-title" fill="#b45309">AS65200 · OSPFv3 IPv4/IPv6 AF · RR65200</text>
+<text x="950" y="818" class="zone-title" fill="#b45309">AS65200 · OSPFv2 IPv4 + OSPFv3 IPv6 · RR65200</text>
 {''.join(link_svg)}
 {''.join(node_svg)}
 <line x1="520" y1="1305" x2="580" y2="1305" stroke="#64748b" stroke-width="3"/>

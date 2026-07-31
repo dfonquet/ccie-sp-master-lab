@@ -35,6 +35,23 @@ def compile_interactive_commands(text: str, *, is_xrd: bool) -> list[str]:
             parsed.append((0, "\n".join(banner_lines)))
             index += 1
             continue
+        if (
+            raw_line == raw_line.lstrip(" ")
+            and stripped.lower().startswith("route-policy ")
+        ):
+            policy_lines = [stripped]
+            index += 1
+            while index < len(raw_lines):
+                policy_line = raw_lines[index].rstrip()
+                policy_lines.append(policy_line)
+                if policy_line.strip().lower() == "end-policy":
+                    break
+                index += 1
+            else:
+                raise ValueError("Unterminated route-policy block")
+            parsed.append((0, "\n".join(policy_lines)))
+            index += 1
+            continue
         if not stripped or stripped == "!" or stripped.lower() == "end":
             index += 1
             continue
@@ -42,7 +59,27 @@ def compile_interactive_commands(text: str, *, is_xrd: bool) -> list[str]:
         parsed.append((indent, stripped))
         index += 1
 
-    commands: list[str] = []
+    if is_xrd:
+        # IOS XR's interactive ``exit`` returns to global configuration mode
+        # for several nested router submodes. Re-enter the complete parent
+        # path for every command so rendered hierarchy is applied exactly.
+        commands: list[str] = []
+        parents: dict[int, str] = {}
+        for index, (indent, command) in enumerate(parsed):
+            for level in [level for level in parents if level >= indent]:
+                del parents[level]
+            if commands:
+                commands.append("root")
+            commands.extend(parents[level] for level in sorted(parents))
+            commands.append(command)
+            next_indent = parsed[index + 1][0] if index + 1 < len(parsed) else -1
+            if next_indent > indent:
+                parents[indent] = command
+        if commands:
+            commands.append("root")
+        return commands
+
+    commands = []
     current_mode_indent = -1
     for index, (indent, command) in enumerate(parsed):
         desired_parent = indent - 1
@@ -55,8 +92,6 @@ def compile_interactive_commands(text: str, *, is_xrd: bool) -> list[str]:
         if next_indent > indent:
             current_mode_indent = indent
 
-    if is_xrd and current_mode_indent >= 0:
-        commands.append("root")
     return commands
 
 
