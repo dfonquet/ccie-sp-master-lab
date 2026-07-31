@@ -96,6 +96,22 @@ def render_base(node: Node) -> str:
     return "\n".join(lines) + "\n"
 
 
+def render_canary(node: Node) -> str:
+    """Render only configuration that is valid without data-plane links."""
+    return "\n".join(
+        [
+            f"hostname {node.name}",
+            "!",
+            "interface Loopback0",
+            f" description SRV6 CANARY {node.role}",
+            f" ipv6 address {node.loopback6}/128",
+            " no shutdown",
+            "!",
+            "",
+        ]
+    )
+
+
 def render_isis(node: Node) -> str:
     lines = [
         f"router isis {ISIS_INSTANCE}",
@@ -226,6 +242,7 @@ def write_inventory() -> None:
 
 def write_configs() -> None:
     phases = {
+        "00-canary": render_canary,
         "00-base": render_base,
         "10-isis-ipv6": render_isis,
         "20-srv6-locator": render_srv6,
