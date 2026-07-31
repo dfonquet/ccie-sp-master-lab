@@ -337,6 +337,8 @@ def render_topology() -> str:
                 [
                     f"      image: {node.image}",
                     f"      mgmt-ipv4: {node.mgmt}",
+                    "      env:",
+                    "        AUTO1_PASSWORD: ${CCIE_AUTO_PASSWORD}",
                     "      binds:",
                     "        - ../automation:/workspace",
                 ]

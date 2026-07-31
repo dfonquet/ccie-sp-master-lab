@@ -104,6 +104,8 @@ topology:
       kind: linux
       image: ccie-sp-automation:1.0
       mgmt-ipv4: 10.202.255.250
+      env:
+        AUTO1_PASSWORD: ${CCIE_AUTO_PASSWORD}
       binds:
         - ..:/workspace
 

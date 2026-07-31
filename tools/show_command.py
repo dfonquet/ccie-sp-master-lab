@@ -10,6 +10,8 @@ from pathlib import Path
 
 from netmiko import ConnectHandler
 
+from credentials import connection_credentials
+
 
 ROOT = Path(__file__).resolve().parents[1]
 INVENTORY = ROOT / "inventory" / "nodes.csv"
@@ -19,14 +21,12 @@ def run(row: dict[str, str], command: str) -> tuple[str, str, str]:
     if row["kind"] == "cisco_xrd":
         params = {
             "device_type": "cisco_xr",
-            "username": "clab",
-            "password": "clab@123",
+            **connection_credentials(row["kind"]),
         }
     elif row["kind"] == "cisco_iol":
         params = {
             "device_type": "cisco_ios",
-            "username": "admin",
-            "password": "admin",
+            **connection_credentials(row["kind"]),
         }
     else:
         return row["name"], "skipped", "Linux node is not a network device"
