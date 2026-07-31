@@ -2,8 +2,10 @@
 
 ## Stage A: P1 one-node canary
 
-Assessment date: 2026-07-31  
-Image: `ios-xr/xrd-control-plane:24.2.11`  
+Assessment date: 2026-07-31
+
+Image: `ios-xr/xrd-control-plane:24.2.11`
+
 Image ID: `sha256:f160dc83ee7e6ef3c9e66254d32237c8d62052f91539da0defc38ddfcc2f36af`
 
 ### Result
