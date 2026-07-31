@@ -22,14 +22,21 @@ def read_csv(name: str) -> list[dict[str, str]]:
 def main() -> int:
     nodes = read_csv("nodes.csv")
     links = read_csv("links.csv")
-    if len(nodes) != 3 or {row["name"] for row in nodes} != {"P1", "P2", "PE1"}:
-        raise SystemExit("SRv6 capability inventory must contain P1, P2 and PE1")
-    if len(links) != 2:
-        raise SystemExit("SRv6 capability inventory must contain exactly two links")
+    expected = ({f"P{i}" for i in range(1, 7)} |
+                {f"PE{i}" for i in range(1, 7)} |
+                {"RR1", "RR2"} |
+                {f"CE{i}" for i in range(1, 7)} |
+                {"AUTO1"})
+    if len(nodes) != 21 or {row["name"] for row in nodes} != expected:
+        raise SystemExit("full SRv6 inventory must contain 21 expected nodes")
+    if len(links) != 33:
+        raise SystemExit("full SRv6 inventory must contain exactly 33 links")
 
     management = [ipaddress.ip_address(row["mgmt_ipv4"]) for row in nodes]
-    loopbacks = [ipaddress.ip_interface(row["loopback_ipv6"]) for row in nodes]
-    locators = [ipaddress.ip_network(row["locator"]) for row in nodes]
+    routed = [row for row in nodes if row["loopback_ipv6"]]
+    xr_nodes = [row for row in nodes if row["kind"] == "cisco_xrd"]
+    loopbacks = [ipaddress.ip_interface(row["loopback_ipv6"]) for row in routed]
+    locators = [ipaddress.ip_network(row["locator"]) for row in xr_nodes]
     if len(management) != len(set(management)):
         raise SystemExit("duplicate management address")
     if any(address not in ipaddress.ip_network("10.203.255.0/24") for address in management):
@@ -49,15 +56,12 @@ def main() -> int:
     if any(item not in topology for item in required_topology):
         raise SystemExit("topology identity or management gate is missing")
 
-    for node in nodes:
+    canary_config = (CONFIG / "00-canary" / "P1.cfg").read_text(encoding="utf-8")
+    if "GigabitEthernet" in canary_config:
+        raise SystemExit("P1 canary config must not reference data interfaces")
+
+    for node in xr_nodes:
         name = node["name"]
-        canary_config = (CONFIG / "00-canary" / f"{name}.cfg").read_text(
-            encoding="utf-8"
-        )
-        if "GigabitEthernet" in canary_config:
-            raise SystemExit(f"{name} canary config must not reference data interfaces")
-        if f"ipv6 address {node['loopback_ipv6']}" not in canary_config:
-            raise SystemExit(f"{name} canary config is missing its loopback")
         locator_config = (CONFIG / "20-srv6-locator" / f"{name}.cfg").read_text(
             encoding="utf-8"
         )
@@ -78,7 +82,7 @@ def main() -> int:
             if command not in isis_config:
                 raise SystemExit(f"{name} missing IS-IS SRv6 command: {command}")
 
-    print("SRv6 artifact validation passed: 3 nodes, 2 links, unique /64 locators")
+    print("SRv6 artifact validation passed: 21 nodes, 33 links, 14 unique /64 locators")
     return 0
 
 

@@ -8,6 +8,8 @@ topology:
   kinds:
     cisco_xrd:
       image: ios-xr/xrd-control-plane:24.2.11
+    cisco_iol:
+      image: vrnetlab/cisco_iol:17.12.01
 
   nodes:
     P1:
@@ -17,12 +19,120 @@ topology:
     P2:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.102
-      startup-delay: 15
+      startup-delay: 30
+    P3:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.103
+      startup-delay: 60
+    P4:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.104
+      startup-delay: 90
+    P5:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.105
+      startup-delay: 120
+    P6:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.106
+      startup-delay: 150
     PE1:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.111
-      startup-delay: 30
+      startup-delay: 180
+    PE2:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.112
+      startup-delay: 210
+    PE3:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.113
+      startup-delay: 240
+    PE4:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.114
+      startup-delay: 270
+    PE5:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.115
+      startup-delay: 300
+    PE6:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.116
+      startup-delay: 330
+    RR1:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.121
+      startup-delay: 360
+    RR2:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.122
+      startup-delay: 390
+    CE1:
+      kind: cisco_iol
+      mgmt-ipv4: 10.203.255.201
+      startup-delay: 420
+    CE2:
+      kind: cisco_iol
+      mgmt-ipv4: 10.203.255.202
+      startup-delay: 430
+    CE3:
+      kind: cisco_iol
+      mgmt-ipv4: 10.203.255.203
+      startup-delay: 440
+    CE4:
+      kind: cisco_iol
+      mgmt-ipv4: 10.203.255.204
+      startup-delay: 450
+    CE5:
+      kind: cisco_iol
+      mgmt-ipv4: 10.203.255.205
+      startup-delay: 460
+    CE6:
+      kind: cisco_iol
+      mgmt-ipv4: 10.203.255.206
+      startup-delay: 470
+    AUTO1:
+      kind: linux
+      image: ccie-sp-automation:1.0
+      env:
+        AUTO1_PASSWORD: ${CCIE_AUTO_PASSWORD}
+      binds:
+        - ../automation:/workspace
+      mgmt-ipv4: 10.203.255.250
+      startup-delay: 480
 
   links:
-    - endpoints: ["PE1:Gi0-0-0-0", "P1:Gi0-0-0-0"]
-    - endpoints: ["P1:Gi0-0-0-1", "P2:Gi0-0-0-0"]
+    - endpoints: ["P1:Gi0-0-0-0", "P2:Gi0-0-0-0"]
+    - endpoints: ["P2:Gi0-0-0-1", "P3:Gi0-0-0-0"]
+    - endpoints: ["P3:Gi0-0-0-1", "P4:Gi0-0-0-0"]
+    - endpoints: ["P4:Gi0-0-0-1", "P5:Gi0-0-0-0"]
+    - endpoints: ["P5:Gi0-0-0-1", "P6:Gi0-0-0-0"]
+    - endpoints: ["P6:Gi0-0-0-1", "P1:Gi0-0-0-1"]
+    - endpoints: ["P1:Gi0-0-0-2", "P4:Gi0-0-0-2"]
+    - endpoints: ["P2:Gi0-0-0-2", "P5:Gi0-0-0-2"]
+    - endpoints: ["P3:Gi0-0-0-2", "P6:Gi0-0-0-2"]
+    - endpoints: ["PE1:Gi0-0-0-0", "P1:Gi0-0-0-3"]
+    - endpoints: ["PE1:Gi0-0-0-1", "P2:Gi0-0-0-3"]
+    - endpoints: ["PE2:Gi0-0-0-0", "P1:Gi0-0-0-4"]
+    - endpoints: ["PE2:Gi0-0-0-1", "P3:Gi0-0-0-3"]
+    - endpoints: ["PE3:Gi0-0-0-0", "P2:Gi0-0-0-4"]
+    - endpoints: ["PE3:Gi0-0-0-1", "P4:Gi0-0-0-3"]
+    - endpoints: ["PE4:Gi0-0-0-0", "P3:Gi0-0-0-4"]
+    - endpoints: ["PE4:Gi0-0-0-1", "P5:Gi0-0-0-3"]
+    - endpoints: ["PE5:Gi0-0-0-0", "P4:Gi0-0-0-4"]
+    - endpoints: ["PE5:Gi0-0-0-1", "P6:Gi0-0-0-3"]
+    - endpoints: ["PE6:Gi0-0-0-0", "P5:Gi0-0-0-4"]
+    - endpoints: ["PE6:Gi0-0-0-1", "P6:Gi0-0-0-4"]
+    - endpoints: ["RR1:Gi0-0-0-0", "P2:Gi0-0-0-5"]
+    - endpoints: ["RR1:Gi0-0-0-1", "P5:Gi0-0-0-5"]
+    - endpoints: ["RR2:Gi0-0-0-0", "P3:Gi0-0-0-5"]
+    - endpoints: ["RR2:Gi0-0-0-1", "P6:Gi0-0-0-5"]
+    - endpoints: ["PE1:Gi0-0-0-2", "CE1:Ethernet0/1"]
+    - endpoints: ["PE2:Gi0-0-0-2", "CE2:Ethernet0/1"]
+    - endpoints: ["PE3:Gi0-0-0-2", "CE3:Ethernet0/1"]
+    - endpoints: ["PE4:Gi0-0-0-2", "CE4:Ethernet0/1"]
+    - endpoints: ["PE5:Gi0-0-0-2", "CE5:Ethernet0/1"]
+    - endpoints: ["PE6:Gi0-0-0-2", "CE6:Ethernet0/1"]
+    - endpoints: ["PE3:Gi0-0-0-3", "CE2:Ethernet0/2"]
+    - endpoints: ["PE6:Gi0-0-0-3", "CE5:Ethernet0/2"]
