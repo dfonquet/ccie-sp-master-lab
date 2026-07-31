@@ -5,6 +5,7 @@ __pycache__/
 artifacts/
 automation/rendered/*
 !automation/rendered/.gitkeep
+automation/playbooks/backup/
 *.retry
 *.log
 topology/clab-*/
