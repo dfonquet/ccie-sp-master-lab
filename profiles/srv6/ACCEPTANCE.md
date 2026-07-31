@@ -8,7 +8,7 @@
 | Image identity | Docker image inspection | Exact local SHA-256 recorded in `READINESS.md` |
 | Management | TCP/22 and IOS XR prompt | P1 reachable without retry storms |
 | Base IPv6 | `00-canary` running configuration and interface brief | Loopback committed; no data-interface references or CLI errors |
-| Locator parser | Configuration session output | Entire locator hierarchy accepted |
+| Locator parser | `20-srv6-locator` configuration output | Global locator hierarchy accepted without creating IS-IS |
 | Locator commit | Commit output and failed-config check | Commit succeeds; failed configuration is empty |
 | Operational state | SRv6 locator and SID show commands | Output recorded even if feature is unsupported |
 | Rollback | Commit history and rollback result | Pre-SRv6 state restored successfully |

@@ -153,6 +153,14 @@ def render_srv6(node: Node) -> str:
             "  !",
             " !",
             "!",
+            "",
+        ]
+    )
+
+
+def render_srv6_isis(_node: Node) -> str:
+    return "\n".join(
+        [
             f"router isis {ISIS_INSTANCE}",
             " address-family ipv6 unicast",
             "  segment-routing srv6",
@@ -217,7 +225,7 @@ def write_topology() -> None:
 def write_inventory() -> None:
     PROFILE.mkdir(parents=True, exist_ok=True)
     with (PROFILE / "nodes.csv").open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.writer(stream)
+        writer = csv.writer(stream, lineterminator="\n")
         writer.writerow(
             ["name", "role", "kind", "mgmt_ipv4", "loopback_ipv6", "locator"]
         )
@@ -227,7 +235,7 @@ def write_inventory() -> None:
                  f"{node.loopback6}/128", node.locator]
             )
     with (PROFILE / "links.csv").open("w", newline="", encoding="utf-8") as stream:
-        writer = csv.writer(stream)
+        writer = csv.writer(stream, lineterminator="\n")
         writer.writerow(
             ["id", "endpoint_a", "endpoint_a_ipv6", "endpoint_b",
              "endpoint_b_ipv6", "purpose"]
@@ -246,6 +254,7 @@ def write_configs() -> None:
         "00-base": render_base,
         "10-isis-ipv6": render_isis,
         "20-srv6-locator": render_srv6,
+        "21-srv6-isis": render_srv6_isis,
     }
     for phase, renderer in phases.items():
         directory = CONFIG / phase
