@@ -15,7 +15,7 @@ same time.
 |---|---|---|
 | `master` | Runnable and validated | Redundant ISP backbone, SR-MPLS, RR/PCE, VPN, multicast, EVPN, AAA, and RPKI |
 | `inter-as` | Runnable and validated | Three autonomous systems, multiple IGPs, eBGP, and Options A/B/C |
-| `srv6` | Full 21-node profile; capability gates passed | Redundant IPv6 IS-IS and SRv6 study environment |
+| `srv6` | Runnable 21-node profile; functional underlay validated | Redundant IPv6 IS-IS and SRv6 study environment |
 
 The primary operational rule is simple: **only one heavy profile may be active
 at a time**. This preserves RAM for XRd, prevents overlapping names and
@@ -31,7 +31,7 @@ ccie-sp-master-lab/
 ├── profiles/
 │   ├── master/                  Lab 1 design and operating guide
 │   ├── inter-as/                Lab 2 inventory and operating guide
-│   └── srv6/                    Lab 3 capability profile and acceptance gates
+│   └── srv6/                    Lab 3 full study profile and acceptance gates
 ├── tools/                       Generators and validators
 ├── templates/                   Jinja2 templates
 ├── configs/                     Phase-based rendered configurations
@@ -44,6 +44,7 @@ Profile-specific entry points:
 
 - [Lab 1 — Master ISP](../profiles/master/README.md)
 - [Lab 2 — Inter-AS](../profiles/inter-as/README.md)
+- [Lab 3 — SRv6](../profiles/srv6/README.md)
 - [Acceptance status](../STATUS.md)
 - [Blueprint matrix](../BLUEPRINT-MATRIX.md)
 
@@ -64,7 +65,9 @@ Inventories + generator + templates
 For `master`, the primary sources are `tools/build_lab.py`,
 `inventory/nodes.csv`, and `inventory/links.csv`. For `inter-as`, they are
 `tools/build_inter_as.py`, `profiles/inter-as/nodes.csv`, and
-`profiles/inter-as/links.csv`.
+`profiles/inter-as/links.csv`. For `srv6`, they are
+`tools/build_srv6_capability.py`, `profiles/srv6/nodes.csv`, and
+`profiles/srv6/links.csv`.
 
 Do not manually edit generated files to make a persistent change. Update the
 inventory, generator, or template, then render and inspect the diff. This keeps
@@ -110,6 +113,26 @@ The exact topology and networks are documented in:
 - [Inter-AS addressing](../profiles/inter-as/ADDRESSING.md)
 - [Design and options](../profiles/inter-as/DESIGN.md)
 
+### 4.3 Lab 3 — SRv6
+
+Lab 3 contains 21 nodes and 33 links:
+
+- P1-P6: redundant provider transit fabric.
+- PE1-PE6: provider edges with six customer sites.
+- RR1-RR2: redundant route reflectors attached to different core nodes.
+- CE1-CE6: customer routers; CE2 and CE5 are dual-homed.
+- AUTO1: automation and validation workstation.
+
+The delivered baseline includes dual-stack-capable interfaces, an operational
+IPv6 IS-IS Level 2 underlay, management access, and direct-link validation.
+SRv6 locators, SRv6-TE policies, VPN services, TI-LFA, and uSID exercises are
+intentionally left as student work on top of that known-good foundation.
+
+- [SRv6 operations and addressing](../profiles/srv6/README.md)
+- [SRv6 design](../profiles/srv6/DESIGN.md)
+- [SRv6 validation evidence](../profiles/srv6/VALIDATION.md)
+- [SRv6 topology diagram](../profiles/srv6/topology.svg)
+
 ## 5. Addressing model
 
 Each profile has an independent management network and data-plane addressing
@@ -129,6 +152,20 @@ IPv6 core links:     2001:db8:1000:<link-id>::/127
 The `/31` and `/127` prefixes represent point-to-point links without wasting
 addresses. Loopbacks remain stable and serve as router IDs, BGP endpoints,
 Prefix-SIDs, and convergence-test destinations.
+
+The `srv6` profile uses:
+
+```text
+Management:          10.203.255.0/24
+Provider loopbacks:  2001:db8:500:abcd::/64, allocated as /128
+CE loopbacks:        2001:db8:700:ce::/64, allocated as /128
+Provider links:      2001:db8:1000::/40, allocated as /127
+PE-CE access links:  2001:db8:2000::/40, allocated as /127
+SRv6 locator pool:   2001:db8:600::/40, one /64 per XRd node
+```
+
+The separate locator block keeps routable loopbacks distinct from local SID
+space and makes locator summarization, policy, and troubleshooting explicit.
 
 ## 6. Server readiness
 
@@ -157,7 +194,10 @@ df -h /srv/netlab
 
 Do not deploy when another `clab-ccie-sp-*` lab exists, swap is in use,
 available memory is below the profile gate, or host load remains abnormal.
-The recommended Inter-AS gate is at least 12 GiB of available RAM.
+The recommended Inter-AS gate is at least 12 GiB of available RAM. For the
+full SRv6 profile, start with at least 45 GiB available RAM, 12 vCPUs, and
+100 GiB of free lab storage. The validated 21-node steady state used about
+32 GiB of RAM, left about 28 GiB available, and did not use swap.
 
 ## 7. Reproducible generation
 
@@ -173,6 +213,14 @@ python3 tools/render_topology.py
 ```bash
 python3 tools/build_inter_as.py
 python3 tools/render_inter_as.py
+```
+
+### SRv6
+
+```bash
+python3 tools/build_srv6_capability.py
+python3 tools/render_srv6.py
+python3 tools/validate_srv6_artifacts.py
 ```
 
 Inspect all generated changes:
@@ -200,6 +248,8 @@ rule. Review the diff before applying any configuration.
 ./labctl deploy master
 # or, after destroying Master:
 ./labctl deploy inter-as
+# or, after destroying Inter-AS:
+./labctl deploy srv6
 ```
 
 `labctl` rejects deployment when another profile is active.
@@ -209,6 +259,7 @@ rule. Review the diff before applying any configuration.
 ```bash
 ./labctl inspect master
 ./labctl inspect inter-as
+./labctl inspect srv6
 ```
 
 ### Destroy
@@ -217,6 +268,8 @@ rule. Review the diff before applying any configuration.
 ./labctl destroy master
 # or:
 ./labctl destroy inter-as
+# or:
+./labctl destroy srv6
 ```
 
 Destroying a lab removes its ephemeral containers and links. Source files,
@@ -239,6 +292,20 @@ python3 tools/apply_phase.py 10-igp \
 python3 tools/apply_phase.py 20-bgp \
   --profile inter-as --nodes P3,RR500
 ```
+
+SRv6 baseline example:
+
+```bash
+python3 tools/apply_phase.py 00-base \
+  --profile srv6 --nodes P1,P2
+
+python3 tools/apply_phase.py 10-isis-ipv6 \
+  --profile srv6 --nodes P1,P2
+```
+
+After validating the canaries, expand those two baseline phases to the
+remaining provider nodes. The locator and SRv6 control-plane phases are
+optional study exercises, not prerequisites for the delivered underlay.
 
 Operational order:
 
@@ -270,6 +337,15 @@ python3 tools/validate_links.py \
   --profile inter-as --family both --workers 2
 ```
 
+For Lab 3:
+
+```bash
+python3 tools/validate_nodes.py \
+  --inventory profiles/srv6/nodes.csv --workers 4
+
+python3 tools/validate_srv6_links.py
+```
+
 ### Control-plane checks
 
 Useful IOS XR commands:
@@ -298,6 +374,14 @@ The current validated Inter-AS baseline is:
 - RR-based iBGP at 6/6, 4/4, and 4/4 per VPN address family.
 - eBGP at 10/10 IPv4 and 10/10 IPv6 endpoints.
 
+The current validated SRv6 baseline is:
+
+- 21/21 running nodes: 14 XRd, six IOL-XE, and AUTO1.
+- 20/20 router management and CLI sessions operational.
+- 66/66 directional IPv6 directly connected link tests passed.
+- IPv6 IS-IS applied successfully to all 14 provider and RR nodes.
+- Zero container restarts, OOM events, or swap use during validation.
+
 ## 11. Inter-AS practice workflow
 
 Preserve a known-good logical baseline before testing each option:
@@ -315,6 +399,19 @@ Preserve a known-good logical baseline before testing each option:
 Do not mix Options A, B, and C during initial validation. The objective is to
 understand which information each model exchanges and where its control plane
 resides.
+
+## 11.1 SRv6 practice workflow
+
+Start every SRv6 exercise from the validated IPv6 underlay:
+
+1. Verify links, loopbacks, and all expected IS-IS adjacencies.
+2. Allocate and advertise one locator per provider node.
+3. Inspect locally allocated End and End.X SIDs.
+4. Build an explicit SRv6-TE policy between selected PE nodes.
+5. Add VPNv4/VPNv6 services and validate DT4/DT6 behavior.
+6. Introduce a link failure and measure convergence or TI-LFA behavior.
+7. Repeat with uSID only after the classic SRv6 behavior is understood.
+8. Restore or redeploy the baseline before starting a different scenario.
 
 ## 12. AUTO1 and synchronization
 
@@ -361,6 +458,7 @@ See:
 - [General troubleshooting](TROUBLESHOOTING.md)
 - [Master troubleshooting](../profiles/master/TROUBLESHOOTING.md)
 - [Inter-AS troubleshooting](../profiles/inter-as/TROUBLESHOOTING.md)
+- [SRv6 validation and troubleshooting](../profiles/srv6/VALIDATION.md)
 
 ## 14. Professional Git workflow
 
@@ -401,4 +499,6 @@ An exercise is complete when:
 
 Official technical references are listed in
 [Master REFERENCES](../profiles/master/REFERENCES.md) and
-[Inter-AS REFERENCES](../profiles/inter-as/REFERENCES.md).
+[Inter-AS REFERENCES](../profiles/inter-as/REFERENCES.md). SRv6 standards and
+platform references are maintained in the
+[SRv6 design guide](../profiles/srv6/DESIGN.md).
