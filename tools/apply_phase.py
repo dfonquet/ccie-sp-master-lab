@@ -199,7 +199,7 @@ def main() -> int:
     parser.add_argument("phase", help="Configuration phase directory, e.g. 00-base")
     parser.add_argument(
         "--profile",
-        choices=("master", "inter-as"),
+        choices=("master", "inter-as", "srv6"),
         default="master",
         help="Inventory/configuration profile. Default: master.",
     )

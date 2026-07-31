@@ -1,0 +1,4 @@
+name,role,kind,mgmt_ipv4,loopback_ipv6,locator
+P1,P,cisco_xrd,10.203.255.101,2001:db8:500:abcd::1/128,2001:db8:600:1::/64
+P2,P,cisco_xrd,10.203.255.102,2001:db8:500:abcd::2/128,2001:db8:600:2::/64
+PE1,PE,cisco_xrd,10.203.255.111,2001:db8:500:abcd::11/128,2001:db8:600:11::/64

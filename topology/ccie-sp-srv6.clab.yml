@@ -1,0 +1,28 @@
+name: ccie-sp-srv6
+
+mgmt:
+  network: ccie-sp-srv6-mgmt
+  ipv4-subnet: 10.203.255.0/24
+
+topology:
+  kinds:
+    cisco_xrd:
+      image: ios-xr/xrd-control-plane:24.2.11
+
+  nodes:
+    P1:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.101
+      startup-delay: 0
+    P2:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.102
+      startup-delay: 15
+    PE1:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.203.255.111
+      startup-delay: 30
+
+  links:
+    - endpoints: ["PE1:Gi0-0-0-0", "P1:Gi0-0-0-0"]
+    - endpoints: ["P1:Gi0-0-0-1", "P2:Gi0-0-0-0"]
