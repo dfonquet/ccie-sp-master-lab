@@ -76,18 +76,24 @@ Date: 2026-07-31
 - Implement and validate AAA with local fallback and the RPKI lab services.
 - Implement the service phases for Inter-AS Options A, B and C independently,
   preserving the validated underlay and BGP baseline between exercises.
-- Execute the generated one-node SRv6 parser/commit canary, then classify XRd
-  support before the three-node control-plane profile. Only one heavy profile
-  may run at a time.
+- Validate advanced SRv6 service exercises (End.X, End.DT4, End.DT6, SRv6-TE,
+  uSID and TI-LFA) independently. The full underlay and locator baseline is
+  operational; only one heavy profile may run at a time.
 
 ## SRv6 capability readiness
 
-- Three-node P1-P2-PE1 Source of Truth and generated topology are available.
+- The 21-node study profile (six P, six PE, two RR, six CE and AUTO1) is
+  generated from the Source of Truth and deploys successfully.
 - Management network `10.203.255.0/24` is isolated from Master and Inter-AS.
 - XRd image ID, KVM nesting, host resources and Docker storage passed readiness.
-- The P1-only parser, commit, rollback and restart canary passed. The next gate
-  is the three-node IPv6/IS-IS control plane.
-- No End, End.X, End.DT4, End.DT6, SRv6-TE, uSID or TI-LFA support is claimed.
+- The P1 parser, commit, rollback and restart canary passed, followed by the
+  three-node capability gate and full-profile deployment.
+- All 21 containers became operational, all 20 network nodes passed SSH/CLI
+  validation, and all 66 directional directly connected IPv6 tests passed.
+- The dual-stack base and IPv6 IS-IS underlay were applied to P, PE and RR
+  nodes. SRv6 locators were operational on the provider nodes.
+- No completed service validation is claimed yet for End.X, End.DT4, End.DT6,
+  SRv6-TE, uSID or TI-LFA; these remain student exercises and acceptance work.
 
 ## Inter-AS profile validated baseline
 

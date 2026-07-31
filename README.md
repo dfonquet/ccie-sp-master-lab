@@ -137,7 +137,8 @@ edited by hand.
 8. `60-multicast`: PIM, RP designs, mLDP, Tree-SID, and NG-mVPN.
 9. `70-l2vpn-evpn`: VPWS, VPLS, EVPN, IRB, and multihoming.
 10. `80-security-assurance`: AAA/RADIUS, LPTS, RPKI, telemetry, gNMI, and TWAMP.
-11. `90-failure-drills`: BFD, TI-LFA, BGP-PIC, PCE failover, and faults.
+11. `90-failure-drills`: TI-LFA, BGP-PIC, PCE failover and faults; read the
+    [XRd BFD platform boundary](docs/FAILURE-DRILLS.md) before BFD practice.
 
 Phases 30-90 are intentionally developed and validated incrementally. This
 keeps each baseline exam-like and prevents untested feature combinations from
