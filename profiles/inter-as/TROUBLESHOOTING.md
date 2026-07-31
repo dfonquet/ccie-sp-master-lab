@@ -1,27 +1,27 @@
 # Troubleshooting — Lab 2 Inter-AS
 
-Este registro conserva errores encontrados durante el despliegue real y la
-forma segura de resolverlos.
+This log preserves errors found during the live deployment and the safest
+known recovery procedures.
 
-## Faltan enlaces después del deploy
+## Links are missing after deployment
 
-**Síntoma:** el contenedor está running, pero faltan `eth1/eth2` o interfaces
-`Gi0-0-0-x`.
+**Symptom:** the container is running, but `eth1`/`eth2` or `Gi0-0-0-x`
+interfaces are missing.
 
-**Diagnóstico:**
+**Diagnosis:**
 
 ```bash
 docker exec clab-ccie-sp-inter-as-CE-C ip -br link
 sudo containerlab apply -t topology/ccie-sp-inter-as.clab.yml --dry-run
 ```
 
-Use siempre el `dry-run`. Si el plan recrea nodos adicionales, calcule el
-impacto y use `--max-workers 1`.
+Always use `--dry-run`. If the plan recreates additional nodes, calculate the
+impact and use `--max-workers 1`.
 
-## XRd muestra Up/Up, pero no reenvía
+## XRd is Up/Up but does not forward
 
-Un veth agregado en caliente puede aparecer en Linux y IOS XR sin quedar
-operativo en el dataplane. Reinicie el nodo afectado con Containerlab:
+A hot-added veth can appear in Linux and IOS XR without becoming operational
+in the data plane. Restart the affected node through Containerlab:
 
 ```bash
 sudo containerlab restart \
@@ -29,15 +29,15 @@ sudo containerlab restart \
   --node P5
 ```
 
-No use `docker stop/start`: Containerlab debe aparcar y restaurar los veth.
+Do not use `docker stop/start`; Containerlab must park and restore the veths.
 
-## IOL queda en “System Configuration Dialog”
+## IOL remains in the System Configuration Dialog
 
-La NVRAM vacía puede tener prioridad sobre `boot_config.txt`. Conserve una
-copia, limpie sólo la NVRAM del CE afectado y use el ciclo de vida de
-Containerlab. Nunca use `--cleanup` para todo el lab.
+Empty NVRAM can take precedence over `boot_config.txt`. Preserve a copy, clear
+only the affected CE NVRAM, and use the Containerlab lifecycle. Never use
+`--cleanup` for the entire lab.
 
-Compruebe después:
+Verify afterwards:
 
 ```text
 show ip interface brief
@@ -45,30 +45,31 @@ show ip route vrf clab-mgmt
 ping vrf clab-mgmt 10.202.255.1
 ```
 
-## OSPFv3 IPv4 rechazado
+## OSPFv3 IPv4 is rejected
 
-XRd 24.2.11 no dejó `address-family ipv4` dentro de `router ospfv3`.
-La implementación validada usa:
+XRd 24.2.11 did not accept `address-family ipv4` under `router ospfv3`.
+The validated implementation uses:
 
-- `router ospf <ASN>` para IPv4.
-- `router ospfv3 <ASN>` para IPv6.
+- `router ospf <ASN>` for IPv4.
+- `router ospfv3 <ASN>` for IPv6.
 
-Además, `area 0` es hermana de `address-family ipv6`, no hija de la AF.
+In addition, `area 0` is a sibling of `address-family ipv6`, not a child of
+the address family.
 
-## `exit` rompe una jerarquía IOS XR
+## `exit` breaks an IOS XR hierarchy
 
-En varios submodos XR, `exit` vuelve a configuración global. El aplicador
-reingresa el path completo para cada comando XR. Si aparece `% Invalid input`,
-ejecute un canario y revise `show configuration failed` antes de expandir.
+In several XR submodes, `exit` returns to global configuration. The phase
+applier re-enters the complete path for each XR command. If `% Invalid input`
+appears, run a canary and inspect `show configuration failed` before expanding.
 
-## Route-policy deja la sesión en el editor RPL
+## Route policy leaves the session in the RPL editor
 
-`route-policy ... end-policy` debe enviarse como un bloque atómico. No inserte
-`root` dentro del editor RPL.
+`route-policy ... end-policy` must be sent as an atomic block. Do not insert
+`root` inside the RPL editor.
 
 ## BGP: “The address family has not been initialized”
 
-Inicialice la AF global antes de asociarla al vecino:
+Initialize the global address family before associating it with the neighbor:
 
 ```text
 router bgp <ASN>
@@ -76,15 +77,15 @@ router bgp <ASN>
  address-family ipv6 unicast
 ```
 
-IOS XR también exige route-policy de entrada y salida para eBGP.
+IOS XR also requires inbound and outbound route policies for eBGP.
 
-## Falso negativo en resumen BGP IPv6
+## False negative in the IPv6 BGP summary
 
-IOS XR parte las filas IPv6 largas en dos líneas. Un parser que busque todos
-los campos en la línea de la dirección reportará `FAIL`. Valide con:
+IOS XR wraps long IPv6 rows onto two lines. A parser that expects every field
+on the address line will report `FAIL`. Validate with:
 
 ```text
 show bgp ipv6 unicast neighbors <peer>
 ```
 
-La prueba correcta busca `BGP state = Established`.
+The correct test looks for `BGP state = Established`.
