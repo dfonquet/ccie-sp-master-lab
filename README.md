@@ -48,6 +48,8 @@ to the next profile.
 | [Lab 2 — Inter-AS](profiles/inter-as/README.md) | Complete multi-AS topology, addressing and workflow |
 | [Laboratory profiles](profiles/README.md) | Profile isolation and one-lab-at-a-time model |
 | [Complete build guide](docs/BUILD-GUIDE.md) | Step-by-step history, resources and design decisions |
+| [Containerlab installation](docs/CONTAINERLAB-INSTALLATION.md) | Host design, installation, storage, images and lifecycle rationale |
+| [Lab design catalog](docs/LAB-DESIGN-CATALOG.md) | Profile scale, addressing, IGP choices and study boundaries |
 | [Architecture](docs/ARCHITECTURE.md) | Nodes, roles, redundancy and study modules |
 | [Addressing](docs/ADDRESSING.md) | Management, loopbacks, links, IS-IS and SIDs |
 | [Automation](docs/AUTOMATION.md) | AUTO1 design, tools and learning path |

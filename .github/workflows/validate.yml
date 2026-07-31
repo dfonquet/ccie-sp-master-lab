@@ -26,6 +26,7 @@ jobs:
           python tools/build_inter_as.py
           python tools/render_inter_as.py
           python tools/build_srv6_capability.py
+          python tools/render_srv6.py
 
       - name: Validate SRv6 capability artifacts
         run: python tools/validate_srv6_artifacts.py

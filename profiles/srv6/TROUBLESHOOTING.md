@@ -1,5 +1,12 @@
 # SRv6 capability troubleshooting
 
+## False link failures caused by platform syntax
+
+IOS XR uses `ping ipv6 <address> count 3`; IOS XE/IOL uses
+`ping ipv6 <address> repeat 3`. A platform-neutral validator that sends the XR
+form to IOL reports false CE-to-PE failures even when the reverse direction
+passes. Use `python tools/validate_srv6_links.py`; it selects the correct form.
+
 ## A command parses but commit fails
 
 ```text

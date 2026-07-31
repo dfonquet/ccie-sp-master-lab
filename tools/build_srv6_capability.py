@@ -180,7 +180,8 @@ def write_topology() -> None:
             lines += [f"      image: {AUTO_IMAGE}", "      env:",
                 "        AUTO1_PASSWORD: ${CCIE_AUTO_PASSWORD}", "      binds:",
                 "        - ../automation:/workspace"]
-        lines += [f"      mgmt-ipv4: {node.mgmt}", f"      startup-delay: {(index // 2) * 15}"]
+        delay = index * 30 if node.kind == "cisco_xrd" else 420 + (index - 14) * 10
+        lines += [f"      mgmt-ipv4: {node.mgmt}", f"      startup-delay: {delay}"]
     lines += ["", "  links:"]
     for link in LINKS:
         lines.append(f'    - endpoints: ["{link.a}:{ENDPOINTS[(link.link_id, link.a)]}", "{link.b}:{ENDPOINTS[(link.link_id, link.b)]}"]')

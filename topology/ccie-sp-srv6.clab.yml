@@ -19,79 +19,79 @@ topology:
     P2:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.102
-      startup-delay: 0
+      startup-delay: 30
     P3:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.103
-      startup-delay: 15
+      startup-delay: 60
     P4:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.104
-      startup-delay: 15
+      startup-delay: 90
     P5:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.105
-      startup-delay: 30
+      startup-delay: 120
     P6:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.106
-      startup-delay: 30
+      startup-delay: 150
     PE1:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.111
-      startup-delay: 45
+      startup-delay: 180
     PE2:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.112
-      startup-delay: 45
+      startup-delay: 210
     PE3:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.113
-      startup-delay: 60
+      startup-delay: 240
     PE4:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.114
-      startup-delay: 60
+      startup-delay: 270
     PE5:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.115
-      startup-delay: 75
+      startup-delay: 300
     PE6:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.116
-      startup-delay: 75
+      startup-delay: 330
     RR1:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.121
-      startup-delay: 90
+      startup-delay: 360
     RR2:
       kind: cisco_xrd
       mgmt-ipv4: 10.203.255.122
-      startup-delay: 90
+      startup-delay: 390
     CE1:
       kind: cisco_iol
       mgmt-ipv4: 10.203.255.201
-      startup-delay: 105
+      startup-delay: 420
     CE2:
       kind: cisco_iol
       mgmt-ipv4: 10.203.255.202
-      startup-delay: 105
+      startup-delay: 430
     CE3:
       kind: cisco_iol
       mgmt-ipv4: 10.203.255.203
-      startup-delay: 120
+      startup-delay: 440
     CE4:
       kind: cisco_iol
       mgmt-ipv4: 10.203.255.204
-      startup-delay: 120
+      startup-delay: 450
     CE5:
       kind: cisco_iol
       mgmt-ipv4: 10.203.255.205
-      startup-delay: 135
+      startup-delay: 460
     CE6:
       kind: cisco_iol
       mgmt-ipv4: 10.203.255.206
-      startup-delay: 135
+      startup-delay: 470
     AUTO1:
       kind: linux
       image: ccie-sp-automation:1.0
@@ -100,7 +100,7 @@ topology:
       binds:
         - ../automation:/workspace
       mgmt-ipv4: 10.203.255.250
-      startup-delay: 150
+      startup-delay: 480
 
   links:
     - endpoints: ["P1:Gi0-0-0-0", "P2:Gi0-0-0-0"]

@@ -7,6 +7,9 @@ TI-LFA and failure scenarios themselves.
 
 Stage A results are recorded in [FINDINGS.md](FINDINGS.md).
 
+Start with the [full design](DESIGN.md), [validation record](VALIDATION.md),
+[acceptance gates](ACCEPTANCE.md) and [troubleshooting guide](TROUBLESHOOTING.md).
+
 ## Final scope
 
 - Six P, six PE and two RR nodes running IOS XRd Control Plane.
