@@ -2,6 +2,8 @@
 
 ## Stage A: one-node parser and commit canary
 
+Status: **PASS** on 2026-07-31. See [FINDINGS.md](FINDINGS.md).
+
 | Gate | Required evidence | Pass condition |
 |---|---|---|
 | Isolation | Docker container inventory | No other `clab-ccie-sp-*` node is running |
