@@ -68,6 +68,38 @@ def connect_params(node: dict[str, str]) -> dict[str, object]:
     }
 
 
+def select_link_sources(
+    nodes: dict[str, dict[str, str]],
+    links_by_source: dict[str, list[dict[str, str]]],
+    sources: str | None,
+) -> dict[str, list[dict[str, str]]]:
+    """Select directed link sources and reject empty validation scopes."""
+    if not sources:
+        if not links_by_source:
+            raise ValueError("No directed link tests exist in the selected profile")
+        return links_by_source
+
+    selected = {name.strip() for name in sources.split(",") if name.strip()}
+    if not selected:
+        raise ValueError("No source nodes were selected")
+    unknown = selected - set(nodes)
+    if unknown:
+        raise ValueError(f"Unknown source nodes: {', '.join(sorted(unknown))}")
+
+    filtered = {
+        name: links
+        for name, links in links_by_source.items()
+        if name in selected
+    }
+    without_tests = selected - set(filtered)
+    if without_tests:
+        raise ValueError(
+            "No directed link tests exist for selected source nodes: "
+            + ", ".join(sorted(without_tests))
+        )
+    return filtered
+
+
 def validate_source(
     node: dict[str, str],
     links: list[dict[str, str]],
@@ -167,18 +199,10 @@ def main() -> int:
     args = parser.parse_args()
 
     nodes, links_by_source = load_data(args.profile)
-    if args.sources:
-        selected = {
-            name.strip() for name in args.sources.split(",") if name.strip()
-        }
-        unknown = selected - set(nodes)
-        if unknown:
-            raise SystemExit(f"Unknown source nodes: {', '.join(sorted(unknown))}")
-        links_by_source = {
-            name: links
-            for name, links in links_by_source.items()
-            if name in selected
-        }
+    try:
+        links_by_source = select_link_sources(nodes, links_by_source, args.sources)
+    except ValueError as exc:
+        raise SystemExit(str(exc)) from exc
     results: list[dict[str, str]] = []
     families = ("ipv4", "ipv6") if args.family == "both" else (args.family,)
     with ThreadPoolExecutor(max_workers=args.workers) as executor:
@@ -188,6 +212,9 @@ def main() -> int:
         }
         for future in as_completed(futures):
             results.extend(future.result())
+
+    if not results:
+        raise SystemExit("Validation produced zero tests")
 
     results.sort(
         key=lambda item: (

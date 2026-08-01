@@ -14,6 +14,26 @@ from urllib.parse import unquote
 
 ROOT = Path(__file__).resolve().parents[1]
 SRGB_START = 16000
+PROFILE_SOURCES = {
+    "master": {
+        "nodes": "inventory/nodes.csv",
+        "links": "inventory/links.csv",
+        "families": 2,
+        "directions": 2,
+    },
+    "inter-as": {
+        "nodes": "profiles/inter-as/nodes.csv",
+        "links": "profiles/inter-as/links.csv",
+        "families": 2,
+        "directions": 2,
+    },
+    "srv6": {
+        "nodes": "profiles/srv6/nodes.csv",
+        "links": "profiles/srv6/links.csv",
+        "families": 1,
+        "directions": 2,
+    },
+}
 
 
 def read(path: str | Path) -> str:
@@ -94,18 +114,39 @@ def local_markdown_links(paths: list[Path]) -> list[str]:
 
 
 def require(text: str, marker: str, location: str, failures: list[str]) -> None:
-    if marker not in text:
+    normalized_text = " ".join(text.split())
+    normalized_marker = " ".join(marker.split())
+    if normalized_marker not in normalized_text:
         failures.append(f"{location}: missing {marker!r}")
+
+
+def profile_facts() -> dict[str, dict[str, int]]:
+    """Derive node, platform, link, and test counts for every lab profile."""
+    profiles: dict[str, dict[str, int]] = {}
+    for name, source in PROFILE_SOURCES.items():
+        nodes = csv_rows(str(source["nodes"]))
+        links = csv_rows(str(source["links"]))
+        families = int(source["families"])
+        directions = int(source["directions"])
+        profiles[name] = {
+            "nodes": len(nodes),
+            "xrd": sum(row["kind"] == "cisco_xrd" for row in nodes),
+            "iol": sum(row["kind"] == "cisco_iol" for row in nodes),
+            "linux": sum(row["kind"] == "linux" for row in nodes),
+            "links": len(links),
+            "families": families,
+            "directions": directions,
+            "tests": len(links) * families * directions,
+        }
+    return profiles
 
 
 def main() -> int:
     failures: list[str] = []
-    nodes = csv_rows("inventory/nodes.csv")
-    links = csv_rows("inventory/links.csv")
-    xrd = [row for row in nodes if row["kind"] == "cisco_xrd"]
-    iol = [row for row in nodes if row["kind"] == "cisco_iol"]
-    linux = [row for row in nodes if row["kind"] == "linux"]
-    expected_tests = len(links) * 2 * 2
+    profile = profile_facts()
+    master = profile["master"]
+    inter_as = profile["inter-as"]
+    srv6 = profile["srv6"]
     mgmt_subnet = str(python_constant("tools/build_lab.py", "MGMT_SUBNET"))
 
     try:
@@ -119,8 +160,8 @@ def main() -> int:
         failures.append("tools/build_lab.py: contradictory AS65000 constant found")
 
     ipv4_indexes, ipv6_indexes = prefix_sid_indexes()
-    expected_ipv4 = list(range(1, len(xrd) + 1))
-    expected_ipv6 = list(range(601, 601 + len(xrd)))
+    expected_ipv4 = list(range(1, master["xrd"] + 1))
+    expected_ipv6 = list(range(601, 601 + master["xrd"]))
     if ipv4_indexes != expected_ipv4:
         failures.append(f"IPv4 Prefix-SID indexes: expected {expected_ipv4}, got {ipv4_indexes}")
     if ipv6_indexes != expected_ipv6:
@@ -138,12 +179,6 @@ def main() -> int:
         license_name = "unknown"
         license_badge = "License-unknown"
     facts = {
-        "nodes": len(nodes),
-        "xrd": len(xrd),
-        "iol": len(iol),
-        "linux": len(linux),
-        "links": len(links),
-        "tests": expected_tests,
         "mgmt_subnet": mgmt_subnet,
         "master_as": next(iter(as_values), None),
         "ipv4_index_range": f"{ipv4_indexes[0]}-{ipv4_indexes[-1]}",
@@ -159,21 +194,26 @@ def main() -> int:
     matrix = read("BLUEPRINT-MATRIX.md")
     validation = read("docs/VALIDATION.md")
     profiles = read("profiles/README.md")
+    inter_as_readme = read("profiles/inter-as/README.md")
+    operating_guide = read("docs/LAB-OPERATING-GUIDE.md")
 
     for marker in (
-        f"30 nodes, {facts['links']} data links",
+        f"{master['nodes']} nodes, {master['links']} data links",
+        f"{inter_as['nodes']} nodes, {inter_as['links']} links",
+        f"{srv6['nodes']} nodes, {srv6['links']} links",
         f"`{facts['mgmt_subnet']}`",
         str(facts["license_badge"]),
     ):
         require(readme, marker, "README.md", failures)
     for marker in (
-        f"{facts['nodes']} of {facts['nodes']} master-lab containers running",
-        f"{facts['xrd']} Cisco XRd nodes",
-        f"{facts['iol']} Cisco IOL nodes",
+        f"{master['nodes']} of {master['nodes']} master-lab containers running",
+        f"{master['xrd']} Cisco XRd nodes",
+        f"{master['iol']} Cisco IOL nodes",
         f"IPv6 Prefix-SIDs `{facts['ipv6_label_range']}`",
         f"`{facts['ipv6_index_range']}`",
         "Full 30-node management acceptance remains pending after the AUTO1 rebuild.",
-        "all 66 directional directly connected IPv6 tests passed",
+        f"all {srv6['tests']} directional directly connected IPv6 tests passed",
+        f"current bidirectional acceptance target is {inter_as['tests']} tests",
     ):
         require(status, marker, "STATUS.md", failures)
     require(
@@ -183,14 +223,25 @@ def main() -> int:
         failures,
     )
     for marker in (
-        f"nodes={facts['nodes']}",
-        f"xrd_nodes={facts['xrd']}",
-        f"links={facts['links']}",
-        f"directed_dual_stack_tests={facts['tests']}",
-        f"SUMMARY tests={facts['tests']} families=ipv4,ipv6 passed={facts['tests']} failed=0",
+        f"nodes={master['nodes']}",
+        f"xrd_nodes={master['xrd']}",
+        f"links={master['links']}",
+        f"directed_dual_stack_tests={master['tests']}",
+        f"SUMMARY tests={master['tests']} families=ipv4,ipv6 passed={master['tests']} failed=0",
     ):
         require(validation, marker, "docs/VALIDATION.md", failures)
     require(profiles, f"AS {facts['master_as']}", "profiles/README.md", failures)
+    for marker in (
+        "previous one-way validator passed 70/70 tests",
+        f"current bidirectional acceptance target is {inter_as['tests']}/{inter_as['tests']} tests",
+        "remains pending until the profile is deployed and observed again",
+    ):
+        require(inter_as_readme, marker, "profiles/inter-as/README.md", failures)
+    for marker in (
+        f"complete {master['nodes']}-node management and {master['tests']}-test Master acceptance remains pending",
+        f"Current bidirectional target: {inter_as['tests']}/{inter_as['tests']} tests",
+    ):
+        require(operating_guide, marker, "docs/LAB-OPERATING-GUIDE.md", failures)
 
     markdown = tracked_markdown()
     for document in markdown:
@@ -200,6 +251,9 @@ def main() -> int:
     failures.extend(f"broken local link: {item}" for item in local_markdown_links(markdown))
 
     print("Documentation facts derived from Source of Truth:")
+    for name, values in profile.items():
+        summary = " ".join(f"{key}={value}" for key, value in values.items())
+        print(f"  profile.{name}: {summary}")
     for key, value in facts.items():
         print(f"  {key}={value}")
 
