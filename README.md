@@ -1,11 +1,11 @@
-CCIE Service Provider v5.1 Multi-Profile Lab
+# CCIE Service Provider v5.1 Multi-Profile Lab
 
 <div align="center">
 
 **Reproducible service-provider labs for architecture, configuration, automation, validation, and troubleshooting practice.**
 
 [![Validate generated lab](https://github.com/dfonquet/ccie-sp-master-lab/actions/workflows/validate.yml/badge.svg)](https://github.com/dfonquet/ccie-sp-master-lab/actions/workflows/validate.yml)
-[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![License: CC BY 4.0](https://img.shields.io/badge/License-CC%20BY%204.0-green.svg)](LICENSE)
 [![Containerlab](https://img.shields.io/badge/Containerlab-0.77.0-blue.svg)](https://containerlab.dev/)
 [![Cisco XRd](https://img.shields.io/badge/Cisco%20XRd-24.2.11-1ba0d7.svg)](https://www.cisco.com/)
 [![IOS XE](https://img.shields.io/badge/IOL--XE-17.12.1-1ba0d7.svg)](https://www.cisco.com/)
@@ -66,7 +66,7 @@ configuration artifacts, diagram, operating procedure, and acceptance boundary.
 
 ### Inter-AS
 
-- Three provider domains: AS500, AS65100, and AS65200..
+- Three provider domains: AS500, AS65100, and AS65200.
 - Separate IGP and BGP foundations for controlled multi-AS practice.
 - Route-reflector roles within each provider domain.
 - External and customer-facing links for Options A, B, and C exercises.
@@ -408,9 +408,11 @@ pull-request requirements.
 
 ## License
 
-Repository-authored source code and documentation are available under the
-[MIT License](LICENSE). Vendor software and network operating-system images are
-not covered by this license and are not distributed by this project.
+Repository-authored documentation, diagrams, configurations, guides, and
+supporting scripts are available under the
+[Creative Commons Attribution 4.0 International license](LICENSE). Vendor
+software and network operating-system images are not covered by this license
+and are not distributed by this project.
 
 ---
 

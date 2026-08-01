@@ -1,0 +1,216 @@
+#!/usr/bin/env python3
+"""Validate documentation facts against the repository Source of Truth."""
+
+from __future__ import annotations
+
+import ast
+import csv
+import re
+import subprocess
+import sys
+from pathlib import Path
+from urllib.parse import unquote
+
+
+ROOT = Path(__file__).resolve().parents[1]
+SRGB_START = 16000
+
+
+def read(path: str | Path) -> str:
+    return (ROOT / path).read_text(encoding="utf-8")
+
+
+def csv_rows(path: str) -> list[dict[str, str]]:
+    with (ROOT / path).open(newline="", encoding="utf-8") as handle:
+        return list(csv.DictReader(handle))
+
+
+def tracked_markdown() -> list[Path]:
+    result = subprocess.run(
+        ["git", "ls-files", "*.md"],
+        cwd=ROOT,
+        check=True,
+        capture_output=True,
+        text=True,
+        encoding="utf-8",
+    )
+    return [ROOT / line for line in result.stdout.splitlines() if line]
+
+
+def python_constant(path: str, name: str) -> object:
+    tree = ast.parse(read(path), filename=path)
+    for statement in tree.body:
+        if not isinstance(statement, ast.Assign):
+            continue
+        if any(isinstance(target, ast.Name) and target.id == name for target in statement.targets):
+            return ast.literal_eval(statement.value)
+    raise ValueError(f"{name} not found in {path}")
+
+
+def bgp_as_values() -> set[int]:
+    paths = [
+        "automation/inventory/group_vars/pe.yml",
+        "automation/inventory/host_vars/RR1.yml",
+        "automation/inventory/host_vars/RR2.yml",
+    ]
+    values: set[int] = set()
+    for path in paths:
+        match = re.search(r"(?m)^bgp_as:\s*(\d+)\s*$", read(path))
+        if not match:
+            raise ValueError(f"bgp_as missing from {path}")
+        values.add(int(match.group(1)))
+    return values
+
+
+def prefix_sid_indexes() -> tuple[list[int], list[int]]:
+    ipv4: list[int] = []
+    ipv6: list[int] = []
+    for config in sorted((ROOT / "configs/20-sr-mpls").glob("*.cfg")):
+        family = None
+        for raw_line in config.read_text(encoding="utf-8").splitlines():
+            line = raw_line.strip()
+            if line == "address-family ipv4 unicast":
+                family = "ipv4"
+            elif line == "address-family ipv6 unicast":
+                family = "ipv6"
+            elif match := re.fullmatch(r"prefix-sid index (\d+)", line):
+                (ipv4 if family == "ipv4" else ipv6).append(int(match.group(1)))
+    return sorted(ipv4), sorted(ipv6)
+
+
+def local_markdown_links(paths: list[Path]) -> list[str]:
+    failures: list[str] = []
+    pattern = re.compile(r"(?<!!)\[[^\]]+\]\(([^)]+)\)")
+    for document in paths:
+        for raw_target in pattern.findall(document.read_text(encoding="utf-8")):
+            target = raw_target.strip().split(maxsplit=1)[0].strip("<>")
+            if not target or target.startswith(("#", "http://", "https://", "mailto:")):
+                continue
+            file_part = unquote(target.split("#", 1)[0])
+            resolved = (document.parent / file_part).resolve()
+            if not resolved.exists():
+                failures.append(f"{document.relative_to(ROOT)} -> {target}")
+    return failures
+
+
+def require(text: str, marker: str, location: str, failures: list[str]) -> None:
+    if marker not in text:
+        failures.append(f"{location}: missing {marker!r}")
+
+
+def main() -> int:
+    failures: list[str] = []
+    nodes = csv_rows("inventory/nodes.csv")
+    links = csv_rows("inventory/links.csv")
+    xrd = [row for row in nodes if row["kind"] == "cisco_xrd"]
+    iol = [row for row in nodes if row["kind"] == "cisco_iol"]
+    linux = [row for row in nodes if row["kind"] == "linux"]
+    expected_tests = len(links) * 2 * 2
+    mgmt_subnet = str(python_constant("tools/build_lab.py", "MGMT_SUBNET"))
+
+    try:
+        as_values = bgp_as_values()
+    except ValueError as exc:
+        failures.append(str(exc))
+        as_values = set()
+    if as_values != {500}:
+        failures.append(f"Master BGP AS values must resolve only to 500; got {sorted(as_values)}")
+    if re.search(r"(?m)^\s*(?:AS_NUMBER|MASTER_AS_NUMBER)\s*=\s*65000\s*$", read("tools/build_lab.py")):
+        failures.append("tools/build_lab.py: contradictory AS65000 constant found")
+
+    ipv4_indexes, ipv6_indexes = prefix_sid_indexes()
+    expected_ipv4 = list(range(1, len(xrd) + 1))
+    expected_ipv6 = list(range(601, 601 + len(xrd)))
+    if ipv4_indexes != expected_ipv4:
+        failures.append(f"IPv4 Prefix-SID indexes: expected {expected_ipv4}, got {ipv4_indexes}")
+    if ipv6_indexes != expected_ipv6:
+        failures.append(f"IPv6 Prefix-SID indexes: expected {expected_ipv6}, got {ipv6_indexes}")
+
+    license_text = read("LICENSE")
+    if license_text.startswith("Creative Commons Attribution 4.0 International"):
+        license_name = "CC BY 4.0"
+        license_badge = "License-CC%20BY%204.0"
+    elif license_text.startswith("MIT License"):
+        license_name = "MIT"
+        license_badge = "License-MIT"
+    else:
+        failures.append("LICENSE: unsupported or unrecognized declared license")
+        license_name = "unknown"
+        license_badge = "License-unknown"
+    facts = {
+        "nodes": len(nodes),
+        "xrd": len(xrd),
+        "iol": len(iol),
+        "linux": len(linux),
+        "links": len(links),
+        "tests": expected_tests,
+        "mgmt_subnet": mgmt_subnet,
+        "master_as": next(iter(as_values), None),
+        "ipv4_index_range": f"{ipv4_indexes[0]}-{ipv4_indexes[-1]}",
+        "ipv6_index_range": f"{ipv6_indexes[0]}-{ipv6_indexes[-1]}",
+        "ipv4_label_range": f"{SRGB_START + ipv4_indexes[0]}-{SRGB_START + ipv4_indexes[-1]}",
+        "ipv6_label_range": f"{SRGB_START + ipv6_indexes[0]}-{SRGB_START + ipv6_indexes[-1]}",
+        "license": license_name,
+        "license_badge": license_badge,
+    }
+
+    readme = read("README.md")
+    status = read("STATUS.md")
+    matrix = read("BLUEPRINT-MATRIX.md")
+    validation = read("docs/VALIDATION.md")
+    profiles = read("profiles/README.md")
+
+    for marker in (
+        f"30 nodes, {facts['links']} data links",
+        f"`{facts['mgmt_subnet']}`",
+        str(facts["license_badge"]),
+    ):
+        require(readme, marker, "README.md", failures)
+    for marker in (
+        f"{facts['nodes']} of {facts['nodes']} master-lab containers running",
+        f"{facts['xrd']} Cisco XRd nodes",
+        f"{facts['iol']} Cisco IOL nodes",
+        f"IPv6 Prefix-SIDs `{facts['ipv6_label_range']}`",
+        f"`{facts['ipv6_index_range']}`",
+        "Full 30-node management acceptance remains pending after the AUTO1 rebuild.",
+        "all 66 directional directly connected IPv6 tests passed",
+    ):
+        require(status, marker, "STATUS.md", failures)
+    require(
+        matrix,
+        "21-node infrastructure, IPv6 IS-IS, and locator baseline validated; advanced SRv6 services remain incremental",
+        "BLUEPRINT-MATRIX.md",
+        failures,
+    )
+    for marker in (
+        f"nodes={facts['nodes']}",
+        f"xrd_nodes={facts['xrd']}",
+        f"links={facts['links']}",
+        f"directed_dual_stack_tests={facts['tests']}",
+        f"SUMMARY tests={facts['tests']} families=ipv4,ipv6 passed={facts['tests']} failed=0",
+    ):
+        require(validation, marker, "docs/VALIDATION.md", failures)
+    require(profiles, f"AS {facts['master_as']}", "profiles/README.md", failures)
+
+    markdown = tracked_markdown()
+    for document in markdown:
+        first_line = document.read_text(encoding="utf-8").splitlines()[0]
+        if not first_line.startswith("# "):
+            failures.append(f"{document.relative_to(ROOT)}: first line must be one H1")
+    failures.extend(f"broken local link: {item}" for item in local_markdown_links(markdown))
+
+    print("Documentation facts derived from Source of Truth:")
+    for key, value in facts.items():
+        print(f"  {key}={value}")
+
+    if failures:
+        print("Documentation consistency validation failed:", file=sys.stderr)
+        for failure in failures:
+            print(f"  - {failure}", file=sys.stderr)
+        return 1
+    print(f"PASS: documentation consistency ({len(markdown)} Markdown files checked)")
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())

@@ -42,6 +42,7 @@ Date: 2026-07-31
 - Cisco pyATS and Genie 26.6.
 - Netmiko 4.7.0, Nornir, Scrapli, ncclient and pyGNMI.
 - The original 26-node management SSH/CLI validation passed.
+- Full 30-node management acceptance remains pending after the AUTO1 rebuild.
 - Netmiko from `AUTO1` to P1 passed.
 - The Ansible provider pre-check against P1 completed with zero failures.
 - Windows reachability to `10.201.255.150`: ping 3/3 and TCP/22 open.
@@ -49,7 +50,8 @@ Date: 2026-07-31
 ## Platform findings
 
 - XRd 24.2.11 rejects reuse of one nodal Prefix-SID index by IPv4 and IPv6;
-  IPv6 therefore uses indexes `601-614`.
+  the current 18-node provider baseline therefore uses IPv6 Prefix-SID indexes
+  `601-618`, which resolve to labels `16601-16618` in the configured SRGB.
 - XRd Control Plane accepts IS-IS BFD commands but does not instantiate BFD
   sessions on these virtual links. The active baseline omits BFD and keeps
   LFA/FRR; BFD practice should use IOL, XRv9k or physical IOS XR.

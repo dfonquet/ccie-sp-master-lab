@@ -18,6 +18,14 @@ IPv4 indexes: 1-14
 IPv6 indexes: 601-614
 ```
 
+The values above describe the original 14-node provider baseline. The expanded
+18-node Master profile extends the same non-overlapping allocation model:
+
+```text
+IPv4 indexes: 1-18   -> labels 16001-16018
+IPv6 indexes: 601-618 -> labels 16601-16618
+```
+
 ## IS-IS neighbors remain in Init
 
 Symptom:

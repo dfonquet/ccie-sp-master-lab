@@ -1,4 +1,4 @@
-Validation and Acceptance Runbook
+# Validation and Acceptance Runbook
 
 > Reproducible validation procedure for the CCIE SP Master profile. This runbook
 > separates inventory-derived cardinality from live acceptance evidence.

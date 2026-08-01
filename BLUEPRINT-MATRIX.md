@@ -1,4 +1,4 @@
-CCIE Service Provider v5.1 Coverage Matrix
+# CCIE Service Provider v5.1 Coverage Matrix
 
 > Blueprint-aligned study map for the three isolated Containerlab profiles in
 > this repository. It distinguishes verified functionality from exercises,
@@ -36,7 +36,7 @@ troubleshoot, remove, and rebuild.
 |---|---|---|
 | **Master** | Dual-stack provider core, SR-MPLS, redundant RR/PCE roles, services, security, and automation | Expanded IS-IS, SR-MPLS, and route-reflector foundation validated |
 | **Inter-AS** | Multi-AS IGP/BGP design and Inter-AS Options A, B, and C | Runnable dual-stack baseline; advanced Inter-AS services remain student exercises |
-| **SRv6** | IPv6 underlay, IS-IS, locators, endpoint behavior, and later SRv6 policy work | 21-node study topology generated; staged acceptance remains in progress |
+| **SRv6** | IPv6 underlay, IS-IS, locators, endpoint behavior, and later SRv6 policy work | 21-node infrastructure, IPv6 IS-IS, and locator baseline validated; advanced SRv6 services remain incremental |
 
 ---
 
@@ -224,4 +224,3 @@ contains reproducible evidence for all applicable gates:
 > **Repository position:** this lab extends beyond the blueprint where doing so
 > improves operational realism, but it does not represent itself as an official
 > Cisco exam environment or as a replacement for authorized Cisco training.
-

@@ -137,17 +137,18 @@ without adding protocol capability.
 
 ## 9. SR-MPLS refinement
 
-The original IPv4 Prefix-SIDs remain:
+The original 14-node IPv4 Prefix-SIDs were retained and extended for P7, P8,
+PE7, and PE8:
 
 ```text
-Indexes 1-14 -> labels 16001-16014
+Current indexes 1-18 -> labels 16001-16018
 ```
 
 XRd rejected reuse of the same nodal SID index for IPv6. A separate,
 deterministic range was therefore selected:
 
 ```text
-Indexes 601-614 -> labels 16601-16614
+Current indexes 601-618 -> labels 16601-16618
 ```
 
 This keeps both address families inside SRGB `16000-23999`.
@@ -191,7 +192,7 @@ Containerlab creates it normally.
 
 ## 12. Final validation
 
-The final evidence was:
+The original 26-node acceptance evidence was:
 
 - 26/26 management SSH/CLI checks passed.
 - 14/14 provider nodes passed the standard audit.
@@ -201,5 +202,11 @@ The final evidence was:
 - P1 learned 14 IPv4 and 14 IPv6 Prefix-SIDs.
 - Netmiko from AUTO1 to P1 passed.
 - Ansible pre-check from AUTO1 to P1 completed with zero failures.
+
+Those results are retained as historical expansion evidence. They do not
+replace the current 30-node acceptance gate. The current targets are 30
+management sessions, 18 provider-standard checks, and 188 bidirectional
+dual-stack link tests; record them as validated only after observing a complete
+live run.
 
 See [VALIDATION.md](VALIDATION.md) for the repeatable commands.

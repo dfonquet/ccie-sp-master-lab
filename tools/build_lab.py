@@ -19,7 +19,6 @@ IOL_IMAGE = "vrnetlab/cisco_iol:17.12.01"
 AUTOMATION_IMAGE = "ccie-sp-automation:1.0"
 MGMT_SUBNET = "10.201.255.0/24"
 MGMT_NETWORK = "ccie-sp-master-mgmt"
-AS_NUMBER = 65000
 
 PROVIDER_LINK_GROUPS = {
     "core-plane-a",

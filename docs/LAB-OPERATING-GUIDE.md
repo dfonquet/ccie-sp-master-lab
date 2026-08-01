@@ -1,4 +1,4 @@
-Professional CCIE SP Multi-Profile Lab Operating Guide
+# Professional CCIE SP Multi-Profile Lab Operating Guide
 
 <div align="center">
 
@@ -1063,4 +1063,3 @@ Official technical references are listed in
 [Inter-AS REFERENCES](../profiles/inter-as/REFERENCES.md). SRv6 standards and
 platform references are maintained in the
 [SRv6 design guide](../profiles/srv6/DESIGN.md).
-
