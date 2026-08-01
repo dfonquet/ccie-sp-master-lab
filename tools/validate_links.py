@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Ping every directly connected IPv4 and/or IPv6 lab link."""
+"""Validate every directly connected link in both directions."""
 
 from __future__ import annotations
 
@@ -31,8 +31,28 @@ def load_data(
         newline="", encoding="utf-8"
     ) as file:
         for row in csv.DictReader(file):
-            source = row["endpoint_a"].split(":", 1)[0]
-            links_by_source[source].append(row)
+            endpoint_a = row["endpoint_a"].split(":", 1)[0]
+            endpoint_b = row["endpoint_b"].split(":", 1)[0]
+
+            # Store one directed test definition under each endpoint. Grouping
+            # by source keeps one SSH session per node while ensuring that an
+            # asymmetric forwarding or interface failure cannot be hidden by a
+            # successful ping in the opposite direction.
+            a_to_b = dict(row)
+            a_to_b["source_node"] = endpoint_a
+            a_to_b["destination_node"] = endpoint_b
+            a_to_b["direction"] = "a-to-b"
+            a_to_b["destination_ipv4"] = row["endpoint_b_ipv4"]
+            a_to_b["destination_ipv6"] = row["endpoint_b_ipv6"]
+            links_by_source[endpoint_a].append(a_to_b)
+
+            b_to_a = dict(row)
+            b_to_a["source_node"] = endpoint_b
+            b_to_a["destination_node"] = endpoint_a
+            b_to_a["direction"] = "b-to-a"
+            b_to_a["destination_ipv4"] = row["endpoint_a_ipv4"]
+            b_to_a["destination_ipv6"] = row["endpoint_a_ipv6"]
+            links_by_source[endpoint_b].append(b_to_a)
     return nodes, links_by_source
 
 
@@ -66,7 +86,7 @@ def validate_source(
         )
         for family in families:
             for link in links:
-                destination = link[f"endpoint_b_{family}"].split("/", 1)[0]
+                destination = link[f"destination_{family}"].split("/", 1)[0]
                 if family == "ipv6" and node["kind"] == "cisco_xrd":
                     command = f"ping ipv6 {destination} count 3 timeout 1"
                 elif family == "ipv6":
@@ -93,7 +113,9 @@ def validate_source(
                     {
                         "id": link["id"],
                         "family": family,
+                        "direction": link["direction"],
                         "source": node["name"],
+                        "destination_node": link["destination_node"],
                         "destination": destination,
                         "status": status,
                         "summary": summary,
@@ -106,8 +128,10 @@ def validate_source(
                     {
                         "id": link["id"],
                         "family": family,
+                        "direction": link["direction"],
                         "source": node["name"],
-                        "destination": link[f"endpoint_b_{family}"].split("/", 1)[0],
+                        "destination_node": link["destination_node"],
+                        "destination": link[f"destination_{family}"].split("/", 1)[0],
                         "status": "failed",
                         "summary": f"{type(exc).__name__}: {exc}".replace(
                             "\n", " "
@@ -135,7 +159,10 @@ def main() -> int:
     )
     parser.add_argument(
         "--sources",
-        help="Comma-separated source node names. Default: every link source.",
+        help=(
+            "Comma-separated source node names. Default: both endpoints of "
+            "every link. Filtering a source runs only its outbound tests."
+        ),
     )
     args = parser.parse_args()
 
@@ -166,12 +193,14 @@ def main() -> int:
         key=lambda item: (
             int("".join(character for character in item["id"] if character.isdigit())),
             item["family"],
+            item["direction"],
         )
     )
     for result in results:
         print(
             f"{result['id']}|{result['family']}|"
-            f"{result['source']}->{result['destination']}|"
+            f"{result['source']}->{result['destination_node']}"
+            f"({result['destination']})|"
             f"{result['status']}|{result['summary']}"
         )
 
