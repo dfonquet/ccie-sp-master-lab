@@ -75,9 +75,9 @@ NETs follow:
 ```text
 SRGB: 16000-23999
 
-IPv4 Prefix-SID indexes: 1-14
-IPv4 labels:             16001-16014
+IPv4 Prefix-SID indexes: 1-18
+IPv4 labels:             16001-16018
 
-IPv6 Prefix-SID indexes: 601-614
-IPv6 labels:             16601-16614
+IPv6 Prefix-SID indexes: 601-618
+IPv6 labels:             16601-16618
 ```

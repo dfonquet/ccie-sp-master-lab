@@ -31,5 +31,17 @@ jobs:
       - name: Validate SRv6 capability artifacts
         run: python tools/validate_srv6_artifacts.py
 
+      - name: Validate documentation consistency
+        run: python tools/validate_documentation.py
+
+      - name: Check Markdown structure
+        uses: DavidAnson/markdownlint-cli2-action@v23
+
+      - name: Check Markdown links
+        uses: lycheeverse/lychee-action@v2
+        with:
+          args: --offline --no-progress './**/*.md'
+          fail: true
+
       - name: Verify generated files are committed
         run: git diff --exit-code
