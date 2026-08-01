@@ -46,6 +46,7 @@ to the next profile.
 | [Professional operating guide](docs/LAB-OPERATING-GUIDE.md) | Start-to-finish explanation and safe operating workflow |
 | [Lab 1 — Master ISP](profiles/master/README.md) | Complete master topology, operation and study order |
 | [Lab 2 — Inter-AS](profiles/inter-as/README.md) | Complete multi-AS topology, addressing and workflow |
+| [Lab 3 — SRv6](https://github.com/dfonquet/ccie-sp-master-lab/blob/main/profiles/srv6/README.md) | SRv6 study profile, topology scope, rollout gates and study workflow |
 | [Laboratory profiles](profiles/README.md) | Profile isolation and one-lab-at-a-time model |
 | [Complete build guide](docs/BUILD-GUIDE.md) | Step-by-step history, resources and design decisions |
 | [Containerlab installation](docs/CONTAINERLAB-INSTALLATION.md) | Host design, installation, storage, images and lifecycle rationale |
