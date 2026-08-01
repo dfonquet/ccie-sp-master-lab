@@ -221,8 +221,21 @@ The local `.env` file is ignored by Git. Never commit credentials.
 ### Generate and validate artifacts
 
 ```bash
+# Master
 python3 tools/build_lab.py
+python3 tools/render_topology.py
+
+# Inter-AS
+python3 tools/build_inter_as.py
+python3 tools/render_inter_as.py
+
+# SRv6
+python3 tools/build_srv6_capability.py
+python3 tools/render_srv6.py
 python3 tools/validate_srv6_artifacts.py
+
+# Cross-profile documentation and generated-diff gates
+python3 tools/validate_documentation.py
 git diff --check
 ```
 
