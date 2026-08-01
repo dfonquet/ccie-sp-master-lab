@@ -866,12 +866,14 @@ The current validated Master baseline includes:
 - Expanded dual-stack IS-IS foundation.
 - SR-MPLS foundation.
 - Redundant route-reflector control-plane foundation.
-- Management and physical connectivity acceptance.
+- Historical 26-node management and 39-link connectivity evidence exists. The
+  complete 30-node management and 188-test Master acceptance remains pending.
 
 The current validated Inter-AS baseline is:
 
 - 23/23 running nodes.
-- 70/70 directional IPv4/IPv6 tests.
+- Historical one-way validation: 70/70 IPv4/IPv6 tests.
+- Current bidirectional target: 140/140 tests; live acceptance remains pending.
 - IS-IS, OSPFv2, and OSPFv3 counts matching the inventory.
 - RR-based iBGP at 6/6, 4/4, and 4/4 per VPN address family.
 - eBGP at 10/10 IPv4 and 10/10 IPv6 endpoints.

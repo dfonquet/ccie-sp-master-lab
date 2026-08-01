@@ -52,7 +52,7 @@ be used to hide an underlay failure.
 
 1. 23/23 containers running, zero restarts and zero OOM events.
 2. No swap use; at least 12 GiB available inside the VM.
-3. All 70 directly connected IPv4/IPv6 tests pass.
+3. All 140 bidirectional directly connected IPv4/IPv6 tests pass.
 4. IS-IS, OSPFv2 and OSPFv3 adjacencies match the inventory.
 5. Every PE/ASBR has redundant reachability to its local RR.
 6. IPv4/IPv6 eBGP is established on the five external links.
@@ -63,7 +63,11 @@ be used to hide an underlay failure.
 The latest integral test of this profile confirmed:
 
 - 23/23 nodes running.
-- 70/70 directional tests over directly connected links.
+- The previous one-way validator passed 70/70 tests: 35 links × one direction
+  × two address families.
+- The current bidirectional acceptance target is 140/140 tests: 35 links × two
+  directions × two address families. This target remains pending until the
+  profile is deployed and observed again.
 - AS500: ten operational IS-IS links and 16/16 loopback reachability tests.
 - AS65100 and AS65200: 14/14 directional OSPFv2 adjacencies and 14/14
   OSPFv3 adjacencies per domain; 8/8 loopback tests in each AS.
