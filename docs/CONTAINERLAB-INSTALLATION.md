@@ -17,6 +17,23 @@
 
 ---
 
+<div align="center">
+
+**From a Windows workstation to a validated multi-profile Containerlab host**
+
+[Architecture](#2-validated-architecture) ·
+[Docker](#5-docker-engine-installation) ·
+[Containerlab](#7-containerlab-installation) ·
+[Transfer images](#8-transfer-licensed-images-from-windows) ·
+[XRd](#9-import-the-cisco-xrd-image) ·
+[IOL-XE](#10-build-the-cisco-iol-xe-vrnetlab-image) ·
+[AUTO1](#12-build-auto1) ·
+[Acceptance](#15-acceptance-checklist)
+
+</div>
+
+---
+
 This document records how the validated CCIE Service Provider environment was
 built. It explains the host decision, Docker and Containerlab installation,
 licensed-image transfer, local image construction, AUTO1 creation, verification,

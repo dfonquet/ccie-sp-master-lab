@@ -126,7 +126,17 @@ def main() -> int:
     if ipv6_indexes != expected_ipv6:
         failures.append(f"IPv6 Prefix-SID indexes: expected {expected_ipv6}, got {ipv6_indexes}")
 
-    license_name = read("LICENSE").splitlines()[0].removesuffix(" License")
+    license_text = read("LICENSE")
+    if license_text.startswith("Creative Commons Attribution 4.0 International"):
+        license_name = "CC BY 4.0"
+        license_badge = "License-CC%20BY%204.0"
+    elif license_text.startswith("MIT License"):
+        license_name = "MIT"
+        license_badge = "License-MIT"
+    else:
+        failures.append("LICENSE: unsupported or unrecognized declared license")
+        license_name = "unknown"
+        license_badge = "License-unknown"
     facts = {
         "nodes": len(nodes),
         "xrd": len(xrd),
@@ -141,6 +151,7 @@ def main() -> int:
         "ipv4_label_range": f"{SRGB_START + ipv4_indexes[0]}-{SRGB_START + ipv4_indexes[-1]}",
         "ipv6_label_range": f"{SRGB_START + ipv6_indexes[0]}-{SRGB_START + ipv6_indexes[-1]}",
         "license": license_name,
+        "license_badge": license_badge,
     }
 
     readme = read("README.md")
@@ -152,7 +163,7 @@ def main() -> int:
     for marker in (
         f"30 nodes, {facts['links']} data links",
         f"`{facts['mgmt_subnet']}`",
-        f"License-{facts['license']}",
+        str(facts["license_badge"]),
     ):
         require(readme, marker, "README.md", failures)
     for marker in (
