@@ -1,9 +1,34 @@
-# Professional CCIE SP Master Lab Operating Guide
+Professional CCIE SP Multi-Profile Lab Operating Guide
 
-This is the entry point for understanding, deploying, validating, modifying,
-and recovering the lab. The repository is not merely a collection of
-topologies: it implements a reproducible workflow in which inventories and
-generators produce verifiable configurations, diagrams, and Containerlab files.
+<div align="center">
+
+**Step-by-step operations for the Master ISP, Inter-AS, and SRv6 profiles**
+
+[Preparation](#6-server-readiness) ·
+[Generation](#7-reproducible-generation) ·
+[Deployment](#8-safe-lifecycle) ·
+[Configuration](#10-phase-based-configuration) ·
+[Validation](#12-validation) ·
+[Recovery](#16-troubleshooting-and-recovery)
+
+</div>
+
+---
+
+This is the operational entry point for understanding, preparing, deploying,
+validating, modifying, recovering, and safely retiring the lab profiles. The
+repository is not merely a collection of topology files. It implements a
+reproducible engineering workflow in which inventories and generators produce
+reviewable configurations, diagrams, and Containerlab artifacts.
+
+> [!IMPORTANT]
+> Follow the sections in order for the first deployment. A stable interface,
+> addressing, IGP, and transport foundation must exist before BGP or customer
+> services can be meaningfully validated.
+
+> [!WARNING]
+> Run only one heavy profile at a time. The three profiles share the same host
+> CPU, RAM, KVM acceleration, Docker storage, and licensed network images.
 
 ## 1. Purpose
 
@@ -13,13 +38,37 @@ same time.
 
 | Profile | Status | Purpose |
 |---|---|---|
-| `master` | Runnable and validated | Redundant ISP backbone, SR-MPLS, RR/PCE, VPN, multicast, EVPN, AAA, and RPKI |
-| `inter-as` | Runnable and validated | Three autonomous systems, multiple IGPs, eBGP, and Options A/B/C |
-| `srv6` | Runnable 21-node profile; functional underlay validated | Redundant IPv6 IS-IS and SRv6 study environment |
+| `master` | Runnable; infrastructure baseline validated | Redundant ISP backbone with dual-stack IS-IS, SR-MPLS, RR/PCE roles, and progressive services |
+| `inter-as` | Runnable; baseline validated | Three autonomous systems, multiple IGPs, route reflectors, eBGP, and Options A/B/C practice |
+| `srv6` | Runnable; 21-node baseline validated | IPv6 IS-IS underlay, operational locators, and progressive SRv6 services |
 
 The primary operational rule is simple: **only one heavy profile may be active
-at a time**. This preserves RAM for XRd, prevents overlapping names and
-networks, and ensures that every exercise starts from a known state.
+at a time**. This preserves resources, prevents overlapping names and networks,
+and ensures that every exercise starts from a known state.
+
+### 1.1 How to use this guide
+
+| Situation | Start with |
+|---|---|
+| First installation | [Containerlab Host, Image, and AUTO1 Build Guide](CONTAINERLAB-INSTALLATION.md) |
+| First deployment | Sections 6 through 12 of this guide |
+| Daily operation | [Operations quick reference](../OPERATIONS.md) |
+| Changing topology or addressing | Sections 3, 7, 10, and 11 |
+| Investigating a failure | Section 16 and the profile troubleshooting guide |
+| Checking what has actually passed | [Deployment Status](../STATUS.md) |
+| Mapping practice to the exam | [CCIE SP Blueprint Matrix](../BLUEPRINT-MATRIX.md) |
+
+### 1.2 Operating principles
+
+1. **Inventory before configuration:** inventory defines the intended nodes,
+   links, interfaces, and addresses.
+2. **Generate before deployment:** rendered artifacts must match their source.
+3. **Validate before expansion:** begin with a canary or small node batch.
+4. **One change domain at a time:** do not mix underlay, BGP, VPN, and failure
+   changes in one unreviewed action.
+5. **Evidence before claims:** record expected and observed state.
+6. **Recoverability before experimentation:** create a known-good checkpoint
+   before destructive exercises.
 
 ## 2. Repository layout
 
@@ -123,10 +172,11 @@ Lab 3 contains 21 nodes and 33 links:
 - CE1-CE6: customer routers; CE2 and CE5 are dual-homed.
 - AUTO1: automation and validation workstation.
 
-The delivered baseline includes dual-stack-capable interfaces, an operational
-IPv6 IS-IS Level 2 underlay, management access, and direct-link validation.
-SRv6 locators, SRv6-TE policies, VPN services, TI-LFA, and uSID exercises are
-intentionally left as student work on top of that known-good foundation.
+The delivered baseline includes operational interfaces, an IPv6 IS-IS Level 2
+underlay, management access, direct-link validation, and operational SRv6
+locators. SRv6-TE policies, VPN services, advanced endpoint behaviors, TI-LFA,
+and uSID scenarios remain progressive student work on top of that known-good
+foundation.
 
 - [SRv6 operations and addressing](../profiles/srv6/README.md)
 - [SRv6 design](../profiles/srv6/DESIGN.md)
@@ -169,6 +219,89 @@ space and makes locator summarization, policy, and troubleshooting explicit.
 
 ## 6. Server readiness
 
+### 6.1 Confirm the working copy
+
+Operate from a clean, known repository revision:
+
+```bash
+cd /srv/netlab/labs/ccie-sp-master
+pwd
+git status --short --branch
+git branch --show-current
+git log -1 --oneline
+```
+
+Stop if unexpected modifications or untracked device backups appear. Existing
+work must be reviewed or preserved before generation because a generator can
+legitimately update many files.
+
+### 6.2 Confirm platform and virtualization
+
+```bash
+uname -a
+cat /etc/os-release
+nproc
+systemd-detect-virt
+ls -l /dev/kvm
+
+test -r /sys/module/kvm_amd/parameters/nested && \
+  echo "kvm_amd nested=$(cat /sys/module/kvm_amd/parameters/nested)"
+
+test -r /sys/module/kvm_intel/parameters/nested && \
+  echo "kvm_intel nested=$(cat /sys/module/kvm_intel/parameters/nested)"
+```
+
+Expected results:
+
+- `/dev/kvm` exists and is accessible to the runtime.
+- Nested virtualization is enabled on a virtualized host.
+- The CPU count matches the VM configuration.
+- No unexpected hypervisor change has occurred.
+
+### 6.3 Confirm software and images
+
+```bash
+docker version
+containerlab version
+docker info --format 'root={{.DockerRootDir}} driver={{.Driver}}'
+
+docker image ls --format '{{.Repository}}:{{.Tag}} | {{.ID}} | {{.Size}}' | \
+  grep -E 'ios-xr/xrd-control-plane:24.2.11|vrnetlab/cisco_iol:17.12.01|ccie-sp-automation:1.0'
+```
+
+The expected image references are:
+
+```text
+ios-xr/xrd-control-plane:24.2.11
+vrnetlab/cisco_iol:17.12.01
+ccie-sp-automation:1.0
+```
+
+If an image is missing, stop and follow the
+[installation and image-build guide](CONTAINERLAB-INSTALLATION.md). Network
+operating-system images are local licensed prerequisites and are not downloaded
+by this repository.
+
+### 6.4 Create the Python environment
+
+Use an isolated virtual environment for automation dependencies:
+
+```bash
+python3 -m venv .venv
+source .venv/bin/activate
+python -m pip install --upgrade pip
+
+test -f automation/requirements.txt && \
+  python -m pip install -r automation/requirements.txt
+
+python -c 'import netmiko; print("Netmiko", netmiko.__version__)'
+```
+
+Reusing a previously validated `.venv` is acceptable. The virtual environment
+is local runtime state and must not be committed.
+
+### 6.5 Load runtime credentials
+
 Create and load the local credential file before deployment:
 
 ```bash
@@ -180,7 +313,21 @@ set +a
 ```
 
 The real `.env` file is ignored by Git. Never place production credentials or
-provider tokens in it. Then run the host checks:
+provider tokens in it. Confirm that the required variables exist without
+printing their values:
+
+```bash
+for variable in \
+  CCIE_XRD_USERNAME CCIE_XRD_PASSWORD \
+  CCIE_IOL_USERNAME CCIE_IOL_PASSWORD \
+  CCIE_AUTO_USERNAME CCIE_AUTO_PASSWORD; do
+  [[ -n "${!variable:-}" ]] || echo "MISSING: $variable"
+done
+```
+
+### 6.6 Check active labs and host capacity
+
+Run the host checks:
 
 ```bash
 cd /srv/netlab/labs/ccie-sp-master
@@ -198,6 +345,26 @@ The recommended Inter-AS gate is at least 12 GiB of available RAM. For the
 full SRv6 profile, start with at least 45 GiB available RAM, 12 vCPUs, and
 100 GiB of free lab storage. The validated 21-node steady state used about
 32 GiB of RAM, left about 28 GiB available, and did not use swap.
+
+Treat those measurements as observed planning data, not universal guarantees.
+Image release, hypervisor scheduling, startup concurrency, and host workload can
+change resource demand.
+
+### 6.7 Go/no-go decision
+
+Proceed only when all checks below pass:
+
+| Check | Go condition |
+|---|---|
+| Active lab | No other `clab-ccie-sp-*` nodes are running |
+| KVM | `/dev/kvm` exists and nested virtualization is enabled if required |
+| Images | Every image required by the chosen profile exists locally |
+| Credentials | Required variables are loaded without exposing their values |
+| Memory | Available memory is above the selected profile's operating gate |
+| Swap | No active swap pressure |
+| Load | Host load is stable before deployment |
+| Storage | `/srv/netlab` has adequate working space |
+| Repository | No unexplained local changes |
 
 ## 7. Reproducible generation
 
@@ -233,6 +400,38 @@ git diff -- inventory profiles topology configs docs
 
 An unexpected change across many files usually indicates a modified global
 rule. Review the diff before applying any configuration.
+
+### 7.1 Generation acceptance
+
+For an unchanged source of truth, a second generation run should be
+deterministic:
+
+```bash
+python3 tools/build_lab.py
+python3 tools/build_inter_as.py
+python3 tools/build_srv6_capability.py
+git diff --check
+git status --short
+```
+
+Review every reported file. Do not use `git restore`, `git checkout --`, or a
+hard reset merely to hide an unexplained generated difference.
+
+### 7.2 What to review in a generated diff
+
+| Artifact | Questions to answer |
+|---|---|
+| Node inventory | Are names, roles, platforms, IDs, and management addresses unique? |
+| Link inventory | Are both endpoints, interfaces, link IDs, and prefixes correct? |
+| Topology YAML | Do images, startup delays, management networks, and links match the selected profile? |
+| Base configuration | Are only intended interfaces enabled and addressed? |
+| IGP phase | Are passive interfaces, metrics, levels, and address families correct? |
+| Diagram | Does the visual topology match the CSV inventories? |
+
+> [!CAUTION]
+> A successful Python exit code proves that generation completed. It does not
+> prove that the design decision was correct. Human diff review remains part of
+> the acceptance process.
 
 ## 8. Safe lifecycle
 
@@ -275,7 +474,133 @@ rule. Review the diff before applying any configuration.
 Destroying a lab removes its ephemeral containers and links. Source files,
 generated configurations, and documentation remain in the repository.
 
-## 9. Phase-based configuration
+## 9. First deployment runbook
+
+Use this procedure for the first boot of any profile.
+
+### Step 1 — Select exactly one profile
+
+```bash
+PROFILE=master
+# Valid values: master, inter-as, srv6
+```
+
+The variable is only a convenience for this shell session. Confirm it before
+every destructive lifecycle command:
+
+```bash
+printf 'Selected profile: %s\n' "$PROFILE"
+```
+
+### Step 2 — Confirm the topology parses
+
+```bash
+sudo containerlab apply \
+  -t "topology/ccie-sp-${PROFILE}.clab.yml" \
+  --dry-run
+```
+
+For a new deployment, the expected plan is `deploy lab`. For an existing lab,
+read every proposed node recreation or link modification before continuing.
+
+### Step 3 — Capture the pre-deployment state
+
+```bash
+date -Is
+free -h
+uptime
+df -h /srv/netlab
+docker ps --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
+```
+
+Keep this output with the exercise notes. It provides the reference for later
+resource and stability comparisons.
+
+### Step 4 — Deploy through the lifecycle controller
+
+```bash
+./labctl deploy "$PROFILE"
+```
+
+Do not start a second deployment terminal. XRd and vrnetlab nodes have long
+boot sequences, and duplicate deployment attempts make the resulting state
+harder to interpret.
+
+### Step 5 — Observe the startup window
+
+```bash
+watch -n 15 "docker ps \
+  --filter name=clab-ccie-sp-${PROFILE} \
+  --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'"
+```
+
+Exit `watch` with `Ctrl+C` after the expected nodes are running. Some vrnetlab
+nodes transition through `health: starting` or temporary `unhealthy` states
+while their nested VM boots. Judge readiness using sustained health, TCP/22,
+and CLI access rather than one early snapshot.
+
+### Step 6 — Check container health
+
+```bash
+for container in $(docker ps \
+  --filter "name=clab-ccie-sp-${PROFILE}" \
+  --format '{{.Names}}'); do
+  docker inspect "$container" \
+    --format '{{.Name}} status={{.State.Status}} restart={{.RestartCount}} oom={{.State.OOMKilled}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}n/a{{end}}'
+done
+```
+
+Stop the rollout when a node repeatedly restarts, reports an OOM event, or
+never reaches its expected management state.
+
+### Step 7 — Check post-boot resources
+
+```bash
+free -h
+uptime
+docker stats --no-stream \
+  $(docker ps --filter "name=clab-ccie-sp-${PROFILE}" --format '{{.Names}}')
+```
+
+High CPU during initial boot is expected. Persistent saturation after all nodes
+are ready requires investigation before configuration deployment.
+
+### Step 8 — Validate management and CLI
+
+Choose the matching inventory:
+
+```bash
+case "$PROFILE" in
+  master)   INVENTORY=inventory/nodes.csv ;;
+  inter-as) INVENTORY=profiles/inter-as/nodes.csv ;;
+  srv6)     INVENTORY=profiles/srv6/nodes.csv ;;
+esac
+
+python3 tools/validate_nodes.py \
+  --inventory "$INVENTORY" \
+  --workers 4
+```
+
+A TCP/22 success without a CLI success is not an accepted node. It normally
+indicates an incomplete boot, incorrect username/password, or platform-specific
+authentication mismatch.
+
+### Step 9 — Save the deployment evidence
+
+Record at minimum:
+
+- Repository revision.
+- Profile and topology filename.
+- Docker and Containerlab versions.
+- Image references and IDs.
+- Node count and health state.
+- CLI validation summary.
+- Host CPU, RAM, swap, load, and disk state.
+- Any warning, workaround, or platform limitation.
+
+Only after these steps pass should configuration phases be applied.
+
+## 10. Phase-based configuration
 
 Never apply every phase at once. Start with one or two canary nodes, validate
 them, and only then expand the same phase.
@@ -321,16 +646,162 @@ Operational order:
 This order prevents troubleshooting BGP when the actual problem is an
 interface, IGP adjacency, label, or next-hop reachability failure.
 
-## 10. Validation
+## 11. Controlled change procedure
 
-### Node management and CLI
+Use the same workflow for a configuration phase, a personal study exercise, or
+a topology refinement.
+
+### Step 1 — Define the change
+
+Write down:
+
+- Intended profile and node scope.
+- Current state.
+- Desired state.
+- Expected protocol or service effect.
+- Validation commands.
+- Rollback method.
+
+If these items cannot be stated clearly, the change is not ready to apply.
+
+### Step 2 — Back up the target nodes
+
+```bash
+python3 tools/backup_provider.py \
+  --inventory profiles/srv6/nodes.csv \
+  --nodes P1,P2 \
+  --workers 2 \
+  --label before-change
+```
+
+Select the inventory and nodes that match the real scope. Backups are runtime
+evidence and may contain sensitive data; keep them outside Git.
+
+### Step 3 — Render and inspect
+
+Regenerate the relevant artifacts and inspect both syntax and semantics:
+
+```bash
+git status --short
+git diff --check
+git diff -- configs topology inventory profiles
+```
+
+### Step 4 — Apply to a canary
+
+```bash
+python3 tools/apply_phase.py 00-base \
+  --profile srv6 \
+  --nodes P1 \
+  --workers 1
+```
+
+Use one node when testing syntax or node-local behavior. Use two directly
+connected nodes when the acceptance condition requires an adjacency or link.
+
+### Step 5 — Validate the canary
+
+Check all layers affected by the change:
+
+```text
+configuration accepted
+        -> interface state
+        -> addressing
+        -> adjacency or session
+        -> route/label/SID installation
+        -> end-to-end service
+```
+
+Do not expand a phase merely because the configuration command returned
+successfully.
+
+### Step 6 — Expand in controlled batches
+
+Recommended order:
+
+1. Core P nodes.
+2. PE and RR nodes.
+3. CE or customer nodes.
+4. Service-specific nodes.
+
+Keep worker counts conservative on a nested-virtualization host. Parallelism
+reduces elapsed time but can also create CPU contention and misleading timeouts.
+
+### Step 7 — Run post-change validation
+
+Repeat the pre-change commands and compare:
+
+- Adjacency and session counts.
+- Route, label, and SID state.
+- Direct-link and end-to-end reachability.
+- Container restart and OOM state.
+- Host resource state.
+- Configuration failure output.
+
+### Step 8 — Roll back or preserve
+
+If acceptance fails:
+
+1. Stop expansion.
+2. Preserve the failing output.
+3. Identify the last accepted configuration commit or backup.
+4. Roll back only the affected scope.
+5. Re-run baseline validation.
+6. Document the cause and resolution.
+
+If acceptance passes, update the relevant status or validation document and
+commit only reproducible source artifacts.
+
+## 12. Validation
+
+Validation proceeds from infrastructure to services. A higher-layer success
+does not remove the requirement to understand lower-layer state.
+
+### 12.1 Node management and CLI
+
+Master:
+
+```bash
+python3 tools/validate_nodes.py \
+  --inventory inventory/nodes.csv \
+  --workers 4
+```
+
+Inter-AS:
 
 ```bash
 python3 tools/validate_nodes.py \
   --inventory profiles/inter-as/nodes.csv --workers 4
 ```
 
-### Directly connected links
+SRv6:
+
+```bash
+python3 tools/validate_nodes.py \
+  --inventory profiles/srv6/nodes.csv \
+  --workers 4
+```
+
+Interpret the summary carefully:
+
+- `tcp22=open` proves transport reachability only.
+- `cli=ok` proves authentication and prompt detection.
+- The reported software version must match the documented image.
+- A failure on every node of one platform usually indicates credentials or
+  platform parameters rather than simultaneous device failure.
+
+### 12.2 Directly connected links
+
+Master:
+
+```bash
+python3 tools/validate_links.py \
+  --profile master \
+  --family both \
+  --workers 2
+```
+
+Inter-AS:
 
 ```bash
 python3 tools/validate_links.py \
@@ -346,7 +817,12 @@ python3 tools/validate_nodes.py \
 python3 tools/validate_srv6_links.py
 ```
 
-### Control-plane checks
+These validators test directed reachability. A physical link normally produces
+one test from each endpoint and for each selected address family. A single
+failed direction may indicate an interface, address, ACL, source-selection, or
+parser issue and must not be silently ignored.
+
+### 12.3 Control-plane checks
 
 Useful IOS XR commands:
 
@@ -366,6 +842,32 @@ show mpls forwarding
 Expected output depends on the profile and phase. Always compare results with
 the inventory rather than a memorized count from another topology.
 
+Recommended validation order:
+
+| Layer | Evidence |
+|---|---|
+| Container | Running state, health, restart count, OOM state |
+| Management | TCP/22, authentication, prompt, and software version |
+| Interface | Administrative and operational state |
+| Addressing | Expected IPv4/IPv6 addresses and connected routes |
+| IGP | Expected neighbor count, levels/areas, metrics, and loopback routes |
+| Transport | MPLS labels, Prefix-SIDs, locators, and next-hop resolution |
+| BGP | Session state, address-family activation, policy, and prefixes |
+| Service | VRF/bridge state, route import/export, and end-to-end traffic |
+| Resiliency | Failure detection, alternate path, convergence, and recovery |
+
+### 12.4 Accepted evidence
+
+The current validated Master baseline includes:
+
+- 30-node generated topology with 47 data-plane links.
+- Expanded nodes `P7`, `P8`, `PE7`, and `PE8` on links `L040-L047`.
+- Base IPv4 and IPv6 addressing.
+- Expanded dual-stack IS-IS foundation.
+- SR-MPLS foundation.
+- Redundant route-reflector control-plane foundation.
+- Management and physical connectivity acceptance.
+
 The current validated Inter-AS baseline is:
 
 - 23/23 running nodes.
@@ -382,7 +884,7 @@ The current validated SRv6 baseline is:
 - IPv6 IS-IS applied successfully to all 14 provider and RR nodes.
 - Zero container restarts, OOM events, or swap use during validation.
 
-## 11. Inter-AS practice workflow
+## 13. Inter-AS practice workflow
 
 Preserve a known-good logical baseline before testing each option:
 
@@ -400,7 +902,7 @@ Do not mix Options A, B, and C during initial validation. The objective is to
 understand which information each model exchanges and where its control plane
 resides.
 
-## 11.1 SRv6 practice workflow
+## 14. SRv6 practice workflow
 
 Start every SRv6 exercise from the validated IPv6 underlay:
 
@@ -413,7 +915,7 @@ Start every SRv6 exercise from the validated IPv6 underlay:
 7. Repeat with uSID only after the classic SRv6 behavior is understood.
 8. Restore or redeploy the baseline before starting a different scenario.
 
-## 12. AUTO1 and synchronization
+## 15. AUTO1 and synchronization
 
 AUTO1 runs Ansible, Python, pyATS/Genie, Netmiko, Nornir, Scrapli, NETCONF,
 and gNMI. The recommended workflow is:
@@ -431,7 +933,7 @@ and gNMI. The recommended workflow is:
 The detailed process is documented in
 [AUTO1 Source of Truth](AUTO1-SOURCE-OF-TRUTH.md).
 
-## 13. Troubleshooting and recovery
+## 16. Troubleshooting and recovery
 
 Troubleshoot from the lowest layer upward:
 
@@ -460,7 +962,66 @@ See:
 - [Inter-AS troubleshooting](../profiles/inter-as/TROUBLESHOOTING.md)
 - [SRv6 validation and troubleshooting](../profiles/srv6/VALIDATION.md)
 
-## 14. Professional Git workflow
+### 16.1 First-response collection
+
+Before restarting or destroying anything, collect evidence:
+
+```bash
+date -Is
+free -h
+uptime
+docker ps -a --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
+docker stats --no-stream
+./labctl status
+git status --short --branch
+```
+
+For one failing container:
+
+```bash
+docker inspect <container-name> \
+  --format 'status={{.State.Status}} restart={{.RestartCount}} oom={{.State.OOMKilled}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}n/a{{end}}'
+
+docker logs --since 10m <container-name> 2>&1 | tail -200
+```
+
+Do not expose passwords, environment variables, private keys, or full
+configurations containing secrets in public evidence.
+
+### 16.2 Recovery decision
+
+| Condition | Preferred response |
+|---|---|
+| One rejected configuration | Inspect `show configuration failed`, abort the candidate, and correct syntax |
+| One bad committed change | Use the platform configuration rollback for that change |
+| One node incomplete after boot | Preserve logs, confirm resources, and use the documented Containerlab lifecycle |
+| Link missing after an unmanaged restart | Destroy and redeploy the profile so Containerlab recreates the wiring |
+| Widespread authentication failure | Verify per-platform credentials before touching configurations |
+| Widespread timeout under high load | Reduce workers, wait for boot stabilization, and recheck host resources |
+| Unknown multi-node state | Back up evidence, destroy the selected profile, regenerate, and redeploy |
+
+### 16.3 Clean redeployment
+
+Use a clean redeployment when ephemeral runtime state is no longer trustworthy:
+
+```bash
+PROFILE=srv6
+
+./labctl destroy "$PROFILE"
+
+docker ps --format '{{.Names}}' | grep '^clab-' || \
+  echo 'PASS: no active Containerlab nodes'
+
+free -h
+uptime
+
+./labctl deploy "$PROFILE"
+```
+
+Destroying a profile is not a substitute for understanding a configuration
+failure. Preserve relevant evidence first.
+
+## 17. Professional Git workflow
 
 From AUTO1 or the server:
 
@@ -484,7 +1045,7 @@ Do not commit Cisco images, private keys, passwords, tokens, configuration
 backups containing secrets, or heavy artifacts. Review
 [`SECURITY.md`](../SECURITY.md) and `.gitignore` before publishing.
 
-## 15. Completion criteria
+## 18. Completion criteria
 
 An exercise is complete when:
 
@@ -502,3 +1063,4 @@ Official technical references are listed in
 [Inter-AS REFERENCES](../profiles/inter-as/REFERENCES.md). SRv6 standards and
 platform references are maintained in the
 [SRv6 design guide](../profiles/srv6/DESIGN.md).
+
