@@ -66,7 +66,7 @@ configuration artifacts, diagram, operating procedure, and acceptance boundary.
 
 ### Inter-AS
 
-- Two independent provider domains.
+- Three provider domains: AS500, AS65100, and AS65200..
 - Separate IGP and BGP foundations for controlled multi-AS practice.
 - Route-reflector roles within each provider domain.
 - External and customer-facing links for Options A, B, and C exercises.
