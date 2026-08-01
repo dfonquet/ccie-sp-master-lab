@@ -18,26 +18,135 @@ PE8, connected through links `L040-L047`.
 
 ## Current implementation status
 
-The 30-node `master` profile is deployed and its expanded IS-IS, SR-MPLS and
-RR control plane has been validated. P7, P8, PE7 and PE8 are included in the
-diagram and use link identifiers `L040-L047`.
+This repository provides three independent, runnable Containerlab profiles. Only one resource-intensive profile should be active at a time.
 
-The `master` and `inter-as` profiles are runnable and have validated baselines.
-The 21-node SRv6 study profile is generated and remains staged-rollout gated; it
-is not yet a full runnable topology. AAA/RPKI and the remaining advanced
-service phases are intentionally incremental. See
-[Deployment status](STATUS.md) for the exact acceptance boundary before moving
-to the next profile.
+### 1. Master profile — 30 nodes
+
+- Eight P routers.
+- Eight PE routers.
+- Two redundant RR/PCE nodes.
+- Nine CE routers.
+- Two client nodes.
+- One AUTO1 automation workstation.
+- Expanded links identified as `L040-L047`.
+
+The following foundation has been validated:
+
+- IPv4 and IPv6 addressing.
+- Dual-stack IS-IS.
+- SR-MPLS.
+- Redundant route-reflector control plane.
+- Physical and management connectivity.
+- Expanded P and PE topology.
+
+### 2. Inter-AS profile — 23 nodes
+
+The Inter-AS profile provides a dual-provider topology designed for:
+
+- Inter-AS Option A.
+- Inter-AS Option B.
+- Inter-AS Option C.
+- eBGP and iBGP.
+- MP-BGP address families.
+- Route reflection inside each autonomous system.
+- Dual-stack provider connectivity.
+- Controlled failure and convergence exercises.
+
+Its generated topology, management access, base configuration, addressing plan, and physical connectivity have been validated.
+
+### 3. SRv6 profile — 21 nodes
+
+The full SRv6 study profile contains:
+
+- Six P routers.
+- Six PE routers.
+- Two route reflectors.
+- Six CE routers.
+- One AUTO1 automation workstation.
+- Thirty-three physical links.
+
+The following foundation has been validated on XRd `24.2.11`:
+
+- Successful deployment of all 21 nodes.
+- Management and CLI access to all network nodes.
+- Base configuration on P, PE, RR, and CE nodes.
+- IPv6 addressing on every provider and customer link.
+- All `66/66` directed IPv6 link tests.
+- IS-IS adjacencies.
+- IPv6 loopback reachability.
+- SRv6 locator configuration and advertisement.
+- SRv6 platform capabilities and endpoint behaviors.
+
+## Study boundary
+
+The profiles provide a stable service-provider foundation without pre-solving every exercise.
+
+The following technologies are intentionally left as progressive study and implementation phases:
+
+- Advanced MP-BGP services.
+- MPLS L2VPN and L3VPN.
+- EVPN and EVPN multihoming.
+- Multicast services.
+- SR-MPLS Traffic Engineering.
+- SRv6 policies and advanced endpoint behaviors.
+- Inter-AS Options A, B, and C.
+- AAA and centralized authentication.
+- RPKI and BGP origin validation.
+- QoS and traffic management.
+- Fast convergence and failure scenarios.
+- Network automation and assurance workflows.
+
+
+See [Deployment status](STATUS.md) for the exact acceptance boundary before moving to the next profile.
 
 ## What this repository contains
 
-- A 30-node Containerlab topology generated from Python.
-- Eight P, eight PE and two redundant RR/PCE XRd nodes.
-- Nine customer-edge and two client IOL-XE nodes.
-- `AUTO1`, a reproducible Ansible/Python/pyATS automation workstation.
-- IPv4/IPv6 addressing, IS-IS and SR-MPLS configuration phases.
-- Validation, backup and read-only command tools.
-- The decisions, failures and platform limitations discovered during the build.
+- Three isolated Containerlab profiles:
+  - Master.
+  - Inter-AS.
+  - SRv6.
+- Reproducible topology generation using Python.
+- XRd provider-core nodes.
+- IOL-XE customer-edge and client nodes.
+- Redundant P, PE, RR, and PCE roles.
+- Deterministic IPv4 and IPv6 addressing.
+- Structured loopback and point-to-point allocation.
+- Validated IS-IS, SR-MPLS, MP-BGP RR, and SRv6 foundation phases.
+- AUTO1 automation workstation with:
+  - Ansible.
+  - Python.
+  - pyATS and Genie.
+  - Netmiko.
+  - Nornir.
+  - Scrapli.
+  - NETCONF.
+  - gNMI.
+- Controlled deployment, inspection, validation, backup, rollback, and destruction tools.
+- Progressive CCIE Service Provider exercises.
+- Network topology diagrams.
+- Addressing and interface inventories.
+- Professional operating and troubleshooting guides.
+- Validation and acceptance evidence.
+- Documented engineering decisions.
+- Resource-consumption findings.
+- Platform limitations and validated workarounds.
+
+## Repository safety boundary
+
+This repository does not include:
+
+- Cisco network operating-system images.
+- Vendor licenses.
+- Passwords or authentication secrets.
+- API tokens.
+- Private SSH keys.
+- Device configuration backups.
+- Generated runtime artifacts.
+
+All proprietary software must be obtained from an authorized source and used according to the applicable vendor license.
+
+
+8:38 a.m.
 
 ## Documentation
 
