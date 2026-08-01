@@ -1,398 +1,422 @@
-# CCIE SP v5.1 Master Lab
+CCIE Service Provider v5.1 Multi-Profile Lab
 
-Reproducible 30-node service-provider lab for Cisco CCIE Service Provider
-v5.1 practice. It combines a redundant dual-stack ISP backbone, customer
-services, Segment Routing and a dedicated automation workstation.
+<div align="center">
 
-![CCIE SP master topology](docs/topology.svg)
+**Reproducible service-provider labs for architecture, configuration, automation, validation, and troubleshooting practice.**
 
-> **Start here:** read the
-> [Professional lab operating guide](docs/LAB-OPERATING-GUIDE.md) before
-> deploying a profile. It explains the repository, source of truth, profiles,
-> addressing, configuration phases, deployment, validation, exercises,
-> troubleshooting and safe synchronization from `AUTO1`.
+[![Validate generated lab](https://github.com/dfonquet/ccie-sp-master-lab/actions/workflows/validate.yml/badge.svg)](https://github.com/dfonquet/ccie-sp-master-lab/actions/workflows/validate.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-green.svg)](LICENSE)
+[![Containerlab](https://img.shields.io/badge/Containerlab-0.77.0-blue.svg)](https://containerlab.dev/)
+[![Cisco XRd](https://img.shields.io/badge/Cisco%20XRd-24.2.11-1ba0d7.svg)](https://www.cisco.com/)
+[![IOS XE](https://img.shields.io/badge/IOL--XE-17.12.1-1ba0d7.svg)](https://www.cisco.com/)
 
-The diagram is generated from the authoritative node and link inventories.
-Orange `NEW` markers identify the validated 2026 expansion: P7, P8, PE7 and
-PE8, connected through links `L040-L047`.
+[Start here](docs/LAB-OPERATING-GUIDE.md) ·
+[Profiles](profiles/README.md) ·
+[Deployment status](STATUS.md) ·
+[Architecture](docs/ARCHITECTURE.md) ·
+[Blueprint coverage](BLUEPRINT-MATRIX.md) ·
+[Installation](docs/CONTAINERLAB-INSTALLATION.md)
+
+</div>
+
+---
+
+## Overview
+
+This repository contains three independent Containerlab profiles built for
+Cisco CCIE Service Provider v5.1 study and service-provider engineering
+practice. The profiles share a deterministic source-of-truth model, generated
+topologies, structured configuration phases, validation tooling, and the
+`AUTO1` automation workstation.
+
+The project provides a tested infrastructure baseline without delivering every
+advanced exercise as a solved configuration. The student retains responsibility
+for implementing, verifying, breaking, troubleshooting, and redesigning the
+service layers.
+
+> [!IMPORTANT]
+> Read the [Professional Lab Operating Guide](docs/LAB-OPERATING-GUIDE.md)
+> before deployment. Run only **one resource-intensive profile at a time**.
+> The profiles share the same CPU, RAM, KVM, storage, and licensed images.
+
+## Choose a lab profile
+
+| Profile | Scale | Validated foundation | Intended study scope |
+|---|---:|---|---|
+| [**Master ISP**](profiles/master/README.md) | 30 nodes, 47 data links | Dual-stack addressing, IS-IS, SR-MPLS, redundant RR foundation, expanded P/PE topology | MPLS, MP-BGP, L3VPN, L2VPN, EVPN, multicast, SR-TE/PCE, QoS, security, assurance, and failure drills |
+| [**Inter-AS**](profiles/inter-as/README.md) | 23 nodes, 35 links | Generated topology, management and CLI access, base addressing, AS separation, and physical connectivity | eBGP/iBGP, routing policy, labeled unicast, route reflection, and Inter-AS Options A, B, and C |
+| [**SRv6**](profiles/srv6/README.md) | 21 nodes, 33 links | Full deployment, base configuration, IS-IS, IPv6 loopback reachability, SRv6 locators, and `66/66` directed IPv6 link tests | SRv6 SID design, endpoint behaviors, SRv6-TE policies, VPN services, uSID, resiliency, and automation |
+
+Each profile has its own topology, management subnet, inventories,
+configuration artifacts, diagram, operating procedure, and acceptance boundary.
 
 ## Current implementation status
 
-This repository provides three independent, runnable Containerlab profiles. Only one resource-intensive profile should be active at a time.
+### Master ISP
 
-### 1. Master profile — 30 nodes
+- Eight P routers: `P1-P8`.
+- Eight PE routers: `PE1-PE8`.
+- Two redundant RR/PCE nodes: `RR1-RR2`.
+- Nine CE routers: `CE1-CE9`.
+- Two customer test endpoints: `C1-C2`.
+- One automation workstation: `AUTO1`.
+- Expanded nodes `P7`, `P8`, `PE7`, and `PE8` use links `L040-L047`.
+- The expanded dual-stack IS-IS, SR-MPLS, and route-reflector foundations have
+  been validated.
 
-- Eight P routers.
-- Eight PE routers.
-- Two redundant RR/PCE nodes.
-- Nine CE routers.
-- Two client nodes.
-- One AUTO1 automation workstation.
-- Expanded links identified as `L040-L047`.
+### Inter-AS
 
-The following foundation has been validated:
+- Two independent provider domains.
+- Separate IGP and BGP foundations for controlled multi-AS practice.
+- Route-reflector roles within each provider domain.
+- External and customer-facing links for Options A, B, and C exercises.
+- Generated artifacts, management access, base configuration, addressing, and
+  physical connectivity have been validated.
 
-- IPv4 and IPv6 addressing.
-- Dual-stack IS-IS.
-- SR-MPLS.
-- Redundant route-reflector control plane.
-- Physical and management connectivity.
-- Expanded P and PE topology.
+### SRv6
 
-### 2. Inter-AS profile — 23 nodes
+- Six P routers, six PE routers, two route reflectors, six CE routers, and
+  `AUTO1`.
+- All 21 containers deployed successfully during acceptance testing.
+- Management and CLI access validated for all 20 network nodes.
+- Base configurations applied to P, PE, RR, and CE roles.
+- All `66/66` directed IPv6 link tests passed.
+- IS-IS adjacencies, loopback reachability, SRv6 locator advertisement, and
+  XRd `24.2.11` SRv6 capabilities were validated.
 
-The Inter-AS profile provides a dual-provider topology designed for:
+See [STATUS.md](STATUS.md) for the exact evidence, remaining work, and platform
+boundaries. A successful baseline does not imply that every advanced service
+phase has already been solved or accepted.
 
-- Inter-AS Option A.
-- Inter-AS Option B.
-- Inter-AS Option C.
-- eBGP and iBGP.
-- MP-BGP address families.
-- Route reflection inside each autonomous system.
-- Dual-stack provider connectivity.
-- Controlled failure and convergence exercises.
+## Topology
 
-Its generated topology, management access, base configuration, addressing plan, and physical connectivity have been validated.
+The Master diagram below is generated from the authoritative node and link
+inventories. Orange `NEW` markers identify the validated expansion.
 
-### 3. SRv6 profile — 21 nodes
+![CCIE SP Master topology](docs/topology.svg)
 
-The full SRv6 study profile contains:
+Profile-specific diagrams:
 
-- Six P routers.
-- Six PE routers.
-- Two route reflectors.
-- Six CE routers.
-- One AUTO1 automation workstation.
-- Thirty-three physical links.
+- [Master ISP design and topology](profiles/master/DESIGN.md)
+- [Inter-AS topology](profiles/inter-as/topology.svg)
+- [SRv6 topology](profiles/srv6/topology.svg)
+- [Cross-profile design catalog](docs/LAB-DESIGN-CATALOG.md)
 
-The following foundation has been validated on XRd `24.2.11`:
+## Architecture at a glance
 
-- Successful deployment of all 21 nodes.
-- Management and CLI access to all network nodes.
-- Base configuration on P, PE, RR, and CE nodes.
-- IPv6 addressing on every provider and customer link.
-- All `66/66` directed IPv6 link tests.
-- IS-IS adjacencies.
-- IPv6 loopback reachability.
-- SRv6 locator configuration and advertisement.
-- SRv6 platform capabilities and endpoint behaviors.
+### Master platform inventory
 
+| Role | Platform | Nodes | Quantity |
+|---|---|---|---:|
+| Provider core | Cisco XRd Control Plane `24.2.11` | `P1-P8` | 8 |
+| Provider edge | Cisco XRd Control Plane `24.2.11` | `PE1-PE8` | 8 |
+| Route reflector and PCE | Cisco XRd Control Plane `24.2.11` | `RR1-RR2` | 2 |
+| Customer edge | Cisco IOL-XE `17.12.1` | `CE1-CE9` | 9 |
+| Customer test endpoints | Cisco IOL-XE `17.12.1` | `C1-C2` | 2 |
+| Automation workstation | Ubuntu-based container | `AUTO1` | 1 |
+
+The Master backbone uses two longitudinal planes, three inter-plane rungs, and
+two diagonal paths. Every PE is dual-homed to a pair of P routers. `RR1` and
+`RR2` provide redundant route-reflector and PCE roles. `CE2`, `CE5`, and `CE8`
+are dual-homed customer sites for routing-policy, loop-prevention, L2VPN, EVPN,
+and failure exercises.
+
+Full architectural detail belongs in the
+[Architecture Guide](docs/ARCHITECTURE.md), not in this landing page.
+
+## Validated starting point
+
+Depending on the selected profile, the starting point includes:
+
+- Successful Containerlab deployment.
+- Isolated management connectivity.
+- Management and CLI reachability.
+- Deterministic node, interface, link, and addressing inventories.
+- Base interface and loopback configuration.
+- Operational physical links.
+- IPv4 and IPv6 point-to-point connectivity.
+- Dual-stack IS-IS where required.
+- SR-MPLS foundations in the Master profile.
+- Autonomous-system separation in the Inter-AS profile.
+- Operational IS-IS and SRv6 locators in the SRv6 profile.
+- Backup, validation, rollback, and automation tooling through `AUTO1`.
 
 ## Study and implementation boundary
 
-The three profiles provide validated, operational service-provider foundations. Their physical connectivity, management access, deterministic addressing, base configurations, and profile-specific control-plane components have been tested.
+The following technologies remain progressive configuration and
+troubleshooting exercises. Their presence in the roadmap does not mean that a
+fully solved and accepted configuration is shipped in every profile.
 
-The repository intentionally does not provide fully solved configurations for every technology. Instead, it supplies the topology, addressing, automation framework, baseline control plane, and validation tools required to implement and troubleshoot the following technologies as progressive exercises.
-
-### Master profile exercises
+<details>
+<summary><strong>Master ISP exercises</strong></summary>
 
 - Advanced MP-BGP address families and routing policy.
 - MPLS L3VPN and L2VPN services.
-- EVPN and EVPN multihoming.
+- EVPN, IRB, and EVPN multihoming.
 - Multicast routing and multicast VPN services.
 - SR-MPLS Traffic Engineering and policy steering.
-- Route-reflector and PCE design changes.
-- QoS and traffic-management policies.
-- Fast convergence, TI-LFA, and failure scenarios.
-- AAA, TACACS+, RADIUS, and operational security.
+- PCC/PCE, affinity, disjointness, and SRLG exercises.
+- QoS and traffic-management policy.
+- Fast convergence, TI-LFA, BGP-PIC, and failure scenarios.
+- AAA, TACACS+, RADIUS, LPTS, and operational security.
 - RPKI and BGP origin validation.
-- Automation, configuration compliance, and assurance workflows.
+- Automation, compliance, telemetry, and assurance workflows.
 
-### Inter-AS profile exercises
+</details>
 
-- Inter-AS Option A.
-- Inter-AS Option B.
-- Inter-AS Option C.
+<details>
+<summary><strong>Inter-AS exercises</strong></summary>
+
+- Inter-AS Options A, B, and C.
 - eBGP and iBGP policy design.
 - MP-BGP route exchange between autonomous systems.
 - Route-reflector interaction between provider domains.
 - IPv4 and IPv6 inter-provider connectivity.
 - Inter-AS L3VPN and labeled-unicast scenarios.
-- Routing-policy enforcement and route-leak prevention.
-- Failure, convergence, and path-selection exercises.
+- Route-leak prevention, path selection, convergence, and failure testing.
 
-### SRv6 profile exercises
+</details>
 
-- SRv6 SID allocation and locator design changes.
-- SRv6 Traffic Engineering policies.
-- Explicit SRv6 segment lists.
+<details>
+<summary><strong>SRv6 exercises</strong></summary>
+
+- SID allocation and locator redesign.
+- Explicit segment lists and SRv6-TE policies.
 - Dynamic and static binding SIDs.
-- SRv6 policy steering.
-- SRv6 VPN services.
-- SRv6 endpoint behaviors.
+- Policy steering and VPN services.
+- Endpoint behavior validation.
 - Reduced encapsulation and uSID experimentation.
-- SRv6 resiliency and failure scenarios.
-- Automation and validation of SRv6 operational state.
+- Resiliency, failure, and automation scenarios.
 
-### Validated starting point
+</details>
 
-Students begin from a functional baseline rather than an empty topology. Depending on the selected profile, the validated starting point includes:
+## Quick start
 
-- Successful Containerlab deployment.
-- Management and CLI reachability.
-- Base interface and loopback configuration.
-- Deterministic IPv4 and IPv6 addressing.
-- Operational physical links.
-- Dual-stack IS-IS where required by the profile.
-- SR-MPLS foundations in the Master profile.
-- Autonomous-system separation in the Inter-AS profile.
-- Operational IS-IS and SRv6 locators in the SRv6 profile.
-- Backup, validation, and automation utilities through AUTO1.
+### Prerequisites
 
-This boundary keeps the infrastructure reproducible and functional while leaving the advanced service-provider technologies available for configuration, verification, troubleshooting, and redesign by the student.
+- Linux host or VM with nested KVM available.
+- Docker Engine.
+- Containerlab `0.77.0` or a validated compatible release.
+- Locally built or imported authorized network images.
+- Sufficient CPU, RAM, and disk for the selected profile.
+- Runtime credentials stored outside Git.
 
+For the complete host, Docker, Containerlab, image-transfer, vrnetlab, and
+`AUTO1` build procedure, use the
+[Containerlab Host, Image, and AUTO1 Build Guide](docs/CONTAINERLAB-INSTALLATION.md).
 
-See [Deployment status](STATUS.md) for the exact acceptance boundary before moving to the next profile.
+### Clone and prepare
 
-## What this repository contains
+```bash
+git clone https://github.com/dfonquet/ccie-sp-master-lab.git
+cd ccie-sp-master-lab
 
-### Lab profiles
+cp .env.example .env
+chmod 0600 .env
+${EDITOR:-nano} .env
+```
 
-The repository provides three isolated and independently operated Containerlab profiles:
+The local `.env` file is ignored by Git. Never commit credentials.
 
-- **Master — 30 nodes:** General CCIE Service Provider practice environment with redundant P, PE, RR/PCE, CE, client, and automation roles.
-- **Inter-AS — 23 nodes:** Multi-provider environment designed for BGP, routing-policy, route-reflector, labeled-unicast, and Inter-AS Options A, B, and C exercises.
-- **SRv6 — 21 nodes:** IPv6-native provider environment with six P routers, six PE routers, two route reflectors, six CE routers, AUTO1, IS-IS, and validated SRv6 locators.
+### Generate and validate artifacts
 
-Only one resource-intensive profile should be active at a time.
+```bash
+python3 tools/build_lab.py
+python3 tools/validate_srv6_artifacts.py
+git diff --check
+```
 
-### Network platforms
+The relevant generator remains the source of truth. Generated topology,
+inventory, and configuration artifacts should not be edited manually.
 
-- Cisco XRd Control Plane `24.2.11` for provider-core, PE, RR, and PCE roles.
-- Cisco IOL-XE `17.12.1` for customer-edge and client roles.
-- Linux-based AUTO1 container for automation, validation, and operational workflows.
-- Containerlab `0.77.0` for topology orchestration and lifecycle management.
+### Operate one profile
 
-### Topology and configuration generation
+```bash
+./labctl status
+./labctl deploy master
+./labctl inspect master
+./labctl destroy master
+```
 
-- Reproducible topology generation using Python.
-- CSV-based node and link sources of truth.
-- Deterministic management, loopback, and point-to-point addressing.
-- Structured IPv4 and IPv6 allocation.
-- Automatically generated Containerlab topology files.
-- Automatically generated initial device configurations.
-- Consistent node naming, interface descriptions, and link identifiers.
-- Separate management networks and lifecycle controls for each profile.
+Replace `master` with `inter-as` or `srv6` as required:
 
-### Validated network foundations
+```bash
+./labctl deploy inter-as
+./labctl deploy srv6
+```
 
-Depending on the selected profile, the validated baseline includes:
+`labctl` refuses to start another heavy profile while Containerlab nodes are
+already active.
 
-- Management and CLI reachability.
-- Physical and logical interface state.
-- IPv4 and IPv6 point-to-point connectivity.
-- Dual-stack IS-IS.
-- SR-MPLS infrastructure.
-- MP-BGP route-reflector foundations.
-- Autonomous-system separation for Inter-AS exercises.
-- IPv6 loopback reachability.
-- SRv6 locator advertisement and operational state.
-- Controlled configuration deployment and rollback.
-- Platform-health, restart, and out-of-memory checks.
+## Addressing and management
 
-Advanced services remain progressive student exercises and are not delivered as fully solved configurations.
+| Profile | Management subnet | Docker network |
+|---|---|---|
+| Master | `10.201.255.0/24` | `ccie-sp-master-mgmt` |
+| Inter-AS | `10.202.255.0/24` | `ccie-sp-inter-as-mgmt` |
+| SRv6 | `10.203.255.0/24` | `ccie-sp-srv6-mgmt` |
 
-### AUTO1 automation workstation
+Master provider addressing follows these conventions:
 
-AUTO1 provides a reproducible network-automation environment containing:
+```text
+IPv4 loopbacks:      10.0.0.<node-id>/32
+IPv4 P2P links:      10.255.0.0/31 onward
+IPv6 loopbacks:      2001:db8:500:abcd::<node-id>/128
+IPv6 provider links: 2001:db8:1000:<link-id>::/127
+```
+
+Customer-facing networks use separate access blocks and are not automatically
+placed in the provider IS-IS underlay. See [Addressing](docs/ADDRESSING.md) and
+the profile-specific inventories for authoritative values.
+
+## Configuration phase model
+
+| Phase | Scope | Boundary |
+|---|---|---|
+| `00-base` | Hostnames, loopbacks, descriptions, interface state, and link addressing | Validated baseline |
+| `10-isis` | Dual-stack IS-IS Level 2, metrics, LFA, and convergence foundations | Validated baseline |
+| `15-provider-standard` | Common P/PE/RR operational standard and IPv6 normalization | Validated baseline |
+| `20-sr-mpls` | SRGB, Prefix-SIDs, SR-MPLS, and SR-TE hierarchy | Validated foundation |
+| `30-bgp-rr` | Redundant RR, iBGP, VPNv4, VPNv6, and routing policy | Progressive |
+| `40-l3vpn` | VRFs, RD/RT, PE-CE routing, shared services, and extranets | Progressive |
+| `50-sr-te-pce` | SR policies, PCC/PCE, affinity, disjointness, and SRLG | Progressive |
+| `60-multicast` | PIM, RP designs, mLDP, Tree-SID, and NG-mVPN | Progressive |
+| `70-l2vpn-evpn` | VPWS, VPLS, EVPN, IRB, and multihoming | Progressive |
+| `80-security-assurance` | AAA, LPTS, RPKI, telemetry, gNMI, and TWAMP | Progressive |
+| `90-failure-drills` | TI-LFA, BGP-PIC, PCE failover, and controlled faults | Progressive |
+
+See [Failure Drills](docs/FAILURE-DRILLS.md) before using BFD as an acceptance
+criterion on XRd Control Plane virtual links.
+
+## AUTO1 automation workstation
+
+`AUTO1` uses the local `ccie-sp-automation:1.0` image and provides:
 
 - Ansible.
 - Python.
 - pyATS and Genie.
-- Netmiko.
-- Nornir.
+- Netmiko and Nornir.
 - Scrapli.
 - NETCONF through `ncclient`.
 - gNMI through `pygnmi`.
-- Cisco automation collections and supporting libraries.
+- Configuration rendering, check mode, controlled deployment, backup,
+  validation, compliance, and troubleshooting workflows.
 
-AUTO1 supports configuration rendering, check mode, controlled deployment, operational validation, configuration backup, compliance checks, and troubleshooting workflows.
+Start with:
 
-### Operations and validation tools
+- [AUTO1 automation guide](automation/README.md)
+- [AUTO1 Source-of-Truth workflow](docs/AUTO1-SOURCE-OF-TRUTH.md)
+- [Automation architecture](docs/AUTOMATION.md)
 
-- Profile-aware deployment and destruction through `labctl`.
-- Protection against running multiple heavy profiles simultaneously.
-- Static topology and addressing validation.
-- Management and CLI reachability checks.
-- Directed link-connectivity testing.
-- Configuration backup tools.
-- Controlled configuration-phase application.
-- Commit-check and rollback workflows.
-- Host CPU, memory, swap, disk, and load monitoring.
-- Container restart and out-of-memory detection.
-- Repeatable acceptance tests and evidence collection.
+## Documentation map
 
-### Documentation
+### Start and operate
 
-The repository includes:
+| Guide | Purpose |
+|---|---|
+| [Professional Lab Operating Guide](docs/LAB-OPERATING-GUIDE.md) | Start-to-finish repository and safe-operation workflow |
+| [Deployment Status](STATUS.md) | Exact validation evidence, remaining work, and acceptance boundaries |
+| [Operations](OPERATIONS.md) | Daily lifecycle and quick commands |
+| [Validation](docs/VALIDATION.md) | Repeatable health, reachability, and protocol checks |
+| [Troubleshooting](docs/TROUBLESHOOTING.md) | Failures encountered and their resolutions |
 
-- Network topology diagrams for every profile.
-- Node, link, interface, and addressing inventories.
-- Architecture and design rationale.
-- Containerlab, Docker, network-image, and AUTO1 build instructions.
-- Profile deployment and operating procedures.
-- CCIE Service Provider blueprint mapping.
-- Progressive study boundaries and suggested exercises.
-- Troubleshooting and failure-injection guidance.
-- Validation results and acceptance evidence.
-- Resource-consumption findings.
-- Platform limitations and validated workarounds.
-- References to relevant vendor documentation and IETF RFCs.
+### Understand the design
+
+| Guide | Purpose |
+|---|---|
+| [Architecture](docs/ARCHITECTURE.md) | Roles, redundancy, components, and study modules |
+| [Addressing](docs/ADDRESSING.md) | Management, loopbacks, links, IS-IS, labels, and SIDs |
+| [Lab Design Catalog](docs/LAB-DESIGN-CATALOG.md) | Cross-profile scale, addressing, IGP choices, and study boundaries |
+| [IPv6 Standard](IPV6-STANDARD.md) | Provider IPv6 control-plane conventions |
+| [CCIE SP Blueprint Matrix](BLUEPRINT-MATRIX.md) | Mapping to CCIE SP v5.1 domains |
+| [Multi-Profile Roadmap](docs/MULTI-PROFILE-ROADMAP.md) | Profile evolution and acceptance gates |
+
+### Build and automate
+
+| Guide | Purpose |
+|---|---|
+| [Complete Build Guide](docs/BUILD-GUIDE.md) | Implementation history, host resources, and design decisions |
+| [Containerlab Installation](docs/CONTAINERLAB-INSTALLATION.md) | Host, Docker, storage, licensed-image transfer, vrnetlab, and AUTO1 build |
+| [Automation](docs/AUTOMATION.md) | Automation platform and learning path |
+| [AUTO1 Source of Truth](docs/AUTO1-SOURCE-OF-TRUTH.md) | Render, check, diff, deploy, post-check, backup, and rollback workflow |
+
+### Profile guides
+
+| Profile | Operations | Design | Troubleshooting | References |
+|---|---|---|---|---|
+| Master | [Guide](profiles/master/README.md) | [Design](profiles/master/DESIGN.md) | [Troubleshooting](profiles/master/TROUBLESHOOTING.md) | [References](profiles/master/REFERENCES.md) |
+| Inter-AS | [Guide](profiles/inter-as/README.md) | [Design](profiles/inter-as/DESIGN.md) | [Troubleshooting](profiles/inter-as/TROUBLESHOOTING.md) | [References](profiles/inter-as/REFERENCES.md) |
+| SRv6 | [Guide](profiles/srv6/README.md) | [Design](profiles/srv6/DESIGN.md) | [Troubleshooting](profiles/srv6/TROUBLESHOOTING.md) | [References](profiles/srv6/REFERENCES.md) |
+
+## Platform boundaries
+
+Cisco XRd Control Plane is suitable for the routing, MPLS, Segment Routing,
+VPN control plane, PCE, security, and model-driven management portions of this
+project. It is not a substitute for every forwarding ASIC, line card, optical
+system, or physical interface behavior.
+
+The following areas may require design study, an on-demand XRv9k image, or
+physical equipment:
+
+- Physical clocking and synchronization.
+- Hardware line-card QoS.
+- Real forwarding-plane scale.
+- MACsec encryption behavior.
+- Optical transport characteristics.
+- ASIC-dependent forwarding and counters.
+- Some Layer 2 data-plane functions.
+- Platform-dependent BFD behavior.
+
+Documented limitations are laboratory boundaries, not successful feature
+validation.
 
 ## Repository safety and licensing boundary
 
-This repository does not contain or distribute:
+This repository does **not** contain or distribute:
 
 - Cisco network operating-system images.
-- Vendor software archives or executables.
-- Product licenses or entitlement files.
-- Passwords or authentication secrets.
-- API tokens.
+- Vendor archives, executables, licenses, or entitlement files.
+- Passwords, authentication secrets, or API tokens.
 - Private SSH keys.
 - Local `.env` files.
 - Device configuration backups.
 - Container runtime state.
-- Generated deployment artifacts.
-- User-specific laboratory credentials.
+- Generated deployment artifacts containing local data.
 
-Proprietary network software must be obtained from an authorized vendor source and used in accordance with the applicable license and entitlement requirements.
+Obtain proprietary software from an authorized source and use it according to
+the applicable license and entitlement requirements. Supply runtime credentials
+through ignored environment files, environment variables, or an approved
+secret-management system.
 
-Runtime credentials must be supplied through ignored environment files, environment variables, or an approved secrets-management mechanism. They must never be embedded in generated configurations, committed to Git, or included in validation evidence.
+See [SECURITY.md](SECURITY.md) before making a fork or deployment public.
 
-## Documentation
+## Contributing
 
-| Guide | Purpose |
-|---|---|
-| [Professional operating guide](docs/LAB-OPERATING-GUIDE.md) | Start-to-finish explanation and safe operating workflow |
-| [Lab 1 — Master ISP](profiles/master/README.md) | Complete master topology, operation and study order |
-| [Lab 2 — Inter-AS](profiles/inter-as/README.md) | Complete multi-AS topology, addressing and workflow |
-| [Lab 3 — SRv6](https://github.com/dfonquet/ccie-sp-master-lab/blob/main/profiles/srv6/README.md) | SRv6 study profile, topology scope, rollout gates and study workflow |
-| [Laboratory profiles](profiles/README.md) | Profile isolation and one-lab-at-a-time model |
-| [Complete build guide](docs/BUILD-GUIDE.md) | Step-by-step history, resources and design decisions |
-| [Containerlab installation](docs/CONTAINERLAB-INSTALLATION.md) | Host design, installation, storage, images and lifecycle rationale |
-| [Lab design catalog](docs/LAB-DESIGN-CATALOG.md) | Profile scale, addressing, IGP choices and study boundaries |
-| [Architecture](docs/ARCHITECTURE.md) | Nodes, roles, redundancy and study modules |
-| [Addressing](docs/ADDRESSING.md) | Management, loopbacks, links, IS-IS and SIDs |
-| [Automation](docs/AUTOMATION.md) | AUTO1 design, tools and learning path |
-| [AUTO1 Source of Truth](docs/AUTO1-SOURCE-OF-TRUTH.md) | BGP render, validation, diff, deploy and post-check workflow |
-| [Multi-profile roadmap](docs/MULTI-PROFILE-ROADMAP.md) | Master, Inter-AS and SRv6 design and acceptance gates |
-| [Validation](docs/VALIDATION.md) | Repeatable health and protocol checks |
-| [Troubleshooting](docs/TROUBLESHOOTING.md) | Errors encountered and their resolutions |
-| [IPv6 standard](IPV6-STANDARD.md) | Provider-specific IPv6 control-plane standard |
-| [Operations](OPERATIONS.md) | Daily lifecycle and quick commands |
-| [Blueprint matrix](BLUEPRINT-MATRIX.md) | Mapping to CCIE SP v5.1 domains |
-| [Security](SECURITY.md) | Credential, image and publishing precautions |
+Contributions should preserve the source-of-truth model, profile isolation,
+documentation accuracy, and safety boundary.
 
-## Architecture
-
-| Role | Platform | Nodes |
-|---|---|---|
-| Provider core | XRd 24.2.11 | P1-P8 |
-| Provider edge | XRd 24.2.11 | PE1-PE8 |
-| Route reflector and PCE | XRd 24.2.11 | RR1-RR2 |
-| Customer edge | IOL-XE 17.12.1 | CE1-CE9 |
-| Customer test endpoints | IOL-XE 17.12.1 | C1-C2 |
-| Automation workstation | Ubuntu 24.04 container | AUTO1 |
-
-Total: 18 XRd nodes, 11 IOL nodes, one automation workstation, and 47
-data-plane links.
-
-The P backbone has two longitudinal planes, three inter-plane rungs, and two
-diagonal paths. Every PE is dual-homed to a pair of P routers. RR1 and RR2
-also provide redundant PCE roles. CE2, CE5, and CE8 are dual-homed customer
-sites for PE-CE loop prevention and EVPN/L2VPN exercises.
-
-## Images
-
-```text
-ios-xr/xrd-control-plane:24.2.11
-vrnetlab/cisco_iol:17.12.01
-```
-
-The IOL artifact supplied in the folder named `17.15.01` was verified by CLI
-as Dublin 17.12.1. This project deliberately uses the truthful image tag.
-
-## Management
-
-```text
-Subnet: 10.201.255.0/24
-Docker network: ccie-sp-master-mgmt
-Ubuntu next hop from Windows: 192.168.192.10
-```
-
-Node addresses are listed in `inventory/nodes.csv`.
-
-## Generated files
-
-Run:
+Before opening a pull request:
 
 ```bash
 python3 tools/build_lab.py
+python3 -m compileall -q tools
+git diff --check
 ```
 
-This generates:
+Follow [CONTRIBUTING.md](CONTRIBUTING.md) for branch, validation, evidence, and
+pull-request requirements.
 
-```text
-topology/ccie-sp-master.clab.yml
-inventory/nodes.csv
-inventory/links.csv
-configs/00-base/
-configs/10-isis/
-configs/15-provider-standard/
-configs/20-sr-mpls/
-```
+## License
 
-The source of truth is `tools/build_lab.py`; generated files should not be
-edited by hand.
+Repository-authored source code and documentation are available under the
+[MIT License](LICENSE). Vendor software and network operating-system images are
+not covered by this license and are not distributed by this project.
 
-## Configuration phases
+---
 
-1. `00-base`: hostnames, dual-stack loopbacks, link addressing, descriptions.
-2. `10-isis`: dual-stack IS-IS Level 2, metrics, LFA and convergence.
-3. `15-provider-standard`: non-destructive migration of the existing provider
-   IPv6 plan plus the common P/PE/RR operational standard.
-4. `20-sr-mpls`: SRGB, dual-stack Prefix-SIDs and the SR-TE hierarchy.
-5. `30-bgp-rr`: dual route reflectors and VPNv4/VPNv6.
-6. `40-l3vpn`: PE-CE routing and shared/extranet services.
-7. `50-sr-te-pce`: SR policies, PCC/PCE, disjointness, affinity, and SRLG.
-8. `60-multicast`: PIM, RP designs, mLDP, Tree-SID, and NG-mVPN.
-9. `70-l2vpn-evpn`: VPWS, VPLS, EVPN, IRB, and multihoming.
-10. `80-security-assurance`: AAA/RADIUS, LPTS, RPKI, telemetry, gNMI, and TWAMP.
-11. `90-failure-drills`: TI-LFA, BGP-PIC, PCE failover and faults; read the
-    [XRd BFD platform boundary](docs/FAILURE-DRILLS.md) before BFD practice.
+<div align="center">
 
-Phases 30-90 are intentionally developed and validated incrementally. This
-keeps each baseline exam-like and prevents untested feature combinations from
-being hidden in one enormous startup configuration.
+Built as a reproducible study environment for serious CCIE Service Provider
+practice, controlled experimentation, and documented engineering work.
 
-## Provider addressing standard
-
-The deployed IPv4 addresses are immutable in the refinement phase:
-
-```text
-Provider loopbacks: 10.0.0.<node-id>/32
-Point-to-point:     10.255.0.0/31 onward
-```
-
-The provider IPv6 plan follows the requested CCIE SP convention:
-
-```text
-Provider loopbacks: 2001:db8:500:abcd::<node-id>/128
-Provider links:     2001:db8:1000:<101-125>::/127
-```
-
-Customer-facing IPv6 links retain their own access block and are not placed in
-the provider IS-IS underlay.
-
-## Automation
-
-`AUTO1` uses `ccie-sp-automation:1.0` at `10.201.255.150`. See
-`automation/README.md` for its Ansible, Python, pyATS/Genie, NETCONF and gNMI
-examples.
-
-## Platform boundaries
-
-XRd Control Plane is suitable for the routing, MPLS, SR, VPN, PCE, security,
-and model-driven management portions of this lab. Physical clocking,
-line-card-specific QoS, real MACsec, optical behavior, and some L2 data-plane
-counters require either design study or an on-demand XRv9k/physical platform.
+</div>
