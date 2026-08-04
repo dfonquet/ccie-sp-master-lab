@@ -338,6 +338,10 @@ def render_topology() -> str:
                     f"      mgmt-ipv4: {node.mgmt}",
                     "      env:",
                     "        AUTO1_PASSWORD: ${CCIE_AUTO_PASSWORD}",
+                    "        CCIE_XRD_USERNAME: ${CCIE_XRD_USERNAME}",
+                    "        CCIE_XRD_PASSWORD: ${CCIE_XRD_PASSWORD}",
+                    "        CCIE_IOL_USERNAME: ${CCIE_IOL_USERNAME}",
+                    "        CCIE_IOL_PASSWORD: ${CCIE_IOL_PASSWORD}",
                     "      binds:",
                     "        - ../automation:/workspace",
                 ]
