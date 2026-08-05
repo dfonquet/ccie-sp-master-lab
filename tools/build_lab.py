@@ -13,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 TOPOLOGY_DIR = ROOT / "topology"
 INVENTORY_DIR = ROOT / "inventory"
 CONFIG_DIR = ROOT / "configs"
+STARTUP_DIR = TOPOLOGY_DIR / "startup"
 
 XR_IMAGE = "ios-xr/xrd-control-plane:24.2.11"
 IOL_IMAGE = "vrnetlab/cisco_iol:17.12.01"
@@ -177,17 +178,19 @@ NODES = [
     Node("PE8", "PE", "cisco_xrd", "10.201.255.118", 18, 90),
     Node("RR1", "RR-PCE", "cisco_xrd", "10.201.255.121", 13, 90),
     Node("RR2", "RR-PCE", "cisco_xrd", "10.201.255.122", 14, 90),
+    # Stagger IOL individually. Starting all eleven at second 105 allowed the
+    # nested NOS to reach its initial dialog before postdeploy wrote config.
     Node("CE1", "CE", "cisco_iol", "10.201.255.131", 1, 105),
-    Node("CE2", "CE-DUAL", "cisco_iol", "10.201.255.132", 2, 105),
-    Node("CE3", "CE", "cisco_iol", "10.201.255.133", 3, 105),
-    Node("CE4", "CE", "cisco_iol", "10.201.255.134", 4, 105),
-    Node("CE5", "CE-DUAL", "cisco_iol", "10.201.255.135", 5, 105),
-    Node("CE6", "CE", "cisco_iol", "10.201.255.136", 6, 105),
-    Node("CE7", "CE", "cisco_iol", "10.201.255.137", 7, 105),
-    Node("CE8", "CE-DUAL", "cisco_iol", "10.201.255.138", 8, 105),
-    Node("CE9", "CE", "cisco_iol", "10.201.255.139", 9, 105),
-    Node("C1", "CLIENT", "cisco_iol", "10.201.255.141", 10, 105),
-    Node("C2", "CLIENT", "cisco_iol", "10.201.255.142", 11, 105),
+    Node("CE2", "CE-DUAL", "cisco_iol", "10.201.255.132", 2, 120),
+    Node("CE3", "CE", "cisco_iol", "10.201.255.133", 3, 135),
+    Node("CE4", "CE", "cisco_iol", "10.201.255.134", 4, 150),
+    Node("CE5", "CE-DUAL", "cisco_iol", "10.201.255.135", 5, 165),
+    Node("CE6", "CE", "cisco_iol", "10.201.255.136", 6, 180),
+    Node("CE7", "CE", "cisco_iol", "10.201.255.137", 7, 195),
+    Node("CE8", "CE-DUAL", "cisco_iol", "10.201.255.138", 8, 210),
+    Node("CE9", "CE", "cisco_iol", "10.201.255.139", 9, 225),
+    Node("C1", "CLIENT", "cisco_iol", "10.201.255.141", 10, 240),
+    Node("C2", "CLIENT", "cisco_iol", "10.201.255.142", 11, 255),
     Node("AUTO1", "AUTOMATION", "linux", "10.201.255.150", 0, 0),
 ]
 
@@ -324,8 +327,10 @@ def render_topology() -> str:
         "  kinds:",
         "    cisco_xrd:",
         f"      image: {XR_IMAGE}",
+        "      startup-config: startup/__clabNodeName__.cfg",
         "    cisco_iol:",
         f"      image: {IOL_IMAGE}",
+        "      startup-config: startup/__clabNodeName__.partial.cfg",
         "",
         "  nodes:",
     ]
@@ -338,6 +343,10 @@ def render_topology() -> str:
                     f"      mgmt-ipv4: {node.mgmt}",
                     "      env:",
                     "        AUTO1_PASSWORD: ${CCIE_AUTO_PASSWORD}",
+                    "        CCIE_XRD_USERNAME: ${CCIE_XRD_USERNAME}",
+                    "        CCIE_XRD_PASSWORD: ${CCIE_XRD_PASSWORD}",
+                    "        CCIE_IOL_USERNAME: ${CCIE_IOL_USERNAME}",
+                    "        CCIE_IOL_PASSWORD: ${CCIE_IOL_PASSWORD}",
                     "      binds:",
                     "        - ../automation:/workspace",
                 ]
@@ -495,7 +504,7 @@ def render_sr_mpls(node: Node) -> str:
     )
 
 
-def render_provider_standard(node: Node) -> str:
+def render_provider_standard(node: Node, *, migration: bool = True) -> str:
     """Render the in-place migration from the deployed baseline.
 
     The commands deliberately never remove or replace an IPv4 address.
@@ -507,7 +516,11 @@ def render_provider_standard(node: Node) -> str:
         "!",
         "interface Loopback0",
         f" description MgM-{node.node_id:06d} | CCIE-SP {node.role}",
-        f" no ipv6 address {node.legacy_loopback6}/128",
+        *(
+            [f" no ipv6 address {node.legacy_loopback6}/128"]
+            if migration
+            else []
+        ),
         f" ipv6 address {node.loopback6}/128",
         "!",
     ]
@@ -516,14 +529,10 @@ def render_provider_standard(node: Node) -> str:
         legacy_ipv6 = (
             link.a_legacy_ipv6 if link.a == node.name else link.b_legacy_ipv6
         )
-        lines.extend(
-            [
-                f"interface {cli_if}",
-                f" no ipv6 address {legacy_ipv6}/127",
-                f" ipv6 address {ipv6}/127",
-                "!",
-            ]
-        )
+        lines.extend([f"interface {cli_if}"])
+        if migration:
+            lines.append(f" no ipv6 address {legacy_ipv6}/127")
+        lines.extend([f" ipv6 address {ipv6}/127", "!"])
 
     lines.extend(
         [
@@ -593,7 +602,7 @@ def render_provider_standard(node: Node) -> str:
 def write_inventory() -> None:
     INVENTORY_DIR.mkdir(parents=True, exist_ok=True)
     with (INVENTORY_DIR / "nodes.csv").open("w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
+        writer = csv.writer(file, lineterminator="\n")
         writer.writerow(
             [
                 "name",
@@ -625,7 +634,7 @@ def write_inventory() -> None:
             )
 
     with (INVENTORY_DIR / "links.csv").open("w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
+        writer = csv.writer(file, lineterminator="\n")
         writer.writerow(
             [
                 "id",
@@ -683,6 +692,67 @@ def write_configs() -> None:
             )
 
 
+def render_xrd_startup(node: Node) -> str:
+    """Render the final 00/10/15/20 provider baseline for a fresh XRd node.
+
+    A custom XRd startup file replaces Containerlab's default first-boot
+    template, so management access is included explicitly. The password is an
+    environment placeholder expanded by Containerlab at deploy time; no secret
+    is written into the repository.
+    """
+    management = "\n".join(
+        [
+            "username ${CCIE_XRD_USERNAME}",
+            " group root-lr",
+            " group cisco-support",
+            " secret ${CCIE_XRD_PASSWORD}",
+            "!",
+            "grpc",
+            " port 9339",
+            " no-tls",
+            " address-family dual",
+            "!",
+            "line default",
+            " transport input ssh",
+            "!",
+            "netconf-yang agent",
+            " ssh",
+            "!",
+            "router static",
+            " address-family ipv4 unicast",
+            f"  0.0.0.0/0 MgmtEth0/RP0/CPU0/0 {MGMT_SUBNET.split('/')[0].rsplit('.', 1)[0]}.1",
+            " !",
+            "!",
+            "ssh server v2",
+            "ssh server netconf",
+            "!",
+        ]
+    )
+    return (
+        render_xrd_base(node)
+        + management
+        + "\n"
+        + render_provider_standard(node, migration=False)
+        + "end\n"
+    )
+
+
+def write_startup_configs() -> None:
+    """Write deploy-safe cumulative startup baselines for network nodes."""
+    STARTUP_DIR.mkdir(parents=True, exist_ok=True)
+    for node in NODES:
+        if node.is_xrd:
+            path = STARTUP_DIR / f"{node.name}.cfg"
+            content = render_xrd_startup(node)
+        elif node.is_iol:
+            # The .partial suffix preserves Containerlab's management/SSH base.
+            path = STARTUP_DIR / f"{node.name}.partial.cfg"
+            content = render_iol_base(node)
+        else:
+            continue
+        path.write_text(content, encoding="utf-8", newline="\n")
+
+
 def main() -> None:
     validate_model()
     TOPOLOGY_DIR.mkdir(parents=True, exist_ok=True)
@@ -691,6 +761,7 @@ def main() -> None:
     )
     write_inventory()
     write_configs()
+    write_startup_configs()
     print(
         f"Generated {len(NODES)} nodes, {len(LINKS)} links, "
         f"{sum(node.is_xrd for node in NODES)} XRd nodes, "

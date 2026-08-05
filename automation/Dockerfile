@@ -1,5 +1,8 @@
 FROM ubuntu:24.04
 
+ARG AUTO1_UID=1000
+ARG AUTO1_GID=1000
+
 ENV DEBIAN_FRONTEND=noninteractive \
     PATH=/opt/venv/bin:$PATH \
     ANSIBLE_COLLECTIONS_PATH=/usr/share/ansible/collections \
@@ -42,8 +45,24 @@ RUN python3 -m venv /opt/venv \
     && ansible-galaxy collection install \
         -p /usr/share/ansible/collections \
         -r /tmp/requirements.yml \
-    && useradd --create-home --shell /bin/bash student \
-    && usermod -aG sudo student \
+    && existing_group="$(getent group "${AUTO1_GID}" | cut -d: -f1 || true)" \
+    && if [ -n "${existing_group}" ]; then \
+         groupmod --new-name student "${existing_group}"; \
+       else \
+         groupadd --gid "${AUTO1_GID}" student; \
+       fi \
+    && existing_user="$(getent passwd "${AUTO1_UID}" | cut -d: -f1 || true)" \
+    && if [ -n "${existing_user}" ]; then \
+         usermod --login student \
+           --home /home/student \
+           --move-home "${existing_user}"; \
+       else \
+         useradd --uid "${AUTO1_UID}" \
+           --gid "${AUTO1_GID}" \
+           --create-home \
+           --shell /bin/bash student; \
+       fi \
+    && usermod --gid "${AUTO1_GID}" --append --groups sudo student \
     && printf 'student ALL=(ALL) NOPASSWD:ALL\n' >/etc/sudoers.d/student \
     && chmod 0440 /etc/sudoers.d/student \
     && mkdir -p /run/sshd /workspace \

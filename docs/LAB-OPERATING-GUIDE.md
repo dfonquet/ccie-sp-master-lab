@@ -53,6 +53,7 @@ and ensures that every exercise starts from a known state.
 | First installation | [Containerlab Host, Image, and AUTO1 Build Guide](CONTAINERLAB-INSTALLATION.md) |
 | First deployment | Sections 6 through 12 of this guide |
 | Daily operation | [Operations quick reference](../OPERATIONS.md) |
+| Personal workflow and persistence | [Personal Three-Profile Lab Workflow](PERSONAL-LAB-WORKFLOW.md) |
 | Changing topology or addressing | Sections 3, 7, 10, and 11 |
 | Investigating a failure | Section 16 and the profile troubleshooting guide |
 | Checking what has actually passed | [Deployment Status](../STATUS.md) |
@@ -453,6 +454,12 @@ hard reset merely to hide an unexplained generated difference.
 
 `labctl` rejects deployment when another profile is active.
 
+For the Master profile, the controller also loads the ignored local `.env`,
+passes only the required `CCIE_*` variables through `sudo`, and runs
+`tools/wait_ready.py`. Readiness means authenticated CLI access on every node;
+an open TCP port alone is insufficient. The default deadline is 900 seconds,
+but the command returns as soon as all nodes are ready.
+
 ### Inspect
 
 ```bash
@@ -528,6 +535,10 @@ harder to interpret.
 
 ### Step 5 — Observe the startup window
 
+For `master`, `labctl` already performs the authoritative readiness loop and
+prints each node as it becomes ready. The following command is optional visual
+observation, not a timer or acceptance gate:
+
 ```bash
 watch -n 15 "docker ps \
   --filter name=clab-ccie-sp-${PROFILE} \
@@ -598,12 +609,17 @@ Record at minimum:
 - Host CPU, RAM, swap, load, and disk state.
 - Any warning, workaround, or platform limitation.
 
-Only after these steps pass should configuration phases be applied.
+For a clean Master deployment, the accepted foundation is already restored by
+the generated startup files under `topology/startup/`. Only advanced or
+experimental phases should be applied after these checks. Inter-AS and SRv6
+retain their documented staged phase workflows.
 
 ## 10. Phase-based configuration
 
-Never apply every phase at once. Start with one or two canary nodes, validate
-them, and only then expand the same phase.
+Never apply every advanced or experimental phase at once. Start with one or two
+canary nodes, validate them, and only then expand the same phase. The Master
+startup baseline is deliberately different: it is the generated, already
+accepted cumulative state for phases `00`, `10`, `15`, and `20`.
 
 Inter-AS example:
 

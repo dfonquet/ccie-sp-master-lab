@@ -1,0 +1,10 @@
+---
+- name: Render RR1 BGP configuration
+  hosts: RR1
+  gather_facts: false
+  tasks:
+    - ansible.builtin.template:
+        src: ../templates/rr_bgp.j2
+        dest: ../rendered/RR1_bgp.cfg
+        mode: "0600"
+      delegate_to: localhost

@@ -8,8 +8,10 @@ topology:
   kinds:
     cisco_xrd:
       image: ios-xr/xrd-control-plane:24.2.11
+      startup-config: startup/__clabNodeName__.cfg
     cisco_iol:
       image: vrnetlab/cisco_iol:17.12.01
+      startup-config: startup/__clabNodeName__.partial.cfg
 
   nodes:
     P1:
@@ -91,49 +93,53 @@ topology:
     CE2:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.132
-      startup-delay: 105
+      startup-delay: 120
     CE3:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.133
-      startup-delay: 105
+      startup-delay: 135
     CE4:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.134
-      startup-delay: 105
+      startup-delay: 150
     CE5:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.135
-      startup-delay: 105
+      startup-delay: 165
     CE6:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.136
-      startup-delay: 105
+      startup-delay: 180
     CE7:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.137
-      startup-delay: 105
+      startup-delay: 195
     CE8:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.138
-      startup-delay: 105
+      startup-delay: 210
     CE9:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.139
-      startup-delay: 105
+      startup-delay: 225
     C1:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.141
-      startup-delay: 105
+      startup-delay: 240
     C2:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.142
-      startup-delay: 105
+      startup-delay: 255
     AUTO1:
       kind: linux
       image: ccie-sp-automation:1.0
       mgmt-ipv4: 10.201.255.150
       env:
         AUTO1_PASSWORD: ${CCIE_AUTO_PASSWORD}
+        CCIE_XRD_USERNAME: ${CCIE_XRD_USERNAME}
+        CCIE_XRD_PASSWORD: ${CCIE_XRD_PASSWORD}
+        CCIE_IOL_USERNAME: ${CCIE_IOL_USERNAME}
+        CCIE_IOL_PASSWORD: ${CCIE_IOL_PASSWORD}
       binds:
         - ../automation:/workspace
 

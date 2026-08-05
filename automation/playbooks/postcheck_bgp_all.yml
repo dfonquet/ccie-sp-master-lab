@@ -1,0 +1,14 @@
+---
+- name: Verify BGP after deployment
+  hosts: rr,pe
+  gather_facts: false
+  tasks:
+    - name: Capture VPN address-family summaries
+      cisco.iosxr.iosxr_command:
+        commands:
+          - show bgp vpnv4 unicast summary
+          - show bgp vpnv6 unicast summary
+      register: bgp_state
+    - name: Display operational state
+      ansible.builtin.debug:
+        var: bgp_state.stdout_lines

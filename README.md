@@ -244,6 +244,10 @@ inventory, and configuration artifacts should not be edited manually.
 
 ### Operate one profile
 
+For a step-by-step explanation of lifecycle, persistence, personal scenarios,
+backups, and AUTO1 responsibilities, read the
+[Personal Three-Profile Lab Workflow](docs/PERSONAL-LAB-WORKFLOW.md).
+
 ```bash
 ./labctl status
 ./labctl deploy master
@@ -260,6 +264,12 @@ Replace `master` with `inter-as` or `srv6` as required:
 
 `labctl` refuses to start another heavy profile while Containerlab nodes are
 already active.
+
+For `master`, deployment loads `.env`, supplies generated cumulative startup
+baselines, and polls every node until SSH **and the real CLI** respond. It does
+not use a fixed five-minute sleep. A clean destroy/redeploy therefore restores
+the accepted `00-base`, `10-isis`, `15-provider-standard`, and `20-sr-mpls`
+foundation. Advanced study phases remain manual and incremental.
 
 ## Addressing and management
 

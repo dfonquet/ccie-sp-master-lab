@@ -58,7 +58,7 @@ Validate all management sessions:
 /srv/netlab/venvs/ccie-sp/bin/python tools/validate_nodes.py --workers 2
 ```
 
-Validate all 39 directly connected links with IPv4 and IPv6:
+Validate all 47 directly connected links with IPv4 and IPv6:
 
 ```bash
 /srv/netlab/venvs/ccie-sp/bin/python tools/validate_links.py --family both
@@ -70,13 +70,29 @@ Validate all 39 directly connected links with IPv4 and IPv6:
 /srv/netlab/venvs/ccie-sp/bin/python tools/build_lab.py
 ```
 
-## Apply baselines
+## Baseline restoration and manual phases
+
+`python3 tools/build_lab.py` generates deploy-safe files under
+`topology/startup/`. `./labctl deploy master` uses them automatically and
+waits for all 30 nodes to pass real SSH/CLI readiness. XRd receives the final
+cumulative provider baseline; IOL receives a partial startup configuration so
+Containerlab retains its management VRF and SSH defaults.
+
+The lifecycle controller limits deployment to four workers, gives Docker API
+operations a five-minute deadline, and staggers each IOL node by 15 seconds.
+This prevents IOL from reaching its initial configuration dialog before
+Containerlab completes postdeploy configuration during an XRd boot storm.
+
+The commands below remain useful for controlled canaries, repair of an already
+running node, and phase-by-phase study. They are not required after a clean
+Master deployment.
 
 Apply the phases in order:
 
 ```bash
 /srv/netlab/venvs/ccie-sp/bin/python tools/apply_phase.py 00-base --workers 2
 /srv/netlab/venvs/ccie-sp/bin/python tools/apply_phase.py 10-isis --workers 2
+/srv/netlab/venvs/ccie-sp/bin/python tools/apply_phase.py 15-provider-standard --workers 2
 /srv/netlab/venvs/ccie-sp/bin/python tools/apply_phase.py 20-sr-mpls --workers 2
 ```
 
