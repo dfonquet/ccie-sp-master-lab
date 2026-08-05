@@ -1,5 +1,7 @@
 # Full Dataplane Architecture
 
+![Authoritative Full Dataplane topology](topology.svg)
+
 ## Authoritative logical view
 
 ```mermaid
