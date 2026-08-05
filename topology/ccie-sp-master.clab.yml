@@ -93,43 +93,43 @@ topology:
     CE2:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.132
-      startup-delay: 105
+      startup-delay: 120
     CE3:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.133
-      startup-delay: 105
+      startup-delay: 135
     CE4:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.134
-      startup-delay: 105
+      startup-delay: 150
     CE5:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.135
-      startup-delay: 105
+      startup-delay: 165
     CE6:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.136
-      startup-delay: 105
+      startup-delay: 180
     CE7:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.137
-      startup-delay: 105
+      startup-delay: 195
     CE8:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.138
-      startup-delay: 105
+      startup-delay: 210
     CE9:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.139
-      startup-delay: 105
+      startup-delay: 225
     C1:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.141
-      startup-delay: 105
+      startup-delay: 240
     C2:
       kind: cisco_iol
       mgmt-ipv4: 10.201.255.142
-      startup-delay: 105
+      startup-delay: 255
     AUTO1:
       kind: linux
       image: ccie-sp-automation:1.0

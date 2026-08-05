@@ -78,6 +78,11 @@ waits for all 30 nodes to pass real SSH/CLI readiness. XRd receives the final
 cumulative provider baseline; IOL receives a partial startup configuration so
 Containerlab retains its management VRF and SSH defaults.
 
+The lifecycle controller limits deployment to four workers, gives Docker API
+operations a five-minute deadline, and staggers each IOL node by 15 seconds.
+This prevents IOL from reaching its initial configuration dialog before
+Containerlab completes postdeploy configuration during an XRd boot storm.
+
 The commands below remain useful for controlled canaries, repair of an already
 running node, and phase-by-phase study. They are not required after a clean
 Master deployment.

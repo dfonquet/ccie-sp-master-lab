@@ -40,3 +40,9 @@ def test_inventory_rendering_uses_platform_independent_newlines(tmp_path) -> Non
 
     assert b"\r\n" not in (tmp_path / "nodes.csv").read_bytes()
     assert b"\r\n" not in (tmp_path / "links.csv").read_bytes()
+
+
+def test_iol_startup_is_staggered_to_avoid_postdeploy_races() -> None:
+    delays = [node.startup_delay for node in build_lab.NODES if node.is_iol]
+
+    assert delays == list(range(105, 256, 15))

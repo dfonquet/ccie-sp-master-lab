@@ -79,7 +79,7 @@ case "$ACTION" in
       : "${CCIE_AUTO_PASSWORD:?Set CCIE_AUTO_PASSWORD in .env or the environment}"
     fi
     sudo --preserve-env=CCIE_XRD_USERNAME,CCIE_XRD_PASSWORD,CCIE_IOL_USERNAME,CCIE_IOL_PASSWORD,CCIE_AUTO_USERNAME,CCIE_AUTO_PASSWORD \
-      containerlab deploy -t "$TOPOLOGY"
+      containerlab deploy -t "$TOPOLOGY" --max-workers 4 --timeout 5m
     if [[ "$PROFILE" == "master" ]]; then
       "$PYTHON" "$ROOT/tools/wait_ready.py" \
         --inventory "$ROOT/inventory/nodes.csv"
