@@ -244,6 +244,10 @@ inventory, and configuration artifacts should not be edited manually.
 
 ### Operate one profile
 
+For a step-by-step explanation of lifecycle, persistence, personal scenarios,
+backups, and AUTO1 responsibilities, read the
+[Personal Three-Profile Lab Workflow](docs/PERSONAL-LAB-WORKFLOW.md).
+
 ```bash
 ./labctl status
 ./labctl deploy master

@@ -53,6 +53,7 @@ and ensures that every exercise starts from a known state.
 | First installation | [Containerlab Host, Image, and AUTO1 Build Guide](CONTAINERLAB-INSTALLATION.md) |
 | First deployment | Sections 6 through 12 of this guide |
 | Daily operation | [Operations quick reference](../OPERATIONS.md) |
+| Personal workflow and persistence | [Personal Three-Profile Lab Workflow](PERSONAL-LAB-WORKFLOW.md) |
 | Changing topology or addressing | Sections 3, 7, 10, and 11 |
 | Investigating a failure | Section 16 and the profile troubleshooting guide |
 | Checking what has actually passed | [Deployment Status](../STATUS.md) |
