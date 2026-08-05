@@ -8,8 +8,10 @@ topology:
   kinds:
     cisco_xrd:
       image: ios-xr/xrd-control-plane:24.2.11
+      startup-config: startup/__clabNodeName__.cfg
     cisco_iol:
       image: vrnetlab/cisco_iol:17.12.01
+      startup-config: startup/__clabNodeName__.partial.cfg
 
   nodes:
     P1:

@@ -4,6 +4,21 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
 ACTION="${1:-status}"
 PROFILE="${2:-}"
+PYTHON="${CCIE_SP_PYTHON:-/srv/netlab/venvs/ccie-sp/bin/python}"
+
+[[ -x "$PYTHON" ]] || PYTHON="python3"
+
+load_environment() {
+  if [[ -f "$ROOT/.env" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "$ROOT/.env"
+    set +a
+  fi
+  export CCIE_XRD_USERNAME="${CCIE_XRD_USERNAME:-clab}"
+  export CCIE_IOL_USERNAME="${CCIE_IOL_USERNAME:-admin}"
+  export CCIE_AUTO_USERNAME="${CCIE_AUTO_USERNAME:-student}"
+}
 
 declare -A TOPOLOGIES=(
   [master]="topology/ccie-sp-master.clab.yml"
@@ -57,7 +72,18 @@ case "$ACTION" in
       echo "Destroy the active profile first."
       exit 4
     fi
-    sudo containerlab deploy -t "$TOPOLOGY"
+    load_environment
+    if [[ "$PROFILE" == "master" ]]; then
+      : "${CCIE_XRD_PASSWORD:?Set CCIE_XRD_PASSWORD in .env or the environment}"
+      : "${CCIE_IOL_PASSWORD:?Set CCIE_IOL_PASSWORD in .env or the environment}"
+      : "${CCIE_AUTO_PASSWORD:?Set CCIE_AUTO_PASSWORD in .env or the environment}"
+    fi
+    sudo --preserve-env=CCIE_XRD_USERNAME,CCIE_XRD_PASSWORD,CCIE_IOL_USERNAME,CCIE_IOL_PASSWORD,CCIE_AUTO_USERNAME,CCIE_AUTO_PASSWORD \
+      containerlab deploy -t "$TOPOLOGY"
+    if [[ "$PROFILE" == "master" ]]; then
+      "$PYTHON" "$ROOT/tools/wait_ready.py" \
+        --inventory "$ROOT/inventory/nodes.csv"
+    fi
     ;;
   destroy)
     sudo containerlab destroy -t "$TOPOLOGY"
