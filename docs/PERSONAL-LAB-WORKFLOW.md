@@ -466,4 +466,3 @@ and runtime artifacts are correctly ignored.
 | Does AUTO1 automatically save manual CLI work? | No; run a backup workflow |
 | Does normal `destroy` erase configurations? | No, provided cleanup and lab-directory deletion are not used |
 | What restores a completely clean Master? | Regenerate and deploy from `topology/startup/` after intentional cleanup |
-
