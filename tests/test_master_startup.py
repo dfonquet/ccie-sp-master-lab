@@ -28,3 +28,15 @@ def test_topology_uses_kind_specific_startup_files() -> None:
 
     assert "startup/__clabNodeName__.cfg" in topology
     assert "startup/__clabNodeName__.partial.cfg" in topology
+
+
+def test_inventory_rendering_uses_platform_independent_newlines(tmp_path) -> None:
+    original = build_lab.INVENTORY_DIR
+    try:
+        build_lab.INVENTORY_DIR = tmp_path
+        build_lab.write_inventory()
+    finally:
+        build_lab.INVENTORY_DIR = original
+
+    assert b"\r\n" not in (tmp_path / "nodes.csv").read_bytes()
+    assert b"\r\n" not in (tmp_path / "links.csv").read_bytes()

@@ -600,7 +600,7 @@ def render_provider_standard(node: Node, *, migration: bool = True) -> str:
 def write_inventory() -> None:
     INVENTORY_DIR.mkdir(parents=True, exist_ok=True)
     with (INVENTORY_DIR / "nodes.csv").open("w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
+        writer = csv.writer(file, lineterminator="\n")
         writer.writerow(
             [
                 "name",
@@ -632,7 +632,7 @@ def write_inventory() -> None:
             )
 
     with (INVENTORY_DIR / "links.csv").open("w", newline="", encoding="utf-8") as file:
-        writer = csv.writer(file)
+        writer = csv.writer(file, lineterminator="\n")
         writer.writerow(
             [
                 "id",
