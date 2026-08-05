@@ -1,0 +1,212 @@
+name: ccie-sp-full-dataplane
+
+mgmt:
+  network: ccie-sp-full-dataplane-mgmt
+  ipv4-subnet: 10.205.255.0/24
+
+topology:
+  kinds:
+    cisco_xrd_vrouter:
+      image: vrnetlab/cisco_xrd-vrouter:26.2.1
+      env:
+        XRD_NIC_TYPE: igb
+    cisco_xrd:
+      image: ios-xr/xrd-control-plane:24.2.11
+    cisco_iol:
+      image: vrnetlab/cisco_iol:17.12.01
+
+  nodes:
+    P1:
+      kind: cisco_xrd_vrouter
+      mgmt-ipv4: 10.205.255.101
+      startup-config: ../configs/full-dataplane/00-foundation/P1.cfg
+      startup-delay: 0
+    P2:
+      kind: cisco_xrd_vrouter
+      mgmt-ipv4: 10.205.255.102
+      startup-config: ../configs/full-dataplane/00-foundation/P2.cfg
+      startup-delay: 90
+    P3:
+      kind: cisco_xrd_vrouter
+      mgmt-ipv4: 10.205.255.103
+      startup-config: ../configs/full-dataplane/00-foundation/P3.cfg
+      startup-delay: 180
+    P4:
+      kind: cisco_xrd_vrouter
+      mgmt-ipv4: 10.205.255.104
+      startup-config: ../configs/full-dataplane/00-foundation/P4.cfg
+      startup-delay: 270
+    PE1:
+      kind: cisco_xrd_vrouter
+      mgmt-ipv4: 10.205.255.111
+      startup-config: ../configs/full-dataplane/00-foundation/PE1.cfg
+      startup-delay: 360
+    PE2:
+      kind: cisco_xrd_vrouter
+      mgmt-ipv4: 10.205.255.112
+      startup-config: ../configs/full-dataplane/00-foundation/PE2.cfg
+      startup-delay: 450
+    PE3:
+      kind: cisco_xrd_vrouter
+      mgmt-ipv4: 10.205.255.113
+      startup-config: ../configs/full-dataplane/00-foundation/PE3.cfg
+      startup-delay: 540
+    PE4:
+      kind: cisco_xrd_vrouter
+      mgmt-ipv4: 10.205.255.114
+      startup-config: ../configs/full-dataplane/00-foundation/PE4.cfg
+      startup-delay: 630
+    PE5:
+      kind: cisco_xrd_vrouter
+      mgmt-ipv4: 10.205.255.115
+      startup-config: ../configs/full-dataplane/00-foundation/PE5.cfg
+      startup-delay: 720
+    PE6:
+      kind: cisco_xrd_vrouter
+      mgmt-ipv4: 10.205.255.116
+      startup-config: ../configs/full-dataplane/00-foundation/PE6.cfg
+      startup-delay: 810
+    RR1:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.205.255.121
+      startup-config: ../configs/full-dataplane/00-foundation/RR1.cfg
+      startup-delay: 1000
+    RR2:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.205.255.122
+      startup-config: ../configs/full-dataplane/00-foundation/RR2.cfg
+      startup-delay: 1010
+    CE1:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.131
+      startup-config: ../configs/full-dataplane/00-foundation/CE1.cfg
+      startup-delay: 1020
+    CE2:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.132
+      startup-config: ../configs/full-dataplane/00-foundation/CE2.cfg
+      startup-delay: 1030
+    CE3:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.133
+      startup-config: ../configs/full-dataplane/00-foundation/CE3.cfg
+      startup-delay: 1040
+    CE4:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.134
+      startup-config: ../configs/full-dataplane/00-foundation/CE4.cfg
+      startup-delay: 1050
+    CE5:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.135
+      startup-config: ../configs/full-dataplane/00-foundation/CE5.cfg
+      startup-delay: 1060
+    CE6:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.136
+      startup-config: ../configs/full-dataplane/00-foundation/CE6.cfg
+      startup-delay: 1070
+    CE7:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.137
+      startup-config: ../configs/full-dataplane/00-foundation/CE7.cfg
+      startup-delay: 1080
+    CE8:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.138
+      startup-config: ../configs/full-dataplane/00-foundation/CE8.cfg
+      startup-delay: 1090
+    C1:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.141
+      startup-config: ../configs/full-dataplane/00-foundation/C1.cfg
+      startup-delay: 1100
+    C2:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.142
+      startup-config: ../configs/full-dataplane/00-foundation/C2.cfg
+      startup-delay: 1110
+    C3:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.143
+      startup-config: ../configs/full-dataplane/00-foundation/C3.cfg
+      startup-delay: 1120
+    C4:
+      kind: cisco_iol
+      mgmt-ipv4: 10.205.255.144
+      startup-config: ../configs/full-dataplane/00-foundation/C4.cfg
+      startup-delay: 1130
+    AUTO1:
+      kind: linux
+      mgmt-ipv4: 10.205.255.150
+      image: ccie-sp-automation:1.0
+      cmd: sleep infinity
+    RPKI1:
+      kind: linux
+      mgmt-ipv4: 10.205.255.160
+      image: alpine:3.20
+      cmd: sleep infinity
+    RPKI2:
+      kind: linux
+      mgmt-ipv4: 10.205.255.161
+      image: alpine:3.20
+      cmd: sleep infinity
+    AAA1:
+      kind: linux
+      mgmt-ipv4: 10.205.255.170
+      image: alpine:3.20
+      cmd: sleep infinity
+    AAA2:
+      kind: linux
+      mgmt-ipv4: 10.205.255.171
+      image: alpine:3.20
+      cmd: sleep infinity
+    OBS1:
+      kind: linux
+      mgmt-ipv4: 10.205.255.180
+      image: alpine:3.20
+      cmd: sleep infinity
+
+  links:
+    - endpoints: ["P1:eth1", "P2:eth1"]
+    - endpoints: ["P2:eth2", "P3:eth1"]
+    - endpoints: ["P3:eth2", "P4:eth1"]
+    - endpoints: ["P4:eth2", "P1:eth2"]
+    - endpoints: ["P1:eth3", "P3:eth3"]
+    - endpoints: ["P2:eth3", "P4:eth3"]
+    - endpoints: ["PE1:eth1", "P1:eth4"]
+    - endpoints: ["PE1:eth2", "P2:eth4"]
+    - endpoints: ["PE2:eth1", "P1:eth5"]
+    - endpoints: ["PE2:eth2", "P3:eth4"]
+    - endpoints: ["PE3:eth1", "P2:eth5"]
+    - endpoints: ["PE3:eth2", "P3:eth5"]
+    - endpoints: ["PE4:eth1", "P2:eth6"]
+    - endpoints: ["PE4:eth2", "P4:eth4"]
+    - endpoints: ["PE5:eth1", "P3:eth6"]
+    - endpoints: ["PE5:eth2", "P4:eth5"]
+    - endpoints: ["PE6:eth1", "P1:eth6"]
+    - endpoints: ["PE6:eth2", "P4:eth6"]
+    - endpoints: ["RR1:Gi0-0-0-0", "P1:eth7"]
+    - endpoints: ["RR1:Gi0-0-0-1", "P3:eth7"]
+    - endpoints: ["RR2:Gi0-0-0-0", "P2:eth7"]
+    - endpoints: ["RR2:Gi0-0-0-1", "P4:eth7"]
+    - endpoints: ["CE1:eth1", "PE1:eth3"]
+    - endpoints: ["CE1:eth2", "PE2:eth3"]
+    - endpoints: ["CE2:eth1", "PE1:eth4"]
+    - endpoints: ["CE2:eth2", "PE2:eth4"]
+    - endpoints: ["CE3:eth1", "PE2:eth5"]
+    - endpoints: ["CE3:eth2", "PE3:eth3"]
+    - endpoints: ["CE4:eth1", "PE3:eth4"]
+    - endpoints: ["CE4:eth2", "PE4:eth3"]
+    - endpoints: ["CE5:eth1", "PE4:eth4"]
+    - endpoints: ["CE5:eth2", "PE5:eth3"]
+    - endpoints: ["CE6:eth1", "PE5:eth4"]
+    - endpoints: ["CE6:eth2", "PE6:eth3"]
+    - endpoints: ["CE7:eth1", "PE1:eth5"]
+    - endpoints: ["CE7:eth2", "PE6:eth4"]
+    - endpoints: ["CE8:eth1", "PE3:eth5"]
+    - endpoints: ["CE8:eth2", "PE6:eth5"]
+    - endpoints: ["C1:eth1", "CE1:eth3"]
+    - endpoints: ["C2:eth1", "CE3:eth3"]
+    - endpoints: ["C3:eth1", "CE5:eth3"]
+    - endpoints: ["C4:eth1", "CE7:eth3"]

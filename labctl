@@ -24,10 +24,11 @@ declare -A TOPOLOGIES=(
   [master]="topology/ccie-sp-master.clab.yml"
   [inter-as]="topology/ccie-sp-inter-as.clab.yml"
   [srv6]="topology/ccie-sp-srv6.clab.yml"
+  [full-dataplane]="topology/ccie-sp-full-dataplane.clab.yml"
 )
 
 usage() {
-  echo "Usage: ./labctl {status|canary|deploy|destroy|inspect} {master|inter-as|srv6}"
+  echo "Usage: ./labctl {status|canary|deploy|destroy|inspect} {master|inter-as|srv6|full-dataplane}"
 }
 
 active_labs() {
@@ -73,6 +74,11 @@ case "$ACTION" in
       exit 4
     fi
     load_environment
+    if [[ "$PROFILE" == "full-dataplane" && "${CCIE_SP_ENABLE_FULL_DATAPLANE:-false}" != "true" ]]; then
+      echo "Refusing deploy: Full Dataplane is prepared but not live-accepted."
+      echo "Use the documented staged rollout before setting CCIE_SP_ENABLE_FULL_DATAPLANE=true."
+      exit 6
+    fi
     if [[ "$PROFILE" == "master" ]]; then
       : "${CCIE_XRD_PASSWORD:?Set CCIE_XRD_PASSWORD in .env or the environment}"
       : "${CCIE_IOL_PASSWORD:?Set CCIE_IOL_PASSWORD in .env or the environment}"

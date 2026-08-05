@@ -23,7 +23,7 @@
 
 ## Overview
 
-This repository contains three independent Containerlab profiles built for
+This repository contains four independent Containerlab profiles built for
 Cisco CCIE Service Provider v5.1 study and service-provider engineering
 practice. The profiles share a deterministic source-of-truth model, generated
 topologies, structured configuration phases, validation tooling, and the
@@ -46,6 +46,7 @@ service layers.
 | [**Master ISP**](profiles/master/README.md) | 30 nodes, 47 data links | Dual-stack addressing, IS-IS, SR-MPLS, redundant RR foundation, expanded P/PE topology | MPLS, MP-BGP, L3VPN, L2VPN, EVPN, multicast, SR-TE/PCE, QoS, security, assurance, and failure drills |
 | [**Inter-AS**](profiles/inter-as/README.md) | 23 nodes, 35 links | Generated topology, management and CLI access, base addressing, AS separation, and physical connectivity | eBGP/iBGP, routing policy, labeled unicast, route reflection, and Inter-AS Options A, B, and C |
 | [**SRv6**](profiles/srv6/README.md) | 21 nodes, 33 links | Full deployment, base configuration, IS-IS, IPv6 loopback reachability, SRv6 locators, and `66/66` directed IPv6 link tests | SRv6 SID design, endpoint behaviors, SRv6-TE policies, VPN services, uSID, resiliency, and automation |
+| [**Full Dataplane**](profiles/full-dataplane/README.md) | 30 nodes, 42 links | Prepared artifacts: 10 XRd vRouter forwarding nodes, redundant P/PE/RR design and dual-homed CE access | Staged live acceptance, then PCE, SRv6, EVPN, VPN, RPKI, AAA, multicast, QoS and telemetry |
 
 Each profile has its own topology, management subnet, inventories,
 configuration artifacts, diagram, operating procedure, and acceptance boundary.
@@ -370,6 +371,7 @@ Start with:
 | Master | [Guide](profiles/master/README.md) | [Design](profiles/master/DESIGN.md) | [Troubleshooting](profiles/master/TROUBLESHOOTING.md) | [References](profiles/master/REFERENCES.md) |
 | Inter-AS | [Guide](profiles/inter-as/README.md) | [Design](profiles/inter-as/DESIGN.md) | [Troubleshooting](profiles/inter-as/TROUBLESHOOTING.md) | [References](profiles/inter-as/REFERENCES.md) |
 | SRv6 | [Guide](profiles/srv6/README.md) | [Design](profiles/srv6/DESIGN.md) | [Troubleshooting](profiles/srv6/TROUBLESHOOTING.md) | [References](profiles/srv6/REFERENCES.md) |
+| Full Dataplane | [Guide](profiles/full-dataplane/README.md) | [Design](profiles/full-dataplane/DESIGN.md) | Prepared, not deployed | [Containerlab 0.77](https://containerlab.dev/rn/0.77/) |
 
 ## Platform boundaries
 
