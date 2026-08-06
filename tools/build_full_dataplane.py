@@ -114,6 +114,8 @@ def main():
 
 This isolated 30-node profile adds a real XRd vRouter forwarding plane without replacing the resource-efficient Master profile.
 
+![CCIE SP Full Dataplane topology](topology.svg)
+
 ## Architecture
 
 | Role | Count |
