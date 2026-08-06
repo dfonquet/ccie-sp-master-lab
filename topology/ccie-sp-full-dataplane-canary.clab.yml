@@ -1,0 +1,28 @@
+name: ccie-sp-full-dataplane-canary
+
+mgmt:
+  network: ccie-sp-full-dataplane-canary-mgmt
+  ipv4-subnet: 10.205.254.0/24
+
+topology:
+  nodes:
+    P1:
+      kind: cisco_xrd_vrouter
+      image: vrnetlab/cisco_xrd-vrouter:26.2.1
+      mgmt-ipv4: 10.205.254.101
+      startup-config: ../configs/full-dataplane/canary/P1.cfg
+      env:
+        VCPU: 4
+        RAM: 10240
+        XRD_NIC_TYPE: igb
+    PROBE1:
+      kind: linux
+      image: alpine:3.20
+      mgmt-ipv4: 10.205.254.201
+      exec:
+        - ip address add 192.0.2.0/31 dev eth1
+        - ip -6 address add 2001:db8:ffff:1::/127 dev eth1
+        - ip link set eth1 up
+
+  links:
+    - endpoints: ["P1:eth1", "PROBE1:eth1"]
