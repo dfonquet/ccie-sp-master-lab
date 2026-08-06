@@ -34,6 +34,8 @@ The generated foundation contains hostnames, loopbacks, link addressing, provide
 
 Target: 96 GiB VM RAM and at least 14 vCPU. Boot no more than two vRouters concurrently. Stop at 80% host RAM, any swap use, sustained load above assigned vCPU, restart or OOM. The ten-vRouter ceiling is a design budget, not a live acceptance claim.
 
+The verified vrnetlab runtime has a hard floor of 8 GiB and 4 vCPU per vRouter; the 30-node drawing is therefore an architectural Source of Truth, not authorization to boot all ten vRouters simultaneously on the current host. Begin with the isolated [canary](CANARY.md), then use resource-bounded study slices.
+
 ```bash
 python3 tools/build_full_dataplane.py
 python3 tools/validate_full_dataplane_artifacts.py
