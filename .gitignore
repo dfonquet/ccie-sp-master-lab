@@ -6,6 +6,9 @@ artifacts/
 automation/rendered/*
 !automation/rendered/.gitkeep
 automation/playbooks/backup/
+automation/xrd-eight/data/
+automation/xrd-eight/evidence/
+automation/xrd-eight/backups/
 *.retry
 *.log
 topology/clab-*/
