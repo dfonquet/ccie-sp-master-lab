@@ -1,0 +1,34 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
+TOPOLOGY="$ROOT/topology/ccie-sp-xrd-eight.clab.yml"
+ISP_FILTER="XR1,XR2,XR3,XR4,R1,R2,R3,R5"
+
+case "${1:-}" in
+  deploy-isp)
+    sudo containerlab deploy -t "$TOPOLOGY" --node-filter "$ISP_FILTER"
+    ;;
+  deploy-full)
+    : "${CCIE_AUTO_PASSWORD:?Export CCIE_AUTO_PASSWORD before deployment}"
+    sudo --preserve-env=CCIE_AUTO_PASSWORD containerlab deploy -t "$TOPOLOGY"
+    ;;
+  destroy)
+    sudo containerlab destroy -t "$TOPOLOGY" --cleanup
+    ;;
+  status)
+    docker ps -a       --filter name=clab-ccie-sp-xrd-eight       --format 'table {{.Names}}	{{.Status}}	{{.Image}}'
+    ;;
+  resources)
+    free -h
+    uptime
+    names="$(docker ps       --filter name=clab-ccie-sp-xrd-eight       --format '{{.Names}}')"
+    if [[ -n "$names" ]]; then
+      docker stats --no-stream $names
+    fi
+    ;;
+  *)
+    echo "Usage: $0 {deploy-isp|deploy-full|destroy|status|resources}"
+    exit 1
+    ;;
+esac

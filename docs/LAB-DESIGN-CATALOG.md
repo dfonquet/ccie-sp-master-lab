@@ -8,6 +8,7 @@ profile. Detailed per-node assignments remain in each profile's CSV inventory.
 | Master | 30 nodes | `10.201.255.0/24` | IS-IS Level 2, IPv4/IPv6 | CCIE SP integrated services, SR-MPLS, VPN, multicast, HA and automation |
 | Inter-AS | 23 nodes | `10.202.255.0/24` | AS500 IS-IS; AS65100/65200 OSPFv2 + OSPFv3 | Inter-AS Options A/B/C, eBGP, per-AS RR design and policy boundaries |
 | SRv6 | 21 nodes | `10.203.255.0/24` | IPv6-only IS-IS Level 2 | SRv6 locators, policies, services, uSID, convergence and automation |
+| XRd Eight | 12 nodes | `10.207.255.0/24` | Student-selected dual-stack IS-IS/SR-MPLS foundation | Resource-bounded real forwarding, P/PE redundancy, PCE, multicast, VPN, EVPN, AAA and RPKI practice |
 
 ## Why the profiles are separate
 
@@ -56,3 +57,12 @@ locators, SRv6-TE, BGP and services themselves. See the
 
 Installation and host rationale are documented in
 [CONTAINERLAB-INSTALLATION.md](CONTAINERLAB-INSTALLATION.md).
+
+## XRd Eight profile
+
+XRd Eight is the accepted compact forwarding profile: eight XRd vRouter nodes,
+three IOL-XE customer nodes and AUTO1. Its four-node P layer is a complete graph,
+each PE is dual-attached to the provider core, and R2 is reserved for RR, PCE and
+multicast-RP exercises. See the [profile guide](../profiles/xrd-eight/README.md),
+[operations](../profiles/xrd-eight/OPERATIONS.md) and
+[topology](../profiles/xrd-eight/topology.svg).

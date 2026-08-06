@@ -23,7 +23,7 @@
 
 ## Overview
 
-This repository contains four independent Containerlab profiles built for
+This repository contains five independent Containerlab profiles built for
 Cisco CCIE Service Provider v5.1 study and service-provider engineering
 practice. The profiles share a deterministic source-of-truth model, generated
 topologies, structured configuration phases, validation tooling, and the
@@ -47,6 +47,7 @@ service layers.
 | [**Inter-AS**](profiles/inter-as/README.md) | 23 nodes, 35 links | Generated topology, management and CLI access, base addressing, AS separation, and physical connectivity | eBGP/iBGP, routing policy, labeled unicast, route reflection, and Inter-AS Options A, B, and C |
 | [**SRv6**](profiles/srv6/README.md) | 21 nodes, 33 links | Full deployment, base configuration, IS-IS, IPv6 loopback reachability, SRv6 locators, and `66/66` directed IPv6 link tests | SRv6 SID design, endpoint behaviors, SRv6-TE policies, VPN services, uSID, resiliency, and automation |
 | [**Full Dataplane**](profiles/full-dataplane/README.md) | 30 nodes, 42 links | Prepared artifacts: 10 XRd vRouter forwarding nodes, redundant P/PE/RR design and dual-homed CE access | Staged live acceptance, then PCE, SRv6, EVPN, VPN, RPKI, AAA, multicast, QoS and telemetry |
+| [**XRd Eight**](profiles/xrd-eight/README.md) | 12 nodes, 20 links | Runtime accepted with 8/8 healthy XRd vRouters, three IOL-XE CEs and AUTO1 | Resource-bounded forwarding, IS-IS/SR, PCE, multicast, VPN, EVPN, AAA, RPKI and failure practice |
 
 Each profile has its own topology, management subnet, inventories,
 configuration artifacts, diagram, operating procedure, and acceptance boundary.
@@ -101,6 +102,7 @@ Profile-specific diagrams:
 - [Master ISP design and topology](profiles/master/DESIGN.md)
 - [Inter-AS topology](profiles/inter-as/topology.svg)
 - [SRv6 topology](profiles/srv6/topology.svg)
+- [XRd Eight topology](profiles/xrd-eight/topology.svg)
 - [Cross-profile design catalog](docs/LAB-DESIGN-CATALOG.md)
 
 ## Architecture at a glance
@@ -279,6 +281,7 @@ foundation. Advanced study phases remain manual and incremental.
 | Master | `10.201.255.0/24` | `ccie-sp-master-mgmt` |
 | Inter-AS | `10.202.255.0/24` | `ccie-sp-inter-as-mgmt` |
 | SRv6 | `10.203.255.0/24` | `ccie-sp-srv6-mgmt` |
+| XRd Eight | `10.207.255.0/24` | `ccie-sp-xrd-eight-mgmt` |
 
 Master provider addressing follows these conventions:
 
@@ -372,6 +375,7 @@ Start with:
 | Inter-AS | [Guide](profiles/inter-as/README.md) | [Design](profiles/inter-as/DESIGN.md) | [Troubleshooting](profiles/inter-as/TROUBLESHOOTING.md) | [References](profiles/inter-as/REFERENCES.md) |
 | SRv6 | [Guide](profiles/srv6/README.md) | [Design](profiles/srv6/DESIGN.md) | [Troubleshooting](profiles/srv6/TROUBLESHOOTING.md) | [References](profiles/srv6/REFERENCES.md) |
 | Full Dataplane | [Guide](profiles/full-dataplane/README.md) | [Design](profiles/full-dataplane/DESIGN.md) | Prepared, not deployed | [Containerlab 0.77](https://containerlab.dev/rn/0.77/) |
+| XRd Eight | [Guide](profiles/xrd-eight/README.md) | [Design](profiles/xrd-eight/DESIGN.md) | [Operations](profiles/xrd-eight/OPERATIONS.md) | [Validation](profiles/xrd-eight/VALIDATION.md) |
 
 ## Platform boundaries
 
