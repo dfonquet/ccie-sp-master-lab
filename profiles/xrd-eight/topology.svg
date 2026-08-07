@@ -1,113 +1,180 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="1200" height="1160" viewBox="0 0 1200 1160">
-<style>text{font-family:Inter,Segoe UI,Arial,sans-serif;fill:#172033}.title{font-size:30px;font-weight:750}.sub{font-size:14px;fill:#536078}.zone{fill:#f8fafc;stroke:#cbd5e1;stroke-width:1.5;stroke-dasharray:8 7}.zone-title{font-size:17px;font-weight:650;fill:#4b5870}.node{stroke-width:2.4}.name{font-size:18px;font-weight:750;text-anchor:middle}.role{font-size:12px;text-anchor:middle;fill:#536078}.ip{font:11px Consolas,monospace;text-anchor:middle;fill:#5d687b}.link{fill:none;stroke-width:2.5}.lid{font:10px Consolas,monospace;fill:#5f6b7d;text-anchor:middle}.legend{font-size:12px;fill:#445069}.badge{font-size:13px;font-weight:650;fill:#176b37}</style>
+<style>
+text {
+  font-family: Inter, Segoe UI, Arial, sans-serif;
+  fill: #172033;
+}
+.title {
+  font-size: 30px;
+  font-weight: 750;
+}
+.sub {
+  font-size: 14px;
+  fill: #536078;
+}
+.zone {
+  fill: #f8fafc;
+  stroke: #cbd5e1;
+  stroke-width: 1.5;
+  stroke-dasharray: 8 7;
+}
+.zone-title {
+  font-size: 17px;
+  font-weight: 650;
+  fill: #4b5870;
+}
+.node {
+  stroke-width: 2.4;
+}
+.name {
+  font-size: 18px;
+  font-weight: 750;
+  text-anchor: middle;
+}
+.role {
+  font-size: 12px;
+  text-anchor: middle;
+  fill: #536078;
+}
+.ip {
+  font: 11px Consolas, monospace;
+  text-anchor: middle;
+  fill: #5d687b;
+}
+.link {
+  fill: none;
+}
+.lid {
+  font: 10px Consolas, monospace;
+  font-weight: 650;
+  fill: #475569;
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: #f8fafc;
+  stroke-width: 4px;
+  stroke-linejoin: round;
+}
+.legend {
+  font-size: 12px;
+  fill: #445069;
+}
+.badge {
+  font-size: 13px;
+  font-weight: 650;
+  fill: #334155;
+}
+</style>
 <rect width="1200" height="1160" fill="#f3f6fa"/>
-<text x="42" y="48" class="title">CCIE SP XRd Eight — Compact Full-Dataplane Lab</text>
-<text x="42" y="75" class="sub">12 nodes · 8 XRd vRouter 26.2.1 · 3 IOL-XE · AUTO1 · 20 links · management 10.207.255.0/24</text>
-<rect x="820" y="30" width="335" height="58" rx="14" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
-<text x="840" y="54" class="badge">✓ Runtime observed: 12/12 containers</text>
-<text x="840" y="75" class="badge">✓ 8/8 XR healthy · restart 0 · OOM false</text>
-<rect x="35" y="105" width="1130" height="115" rx="18" class="zone"/>
+<text x="42" y="48" class="title">CCIE SP XRd Eight v2 — Full-Dataplane Service Provider Lab</text>
+<text x="42" y="75" class="sub">12 nodes · 8 XRd vRouter 26.2.1 · 3 IOL-XE CE · AUTO1 · 19 links · management 10.207.255.0/24</text>
+<rect x="890" y="28" width="265" height="56" rx="14" fill="#e2e8f0" stroke="#64748b" stroke-width="1.5"/>
+<text x="1022" y="52" class="badge" text-anchor="middle">Repository design</text>
+<text x="1022" y="71" class="role">Source-of-truth driven</text>
+<rect x="35" y="105" width="1130" height="120" rx="18" class="zone"/>
 <text x="55" y="137" class="zone-title">Operations and control plane</text>
-<rect x="35" y="245" width="1130" height="390" rx="18" class="zone"/>
-<text x="55" y="278" class="zone-title">Provider core · four-node complete graph · dual-stack IS-IS / SR-MPLS study foundation</text>
-<rect x="35" y="655" width="1130" height="205" rx="18" class="zone"/>
-<text x="55" y="688" class="zone-title">Provider edge · each PE attached to two different P routers</text>
-<rect x="35" y="880" width="1130" height="190" rx="18" class="zone"/>
-<text x="55" y="913" class="zone-title">Customer edge · two physical links per site to one PE (bundle/access exercises)</text>
-<path d="M200 150 H455" stroke="#64748b" stroke-width="2" stroke-dasharray="7 6"/>
-<rect x="455" y="126" width="255" height="48" rx="24" fill="#e2e8f0" stroke="#64748b"/>
-<text x="582" y="147" class="role">Management network</text><text x="582" y="164" class="ip">10.207.255.0/24</text>
-<path d="M315 330 L685 330" class="link" stroke="#1593b5"/>
-<text x="500.0" y="325.0" class="lid">L001</text>
-<path d="M315 330 L315 535" class="link" stroke="#1593b5"/>
-<text x="315.0" y="427.5" class="lid">L002</text>
-<path d="M315 330 L685 535" class="link" stroke="#1593b5"/>
-<text x="500.0" y="427.5" class="lid">L003</text>
-<path d="M685 330 L315 535" class="link" stroke="#1593b5"/>
-<text x="500.0" y="427.5" class="lid">L004</text>
-<path d="M685 330 L685 535" class="link" stroke="#1593b5"/>
-<text x="685.0" y="427.5" class="lid">L005</text>
-<path d="M315 535 L685 535" class="link" stroke="#1593b5"/>
-<text x="500.0" y="530.0" class="lid">L006</text>
-<path d="M205 755 L315 330" class="link" stroke="#1593b5"/>
-<text x="260.0" y="537.5" class="lid">L007</text>
-<path d="M205 755 L315 535" class="link" stroke="#1593b5"/>
-<text x="260.0" y="640.0" class="lid">L008</text>
-<path d="M500 755 L685 330" class="link" stroke="#1593b5"/>
-<text x="592.5" y="537.5" class="lid">L009</text>
-<path d="M500 755 L685 535" class="link" stroke="#1593b5"/>
-<text x="592.5" y="640.0" class="lid">L010</text>
-<path d="M795 755 L315 330" class="link" stroke="#1593b5"/>
-<text x="555.0" y="537.5" class="lid">L011</text>
-<path d="M795 755 L685 535" class="link" stroke="#1593b5"/>
-<text x="740.0" y="640.0" class="lid">L012</text>
-<path d="M930 125 L315 330" class="link" stroke="#7c3aed"/>
-<text x="622.5" y="222.5" class="lid">L013</text>
-<path d="M930 125 L685 535" class="link" stroke="#7c3aed"/>
-<text x="807.5" y="325.0" class="lid">L014</text>
-<path d="M205 981 L205 751" class="link" stroke="#3aa65a"/>
-<text x="205.0" y="861.0" class="lid">L015</text>
-<path d="M205 989 L205 759" class="link" stroke="#3aa65a"/>
-<text x="205.0" y="869.0" class="lid">L016</text>
-<path d="M500 981 L500 751" class="link" stroke="#3aa65a"/>
-<text x="500.0" y="861.0" class="lid">L017</text>
-<path d="M500 989 L500 759" class="link" stroke="#3aa65a"/>
-<text x="500.0" y="869.0" class="lid">L018</text>
-<path d="M795 981 L795 751" class="link" stroke="#3aa65a"/>
-<text x="795.0" y="861.0" class="lid">L019</text>
-<path d="M795 989 L795 759" class="link" stroke="#3aa65a"/>
-<text x="795.0" y="869.0" class="lid">L020</text>
-<rect x="233" y="285" width="164" height="90" rx="14" class="node" fill="#dbeafe" stroke="#2563eb"/>
-<text x="315" y="315" class="name">XR1</text>
-<text x="315" y="335" class="role">P1</text>
-<text x="315" y="357" class="ip">10.207.255.101</text>
-<rect x="603" y="285" width="164" height="90" rx="14" class="node" fill="#dbeafe" stroke="#2563eb"/>
-<text x="685" y="315" class="name">XR2</text>
-<text x="685" y="335" class="role">P2</text>
-<text x="685" y="357" class="ip">10.207.255.102</text>
-<rect x="713" y="710" width="164" height="90" rx="14" class="node" fill="#cffafe" stroke="#0891b2"/>
-<text x="795" y="740" class="name">XR3</text>
-<text x="795" y="760" class="role">PE3</text>
-<text x="795" y="782" class="ip">10.207.255.103</text>
-<rect x="418" y="710" width="164" height="90" rx="14" class="node" fill="#cffafe" stroke="#0891b2"/>
-<text x="500" y="740" class="name">XR4</text>
-<text x="500" y="760" class="role">PE2</text>
-<text x="500" y="782" class="ip">10.207.255.108</text>
-<rect x="233" y="490" width="164" height="90" rx="14" class="node" fill="#dbeafe" stroke="#2563eb"/>
-<text x="315" y="520" class="name">R1</text>
-<text x="315" y="540" class="role">P3</text>
-<text x="315" y="562" class="ip">10.207.255.104</text>
-<rect x="848" y="80" width="164" height="90" rx="14" class="node" fill="#f3e8ff" stroke="#7c3aed"/>
-<text x="930" y="110" class="name">R2</text>
-<text x="930" y="130" class="role">RR / PCE / RP</text>
-<text x="930" y="152" class="ip">10.207.255.105</text>
-<rect x="603" y="490" width="164" height="90" rx="14" class="node" fill="#dbeafe" stroke="#2563eb"/>
-<text x="685" y="520" class="name">R3</text>
-<text x="685" y="540" class="role">P4</text>
-<text x="685" y="562" class="ip">10.207.255.106</text>
-<rect x="123" y="710" width="164" height="90" rx="14" class="node" fill="#cffafe" stroke="#0891b2"/>
-<text x="205" y="740" class="name">R5</text>
-<text x="205" y="760" class="role">PE1</text>
-<text x="205" y="782" class="ip">10.207.255.107</text>
-<rect x="123" y="940" width="164" height="90" rx="14" class="node" fill="#dcfce7" stroke="#15803d"/>
-<text x="205" y="970" class="name">R4</text>
-<text x="205" y="990" class="role">CE</text>
-<text x="205" y="1012" class="ip">10.207.255.141</text>
-<rect x="418" y="940" width="164" height="90" rx="14" class="node" fill="#dcfce7" stroke="#15803d"/>
-<text x="500" y="970" class="name">R7</text>
-<text x="500" y="990" class="role">CE</text>
-<text x="500" y="1012" class="ip">10.207.255.143</text>
-<rect x="713" y="940" width="164" height="90" rx="14" class="node" fill="#dcfce7" stroke="#15803d"/>
-<text x="795" y="970" class="name">R10</text>
-<text x="795" y="990" class="role">CE</text>
-<text x="795" y="1012" class="ip">10.207.255.146</text>
-<rect x="28" y="70" width="164" height="90" rx="14" class="node" fill="#e2e8f0" stroke="#475569"/>
-<text x="110" y="100" class="name">AUTO1</text>
-<text x="110" y="120" class="role">AUTOMATION</text>
-<text x="110" y="142" class="ip">10.207.255.150</text>
-<line x1="185" y1="1115" x2="235" y2="1115" stroke="#2563eb" stroke-width="3"/><text x="245" y="1119" class="legend">P complete-mesh</text>
-<line x1="390" y1="1115" x2="440" y2="1115" stroke="#1593b5" stroke-width="3"/><text x="450" y="1119" class="legend">PE/core</text>
-<line x1="565" y1="1115" x2="615" y2="1115" stroke="#7c3aed" stroke-width="3"/><text x="625" y="1119" class="legend">RR/PCE/RP</text>
-<line x1="770" y1="1115" x2="820" y2="1115" stroke="#3aa65a" stroke-width="3"/><text x="830" y="1119" class="legend">Customer dual-link</text>
-<text x="42" y="1148" class="sub">Source of truth: profiles/xrd-eight/nodes.csv + links.csv · generated by tools/render_xrd_eight.py</text>
+<rect x="35" y="250" width="1130" height="390" rx="18" class="zone"/>
+<text x="55" y="283" class="zone-title">Provider core · P1–P4 full mesh · dual-stack IS-IS Level-2 · SR-MPLS foundation</text>
+<rect x="35" y="665" width="1130" height="205" rx="18" class="zone"/>
+<text x="55" y="698" class="zone-title">Provider edge · PE1–PE3 dual-homed into independent P routers</text>
+<rect x="35" y="895" width="1130" height="190" rx="18" class="zone"/>
+<text x="55" y="928" class="zone-title">Customer edge · CE1 and CE3 multihomed · CE2 single-homed baseline</text>
+<path d="M205 163 H445" stroke="#64748b" stroke-width="2" stroke-dasharray="7 6"/>
+<rect x="445" y="139" width="270" height="48" rx="24" fill="#e2e8f0" stroke="#64748b"/>
+<text x="580" y="159" class="role">Management network</text>
+<text x="580" y="177" class="ip">10.207.255.0/24</text>
+<path d="M300 360 L700 360" class="link" stroke="#2563eb" stroke-width="3.0"/>
+<text x="500.0" y="350.0" class="lid">P1-P2</text>
+<path d="M300 360 L300 565" class="link" stroke="#2563eb" stroke-width="3.0"/>
+<text x="276.0" y="462.5" class="lid">P1-P3</text>
+<path d="M300 360 L700 565" class="link" stroke="#2563eb" stroke-width="3.0"/>
+<text x="518.0" y="450.5" class="lid">P1-P4</text>
+<path d="M700 360 L300 565" class="link" stroke="#2563eb" stroke-width="3.0"/>
+<text x="482.0" y="478.5" class="lid">P2-P3</text>
+<path d="M700 360 L700 565" class="link" stroke="#2563eb" stroke-width="3.0"/>
+<text x="724.0" y="462.5" class="lid">P2-P4</text>
+<path d="M300 565 L700 565" class="link" stroke="#2563eb" stroke-width="3.0"/>
+<text x="500.0" y="555.0" class="lid">P3-P4</text>
+<path d="M200 790 L300 360" class="link" stroke="#0891b2" stroke-width="2.7"/>
+<text x="232.0" y="571.0" class="lid">PE1-P1</text>
+<path d="M200 790 L300 565" class="link" stroke="#0891b2" stroke-width="2.7"/>
+<text x="232.0" y="689.5" class="lid">PE1-P3</text>
+<path d="M500 790 L700 360" class="link" stroke="#0891b2" stroke-width="2.7"/>
+<text x="616.0" y="567.0" class="lid">PE2-P2</text>
+<path d="M500 790 L700 565" class="link" stroke="#0891b2" stroke-width="2.7"/>
+<text x="616.0" y="689.5" class="lid">PE2-P4</text>
+<path d="M800 790 L300 360" class="link" stroke="#0891b2" stroke-width="2.7"/>
+<text x="542.0" y="563.0" class="lid">PE3-P1</text>
+<path d="M800 790 L700 565" class="link" stroke="#0891b2" stroke-width="2.7"/>
+<text x="768.0" y="687.5" class="lid">PE3-P4</text>
+<path d="M980 145 L300 360" class="link" stroke="#7c3aed" stroke-width="2.7" stroke-dasharray="8 6"/>
+<text x="635.0" y="242.5" class="lid">RR-P1</text>
+<path d="M980 145 L700 565" class="link" stroke="#7c3aed" stroke-width="2.7" stroke-dasharray="8 6"/>
+<text x="852.0" y="347.0" class="lid">RR-P4</text>
+<path d="M200 1010 L200 790" class="link" stroke="#16a34a" stroke-width="2.7"/>
+<text x="178.0" y="900.0" class="lid">CE1-PE1</text>
+<path d="M200 1010 L500 790" class="link" stroke="#16a34a" stroke-width="2.7"/>
+<text x="372.0" y="900.0" class="lid">CE1-PE2</text>
+<path d="M500 1010 L500 790" class="link" stroke="#16a34a" stroke-width="2.7"/>
+<text x="522.0" y="900.0" class="lid">CE2-PE2</text>
+<path d="M800 1010 L800 790" class="link" stroke="#16a34a" stroke-width="2.7"/>
+<text x="822.0" y="900.0" class="lid">CE3-PE3</text>
+<path d="M800 1010 L500 790" class="link" stroke="#16a34a" stroke-width="2.7"/>
+<text x="628.0" y="900.0" class="lid">CE3-PE2</text>
+<rect x="218" y="315" width="164" height="90" rx="14" class="node" fill="#dbeafe" stroke="#2563eb"/>
+<text x="300" y="345" class="name">P1</text>
+<text x="300" y="365" class="role">Provider Core</text>
+<text x="300" y="387" class="ip">10.207.255.101</text>
+<rect x="618" y="315" width="164" height="90" rx="14" class="node" fill="#dbeafe" stroke="#2563eb"/>
+<text x="700" y="345" class="name">P2</text>
+<text x="700" y="365" class="role">Provider Core</text>
+<text x="700" y="387" class="ip">10.207.255.102</text>
+<rect x="218" y="520" width="164" height="90" rx="14" class="node" fill="#dbeafe" stroke="#2563eb"/>
+<text x="300" y="550" class="name">P3</text>
+<text x="300" y="570" class="role">Provider Core</text>
+<text x="300" y="592" class="ip">10.207.255.104</text>
+<rect x="618" y="520" width="164" height="90" rx="14" class="node" fill="#dbeafe" stroke="#2563eb"/>
+<text x="700" y="550" class="name">P4</text>
+<text x="700" y="570" class="role">Provider Core</text>
+<text x="700" y="592" class="ip">10.207.255.106</text>
+<rect x="118" y="745" width="164" height="90" rx="14" class="node" fill="#cffafe" stroke="#0891b2"/>
+<text x="200" y="775" class="name">PE1</text>
+<text x="200" y="795" class="role">Provider Edge</text>
+<text x="200" y="817" class="ip">10.207.255.107</text>
+<rect x="418" y="745" width="164" height="90" rx="14" class="node" fill="#cffafe" stroke="#0891b2"/>
+<text x="500" y="775" class="name">PE2</text>
+<text x="500" y="795" class="role">Provider Edge</text>
+<text x="500" y="817" class="ip">10.207.255.108</text>
+<rect x="718" y="745" width="164" height="90" rx="14" class="node" fill="#cffafe" stroke="#0891b2"/>
+<text x="800" y="775" class="name">PE3</text>
+<text x="800" y="795" class="role">Provider Edge</text>
+<text x="800" y="817" class="ip">10.207.255.103</text>
+<rect x="898" y="100" width="164" height="90" rx="14" class="node" fill="#f3e8ff" stroke="#7c3aed"/>
+<text x="980" y="130" class="name">RR</text>
+<text x="980" y="150" class="role">Route Reflector</text>
+<text x="980" y="172" class="ip">10.207.255.105</text>
+<rect x="118" y="965" width="164" height="90" rx="14" class="node" fill="#dcfce7" stroke="#15803d"/>
+<text x="200" y="995" class="name">CE1</text>
+<text x="200" y="1015" class="role">Customer Edge</text>
+<text x="200" y="1037" class="ip">10.207.255.141</text>
+<rect x="418" y="965" width="164" height="90" rx="14" class="node" fill="#dcfce7" stroke="#15803d"/>
+<text x="500" y="995" class="name">CE2</text>
+<text x="500" y="1015" class="role">Customer Edge</text>
+<text x="500" y="1037" class="ip">10.207.255.143</text>
+<rect x="718" y="965" width="164" height="90" rx="14" class="node" fill="#dcfce7" stroke="#15803d"/>
+<text x="800" y="995" class="name">CE3</text>
+<text x="800" y="1015" class="role">Customer Edge</text>
+<text x="800" y="1037" class="ip">10.207.255.146</text>
+<rect x="38" y="100" width="164" height="90" rx="14" class="node" fill="#e2e8f0" stroke="#475569"/>
+<text x="120" y="130" class="name">AUTO1</text>
+<text x="120" y="150" class="role">Automation</text>
+<text x="120" y="172" class="ip">10.207.255.150</text>
+<line x1="105" y1="1120" x2="155" y2="1120" stroke="#2563eb" stroke-width="3"/>
+<text x="165" y="1124" class="legend">Core</text>
+<line x1="260" y1="1120" x2="310" y2="1120" stroke="#0891b2" stroke-width="3"/>
+<text x="320" y="1124" class="legend">Provider uplink</text>
+<line x1="475" y1="1120" x2="525" y2="1120" stroke="#7c3aed" stroke-width="3" stroke-dasharray="8 6"/>
+<text x="535" y="1124" class="legend">Control / RR</text>
+<line x1="690" y1="1120" x2="740" y2="1120" stroke="#16a34a" stroke-width="3"/>
+<text x="750" y="1124" class="legend">Customer</text>
+<text x="42" y="1150" class="sub">Source of truth: profiles/xrd-eight/nodes.csv + links.csv · generated by tools/render_xrd_eight.py</text>
 </svg>
