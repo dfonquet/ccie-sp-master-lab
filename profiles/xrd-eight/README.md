@@ -1,4 +1,5 @@
 # CCIE SP XRd Eight Profile
+
 > **Compact full-dataplane study environment.** This profile was created for students who need real XRd vRouter forwarding behavior but cannot run the larger Full Dataplane design continuously.
 
 ![CCIE SP XRd Eight topology](topology.svg)

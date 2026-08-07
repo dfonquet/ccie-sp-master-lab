@@ -1,4 +1,5 @@
 # XRd Eight Architecture and Design
+
 ![Authoritative XRd Eight topology](topology.svg)
 
 ## Design objective

@@ -1,4 +1,5 @@
 # XRd Eight Detailed Operating Guide
+
 This runbook distinguishes the repository Source of Truth, Containerlab runtime files and the configuration currently running inside each router.
 
 ## Directory model

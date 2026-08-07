@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 
 import csv
+import ipaddress
 from collections import defaultdict
 from pathlib import Path
 
@@ -9,6 +10,7 @@ PROFILE = ROOT / "profiles" / "xrd-eight"
 TOPOLOGY = ROOT / "topology" / "ccie-sp-xrd-eight.clab.yml"
 CONFIGS = ROOT / "configs" / "xrd-eight" / "00-foundation"
 INVENTORY = PROFILE
+LINKS_V2 = PROFILE / "links-v2.csv"
 AUTO_DIR = ROOT / "automation" / "xrd-eight"
 LABCTL = PROFILE / "labctl"
 
@@ -25,21 +27,20 @@ XR_STARTUP_INTERVAL = 120
 
 
 ISP_NODES = [
-    {"name": "XR1", "role": "P",         "id": 1, "mgmt": "10.207.255.101"},
-    {"name": "XR2", "role": "P",         "id": 2, "mgmt": "10.207.255.102"},
-    {"name": "XR3", "role": "PE",        "id": 3, "mgmt": "10.207.255.103"},
-    {"name": "XR4", "role": "PE",        "id": 8, "mgmt": "10.207.255.108"},
-    {"name": "R1",  "role": "P",         "id": 4, "mgmt": "10.207.255.104"},
-    {"name": "R2",  "role": "RR-PCE-RP", "id": 5, "mgmt": "10.207.255.105"},
-    {"name": "R3",  "role": "P",         "id": 6, "mgmt": "10.207.255.106"},
-    {"name": "R5",  "role": "PE",        "id": 7, "mgmt": "10.207.255.107"},
+    {"name": "P1",  "role": "P",  "id": 1, "mgmt": "10.207.255.101"},
+    {"name": "P2",  "role": "P",  "id": 2, "mgmt": "10.207.255.102"},
+    {"name": "P3",  "role": "P",  "id": 3, "mgmt": "10.207.255.104"},
+    {"name": "P4",  "role": "P",  "id": 4, "mgmt": "10.207.255.106"},
+    {"name": "PE1", "role": "PE", "id": 5, "mgmt": "10.207.255.107"},
+    {"name": "PE2", "role": "PE", "id": 6, "mgmt": "10.207.255.108"},
+    {"name": "PE3", "role": "PE", "id": 7, "mgmt": "10.207.255.103"},
+    {"name": "RR",  "role": "RR", "id": 8, "mgmt": "10.207.255.105"},
 ]
 
-
 CE_NODES = [
-    {"name": "R4",  "role": "CE", "id": 41, "mgmt": "10.207.255.141"},
-    {"name": "R7",  "role": "CE", "id": 43, "mgmt": "10.207.255.143"},
-    {"name": "R10", "role": "CE", "id": 46, "mgmt": "10.207.255.146"},
+    {"name": "CE1", "role": "CE", "id": 41, "mgmt": "10.207.255.141"},
+    {"name": "CE2", "role": "CE", "id": 43, "mgmt": "10.207.255.143"},
+    {"name": "CE3", "role": "CE", "id": 46, "mgmt": "10.207.255.146"},
 ]
 
 AUTO_NODE = {
@@ -49,45 +50,44 @@ AUTO_NODE = {
     "mgmt": "10.207.255.150",
 }
 
+INFRA_PURPOSES = {"isp", "core", "provider", "control"}
+CUSTOMER_PURPOSES = {"customer"}
 
-# Compact CCIE SP topology:
-# four-node full-mesh P core, three dual-homed PE,
-# one dual-homed RR/PCE/RP, and three dual-link CE sites.
 LINKS = [
-    # Four-node P full mesh
-    ("L001", "XR1", "XR2", "isp"),
-    ("L002", "XR1", "R1",  "isp"),
-    ("L003", "XR1", "R3",  "isp"),
-    ("L004", "XR2", "R1",  "isp"),
-    ("L005", "XR2", "R3",  "isp"),
-    ("L006", "R1",  "R3",  "isp"),
+    # Provider Core - four-node full mesh
+    ("P1-P2", "P1", "P2", "core"),
+    ("P1-P3", "P1", "P3", "core"),
+    ("P1-P4", "P1", "P4", "core"),
+    ("P2-P3", "P2", "P3", "core"),
+    ("P2-P4", "P2", "P4", "core"),
+    ("P3-P4", "P3", "P4", "core"),
 
-    # Provider edge dual-homing
-    ("L007", "R5",  "XR1", "isp"),
-    ("L008", "R5",  "R1",  "isp"),
+    # Provider Edge redundancy
+    ("PE1-P1", "PE1", "P1", "provider"),
+    ("PE1-P3", "PE1", "P3", "provider"),
+    ("PE2-P2", "PE2", "P2", "provider"),
+    ("PE2-P4", "PE2", "P4", "provider"),
+    ("PE3-P1", "PE3", "P1", "provider"),
+    ("PE3-P4", "PE3", "P4", "provider"),
 
-    ("L009", "XR4", "XR2", "isp"),
-    ("L010", "XR4", "R3",  "isp"),
+    # Route Reflector redundancy
+    ("RR-P1", "RR", "P1", "control"),
+    ("RR-P4", "RR", "P4", "control"),
 
-    ("L011", "XR3", "XR1", "isp"),
-    ("L012", "XR3", "R3",  "isp"),
-
-    # RR/PCE/RP dual-homing
-    ("L013", "R2", "XR1", "isp"),
-    ("L014", "R2", "R3",  "isp"),
-
-    # CE1 dual physical links to PE1
-    ("L015", "R4", "R5", "customer"),
-    ("L016", "R4", "R5", "customer"),
-
-    # CE2 dual physical links to PE2
-    ("L017", "R7", "XR4", "customer"),
-    ("L018", "R7", "XR4", "customer"),
-
-    # CE3 dual physical links to PE3
-    ("L019", "R10", "XR3", "customer"),
-    ("L020", "R10", "XR3", "customer"),
+    # Customer Edge
+    ("CE1-PE1", "CE1", "PE1", "customer"),
+    ("CE1-PE2", "CE1", "PE2", "customer"),
+    ("CE2-PE2", "CE2", "PE2", "customer"),
+    ("CE3-PE3", "CE3", "PE3", "customer"),
+    ("CE3-PE2", "CE3", "PE2", "customer"),
 ]
+
+# Explicit addressing source of truth for XRd Eight v2.
+with LINKS_V2.open(encoding="utf-8", newline="") as handle:
+    LINK_ADDRESSING = {
+        row["id"]: row
+        for row in csv.DictReader(handle)
+    }
 
 ISP_NAMES = {node["name"] for node in ISP_NODES}
 ALL_NODES = ISP_NODES + CE_NODES + [AUTO_NODE]
@@ -115,9 +115,6 @@ port_counter = defaultdict(lambda: 1)
 interfaces = defaultdict(list)
 rendered_links = []
 
-isp_sequence = 0
-customer_sequence = 0
-
 for link_id, endpoint_a, endpoint_b, purpose in LINKS:
     port_a = port_counter[endpoint_a]
     port_b = port_counter[endpoint_b]
@@ -127,22 +124,54 @@ for link_id, endpoint_a, endpoint_b, purpose in LINKS:
     topo_a = f"{endpoint_a}:eth{port_a}"
     topo_b = f"{endpoint_b}:eth{port_b}"
 
-    if purpose == "isp":
-        isp_sequence += 1
-        host_a = (isp_sequence - 1) * 2
-        host_b = host_a + 1
-        ipv4_a = f"10.70.255.{host_a}"
-        ipv4_b = f"10.70.255.{host_b}"
-        ipv6_a = f"2001:db8:1700:{isp_sequence:x}::"
-        ipv6_b = f"2001:db8:1700:{isp_sequence:x}::1"
-    else:
-        customer_sequence += 1
-        host_a = (customer_sequence - 1) * 2
-        host_b = host_a + 1
-        ipv4_a = f"10.71.255.{host_a}"
-        ipv4_b = f"10.71.255.{host_b}"
-        ipv6_a = f"2001:db8:2700:{customer_sequence:x}::"
-        ipv6_b = f"2001:db8:2700:{customer_sequence:x}::1"
+    if link_id not in LINK_ADDRESSING:
+        raise ValueError(
+            f"Missing addressing definition for link {link_id}"
+        )
+
+    addressing = LINK_ADDRESSING[link_id]
+
+    expected_a = addressing["endpoint_a"]
+    expected_b = addressing["endpoint_b"]
+
+    if topo_a != expected_a or topo_b != expected_b:
+        raise ValueError(
+            f"{link_id}: endpoint mismatch. "
+            f"Builder={topo_a}<->{topo_b}, "
+            f"CSV={expected_a}<->{expected_b}"
+        )
+
+    if purpose != addressing["purpose"]:
+        raise ValueError(
+            f"{link_id}: purpose mismatch. "
+            f"Builder={purpose}, CSV={addressing['purpose']}"
+        )
+
+    ipv4_a_if = ipaddress.ip_interface(addressing["ipv4_a"])
+    ipv4_b_if = ipaddress.ip_interface(addressing["ipv4_b"])
+    ipv6_a_if = ipaddress.ip_interface(addressing["ipv6_a"])
+    ipv6_b_if = ipaddress.ip_interface(addressing["ipv6_b"])
+
+    if ipv4_a_if.network.prefixlen != 31 or ipv4_b_if.network.prefixlen != 31:
+        raise ValueError(f"{link_id}: IPv4 P2P must use /31")
+
+    if ipv6_a_if.network.prefixlen != 127 or ipv6_b_if.network.prefixlen != 127:
+        raise ValueError(f"{link_id}: IPv6 P2P must use /127")
+
+    if ipv4_a_if.network != ipv4_b_if.network:
+        raise ValueError(
+            f"{link_id}: IPv4 endpoints are not in the same /31"
+        )
+
+    if ipv6_a_if.network != ipv6_b_if.network:
+        raise ValueError(
+            f"{link_id}: IPv6 endpoints are not in the same /127"
+        )
+
+    ipv4_a = str(ipv4_a_if.ip)
+    ipv4_b = str(ipv4_b_if.ip)
+    ipv6_a = str(ipv6_a_if.ip)
+    ipv6_b = str(ipv6_b_if.ip)
 
     rendered_links.append({
         "id": link_id,
@@ -187,7 +216,7 @@ def render_xr_config(node):
 
     lines = [
         f"hostname {name}",
-        "banner motd ^C",
+        "banner motd @",
         "------------------------------------------------------------",
         "                    AUTHORIZED ACCESS ONLY",
         "",
@@ -199,8 +228,8 @@ def render_xr_config(node):
         "Use of this system indicates acceptance of monitoring",
         "and security policies.",
         "------------------------------------------------------------",
-        "^C",
-        "banner login ^C",
+        "@",
+        "banner login @",
         "************************************************************",
         "*                                                          *",
         "*          CCCCCC  CCCCCC  III  EEEEEEE     SSSSSS  PPPPPP *",
@@ -213,9 +242,9 @@ def render_xr_config(node):
         "*                         (SP)                              *",
         "*                                                          *",
         "************************************************************",
-        "^C",
+        "@",
         "interface Loopback0",
-        f" description XR8-LAB {node['role']} NODE-ID {node_id}",
+        f" description CCIE-SP {name} NODE-ID {node_id}",
         f" ipv4 address 10.70.0.{node_id} 255.255.255.255",
         f" ipv6 address 2001:db8:570:abcd::{node_id}/128",
         " no shutdown",
@@ -227,7 +256,7 @@ def render_xr_config(node):
     for interface in interfaces[name]:
         interface_name = xr_interface(interface["port"])
 
-        if interface["purpose"] == "isp":
+        if interface["purpose"] in INFRA_PURPOSES:
             lines.extend([
                 f"interface {interface_name}",
                 f" description {interface['id']} PROVIDER {name} -> {interface['peer']}",
@@ -483,7 +512,7 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TOPOLOGY="$ROOT/topology/ccie-sp-xrd-eight.clab.yml"
-ISP_FILTER="XR1,XR2,XR3,XR4,R1,R2,R3,R5"
+ISP_FILTER="P1,P2,P3,P4,PE1,PE2,PE3,RR"
 
 case "${1:-}" in
   deploy-isp)
