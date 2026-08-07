@@ -441,6 +441,7 @@ with (INVENTORY / "nodes.csv").open("w", encoding="utf-8", newline="") as handle
             "loopback_ipv4",
             "loopback_ipv6",
         ],
+    lineterminator="\n",
     )
     writer.writeheader()
 
@@ -490,6 +491,7 @@ with (INVENTORY / "links.csv").open("w", encoding="utf-8", newline="") as handle
             "ipv6_a",
             "ipv6_b",
         ],
+    lineterminator="\n",
     )
     writer.writeheader()
 
