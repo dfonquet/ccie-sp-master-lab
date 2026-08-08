@@ -3,32 +3,206 @@ set -euo pipefail
 
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/../.." && pwd)"
 TOPOLOGY="$ROOT/topology/ccie-sp-xrd-eight.clab.yml"
-ISP_FILTER="P1,P2,P3,P4,PE1,PE2,PE3,RR"
+ADDRESS_VALIDATOR="$ROOT/tools/validate_xrd_eight_addressing.py"
+
+LAB_NAME="ccie-sp-xrd-eight"
+CONTAINER_PREFIX="clab-${LAB_NAME}-"
+
+PROVIDER_FILTER="P1,P2,P3,P4,PE1,PE2,PE3,RR"
+XRD_NODES=(P1 P2 P3 P4 PE1 PE2 PE3 RR)
+
+die() {
+  echo "ERROR: $*" >&2
+  exit 1
+}
+
+require_command() {
+  command -v "$1" >/dev/null 2>&1 ||
+    die "Required command not found: $1"
+}
+
+check_base_requirements() {
+  require_command docker
+  require_command containerlab
+
+  [[ -f "$TOPOLOGY" ]] ||
+    die "Topology file not found: $TOPOLOGY"
+}
+
+validate_repository() {
+  require_command python3
+
+  [[ -f "$ADDRESS_VALIDATOR" ]] ||
+    die "Address validator not found: $ADDRESS_VALIDATOR"
+
+  echo "==> Validating XRd Eight v2 addressing"
+  python3 "$ADDRESS_VALIDATOR"
+
+  echo
+  echo "==> Validation completed successfully"
+}
+
+check_full_deploy_secret() {
+  : "${CCIE_AUTO_PASSWORD:?Export CCIE_AUTO_PASSWORD before full deployment}"
+}
+
+deploy_provider() {
+  check_base_requirements
+
+  echo "==> Deploying XRd Eight v2 provider infrastructure"
+  echo "    Nodes: $PROVIDER_FILTER"
+  echo "    Topology: $TOPOLOGY"
+
+  sudo containerlab deploy \
+    -t "$TOPOLOGY" \
+    --node-filter "$PROVIDER_FILTER"
+}
+
+deploy_full() {
+  check_base_requirements
+  check_full_deploy_secret
+
+  echo "==> Deploying complete XRd Eight v2 topology"
+  echo "    Topology: $TOPOLOGY"
+
+  sudo --preserve-env=CCIE_AUTO_PASSWORD \
+    containerlab deploy \
+    -t "$TOPOLOGY"
+}
+
+destroy_lab() {
+  check_base_requirements
+
+  echo "==> Destroying XRd Eight v2"
+  echo "    Runtime cleanup: enabled"
+
+  sudo containerlab destroy \
+    -t "$TOPOLOGY" \
+    --cleanup
+}
+
+show_status() {
+  require_command docker
+
+  echo "==> XRd Eight v2 container status"
+
+  docker ps -a \
+    --filter "name=${CONTAINER_PREFIX}" \
+    --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
+}
+
+show_health() {
+  require_command docker
+
+  echo "==> XRd Eight v2 XRd health"
+
+  local node
+  local container
+
+  for node in "${XRD_NODES[@]}"; do
+    container="${CONTAINER_PREFIX}${node}"
+
+    if ! docker inspect "$container" >/dev/null 2>&1; then
+      printf '%-40s %s\n' "$container" "NOT FOUND"
+      continue
+    fi
+
+    docker inspect "$container" \
+      --format '{{.Name}} status={{.State.Status}} health={{if .State.Health}}{{.State.Health.Status}}{{else}}n/a{{end}} restart={{.RestartCount}} oom={{.State.OOMKilled}}'
+  done
+}
+
+show_resources() {
+  require_command docker
+
+  echo "==> Host resources"
+  free -h
+  echo
+  uptime
+  echo
+
+  mapfile -t containers < <(
+    docker ps \
+      --filter "name=${CONTAINER_PREFIX}" \
+      --format '{{.Names}}'
+  )
+
+  if (( ${#containers[@]} == 0 )); then
+    echo
+    echo "No running XRd Eight v2 containers found."
+    return 0
+  fi
+
+  echo
+  echo "==> Container resources"
+
+  docker stats \
+    --no-stream \
+    "${containers[@]}"
+}
+
+show_usage() {
+  cat <<EOF
+Usage:
+  $0 validate
+  $0 deploy-provider
+  $0 deploy-full
+  $0 destroy
+  $0 status
+  $0 health
+  $0 resources
+
+Commands:
+  validate         Run static addressing validation.
+  deploy-provider Deploy P1-P4, PE1-PE3 and RR only.
+  deploy-full      Deploy the complete 12-node topology.
+  destroy          Destroy the topology and remove runtime artifacts.
+  status           Show XRd Eight container state.
+  health           Show XRd health, restart and OOM state.
+  resources        Show host and running-container resource usage.
+
+Compatibility:
+  deploy-isp       Alias for deploy-provider.
+EOF
+}
 
 case "${1:-}" in
-  deploy-isp)
-    sudo containerlab deploy -t "$TOPOLOGY" --node-filter "$ISP_FILTER"
+  validate)
+    validate_repository
     ;;
+
+  deploy-provider|deploy-isp)
+    deploy_provider
+    ;;
+
   deploy-full)
-    : "${CCIE_AUTO_PASSWORD:?Export CCIE_AUTO_PASSWORD before deployment}"
-    sudo --preserve-env=CCIE_AUTO_PASSWORD containerlab deploy -t "$TOPOLOGY"
+    deploy_full
     ;;
+
   destroy)
-    sudo containerlab destroy -t "$TOPOLOGY" --cleanup
+    destroy_lab
     ;;
+
   status)
-    docker ps -a       --filter name=clab-ccie-sp-xrd-eight       --format 'table {{.Names}}	{{.Status}}	{{.Image}}'
+    show_status
     ;;
+
+  health)
+    show_health
+    ;;
+
   resources)
-    free -h
-    uptime
-    names="$(docker ps       --filter name=clab-ccie-sp-xrd-eight       --format '{{.Names}}')"
-    if [[ -n "$names" ]]; then
-      docker stats --no-stream $names
-    fi
+    show_resources
     ;;
+
+  help|-h|--help|"")
+    show_usage
+    ;;
+
   *)
-    echo "Usage: $0 {deploy-isp|deploy-full|destroy|status|resources}"
+    echo "Unknown command: ${1}" >&2
+    echo
+    show_usage >&2
     exit 1
     ;;
 esac
