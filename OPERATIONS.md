@@ -11,6 +11,15 @@
 | C1-C2 | `10.201.255.141-142` | `CCIE_IOL_USERNAME` | `CCIE_IOL_PASSWORD` |
 | AUTO1 | `10.201.255.150` | `CCIE_AUTO_USERNAME` | `CCIE_AUTO_PASSWORD` |
 
+The following entries are declared offline and are not reachable until a
+separately approved deployment window:
+
+| Planned nodes | Management addresses | Username source | Password source |
+|---|---|---|---|
+| ASBR-ISP2, RR-ISP2 | `10.201.255.151-152` | `CCIE_XRD_USERNAME` | `CCIE_XRD_PASSWORD` |
+| ISP2-P1–ISP2-P5 | `10.201.255.153-157` | `CCIE_IOL_USERNAME` | `CCIE_IOL_PASSWORD` |
+| SOURCE1 | `10.201.255.158` | `CCIE_AUTO_USERNAME` | `CCIE_AUTO_PASSWORD` |
+
 Create the ignored runtime credential file before operating the lab:
 
 ```bash
@@ -58,7 +67,8 @@ Validate all management sessions:
 /srv/netlab/venvs/ccie-sp/bin/python tools/validate_nodes.py --workers 2
 ```
 
-Validate all 47 directly connected links with IPv4 and IPv6:
+Validate the 47 active ISP-1 links with IPv4 and IPv6 before the expansion.
+After manual ISP-2 addressing, the same validator targets all 57 links:
 
 ```bash
 /srv/netlab/venvs/ccie-sp/bin/python tools/validate_links.py --family both
@@ -66,13 +76,17 @@ Validate all 47 directly connected links with IPv4 and IPv6:
 
 ## Rebuild the generated files
 
+Do not run the Master generator while runtime-only study configuration has not
+been captured and reconciled. It can regenerate topology and startup artifacts
+that are intentionally not authoritative for the current runtime.
+
 ```bash
 /srv/netlab/venvs/ccie-sp/bin/python tools/build_lab.py
 ```
 
 ## Baseline restoration and manual phases
 
-`python3 tools/build_lab.py` generates deploy-safe files under
+Historically, `python3 tools/build_lab.py` generates deploy-safe files under
 `topology/startup/`. `./labctl deploy master` uses them automatically and
 waits for all 30 nodes to pass real SSH/CLI readiness. XRd receives the final
 cumulative provider baseline; IOL receives a partial startup configuration so

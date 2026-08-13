@@ -5,7 +5,7 @@
 
 ## 1. Scope
 
-The current Master source of truth contains:
+The currently active Master runtime baseline contains:
 
 | Component | Inventory source | Current count |
 |---|---|---:|
@@ -19,7 +19,19 @@ For a complete dual-stack link-validation run, the calculated test cardinality
 is therefore:
 
 ```text
-47 links × 2 directions × 2 address families = 188 directed tests
+47 active links × 2 directions × 2 address families = 188 directed tests
+```
+
+The offline structural inventory additionally declares ISP-2. It must not be
+counted as runtime acceptance before the approved deployment and manual
+configuration phases:
+
+```text
+structural_nodes=38
+structural_links=57
+active_nodes=30
+active_links=47
+active_directed_dual_stack_tests=188
 ```
 
 This number verifies test **coverage**, not reachability. Do not publish a pass

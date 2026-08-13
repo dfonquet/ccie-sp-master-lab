@@ -14,9 +14,12 @@ LINKS_CSV = ROOT / "inventory" / "links.csv"
 OUTPUT = ROOT / "docs" / "topology.svg"
 
 WIDTH = 1800
-HEIGHT = 1380
+HEIGHT = 1900
 
-EXPANSION_NODES = {"P7", "P8", "PE7", "PE8"}
+EXPANSION_NODES = {
+    "P7", "P8", "PE7", "PE8", "ASBR-ISP2", "RR-ISP2",
+    "ISP2-P1", "ISP2-P2", "ISP2-P3", "ISP2-P4", "ISP2-P5", "SOURCE1",
+}
 
 POSITIONS = {
     "AUTO1": (150, 150),
@@ -49,6 +52,14 @@ POSITIONS = {
     "CE9": (1640, 1000),
     "C1": (120, 1210),
     "C2": (1640, 1210),
+    "ASBR-ISP2": (350, 1400),
+    "ISP2-P1": (650, 1350),
+    "ISP2-P2": (650, 1550),
+    "ISP2-P3": (950, 1350),
+    "ISP2-P4": (1200, 1450),
+    "ISP2-P5": (950, 1550),
+    "RR-ISP2": (1450, 1450),
+    "SOURCE1": (1250, 1650),
 }
 
 GROUP_STYLE = {
@@ -61,6 +72,10 @@ GROUP_STYLE = {
     "customer": ("#16a34a", 2, ""),
     "customer-dual": ("#65a30d", 3, "7 5"),
     "client": ("#ea580c", 2, ""),
+    "inter-as": ("#dc2626", 4, "10 6"),
+    "isp2-core": ("#0f766e", 3, ""),
+    "isp2-rr": ("#7c3aed", 3, "7 5"),
+    "source-access": ("#ea580c", 3, ""),
 }
 
 ROLE_STYLE = {
@@ -71,6 +86,12 @@ ROLE_STYLE = {
     "CE-DUAL": ("#ecfccb", "#4d7c0f"),
     "CLIENT": ("#ffedd5", "#c2410c"),
     "AUTOMATION": ("#e2e8f0", "#334155"),
+    "ASBR-ISP2": ("#fee2e2", "#b91c1c"),
+    "RR-ISP2": ("#f3e8ff", "#7e22ce"),
+    "P-ISP2": ("#ccfbf1", "#0f766e"),
+    "TRANSIT-ISP2": ("#d1fae5", "#047857"),
+    "PE-SERVICE-EDGE": ("#cffafe", "#0e7490"),
+    "TRAFFIC-SOURCE": ("#ffedd5", "#c2410c"),
 }
 
 
@@ -104,7 +125,7 @@ def node_element(node: dict[str, str]) -> str:
     name = node["name"]
     x, y = POSITIONS[name]
     fill, stroke = ROLE_STYLE[node["role"]]
-    width = 150 if name != "AUTO1" else 175
+    width = 175 if name in {"AUTO1", "ASBR-ISP2", "RR-ISP2", "SOURCE1"} else 150
     height = 86
     left = x - width / 2
     top = y - height / 2
@@ -145,17 +166,17 @@ def render() -> str:
     ]
     legend = []
     for index, (label, color, dash) in enumerate(legend_items):
-        x = 310 + index * 225
+        x = 220 + index * 250
         dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
         legend.append(
-            f'<line x1="{x}" y1="1270" x2="{x + 55}" y2="1270" '
+            f'<line x1="{x}" y1="1810" x2="{x + 55}" y2="1810" '
             f'stroke="{color}" stroke-width="4"{dash_attr}/>'
-            f'<text x="{x + 65}" y="1276" class="legend">{esc(label)}</text>'
+            f'<text x="{x + 65}" y="1816" class="legend">{esc(label)}</text>'
         )
 
     return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-labelledby="title desc">
   <title id="title">CCIE Service Provider master lab topology</title>
-  <desc id="desc">Validated thirty-node dual-plane service provider topology with eight P routers, eight PE routers, two route reflectors and PCEs, nine customer edges, two clients and one automation workstation. P7, P8, PE7 and PE8 are the expansion nodes.</desc>
+  <desc id="desc">Structural 38-node topology containing the validated ISP-1 Master and the offline ISP-2 AS65002 expansion. Runtime routing configuration remains manual.</desc>
   <style>
     .background {{ fill: #f8fafc; }}
     .zone {{ fill: none; stroke: #cbd5e1; stroke-width: 2; stroke-dasharray: 8 8; }}
@@ -173,7 +194,7 @@ def render() -> str:
   </style>
   <rect class="background" width="100%" height="100%"/>
   <text x="55" y="48" class="title">CCIE SP v5.1 Master Lab</text>
-  <text x="55" y="76" class="subtitle">30 nodes | 18 XRd + 11 IOL + AUTO1 | 47 links | expanded underlay validated 2026-07-30</text>
+  <text x="55" y="76" class="subtitle">{len(nodes)} nodes | 20 XRd + 16 IOL + 2 Linux | {len(links)} links | ISP-2 structural definition only</text>
   <rect x="1360" y="30" width="385" height="58" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
   <text x="1380" y="54" class="status">✓ Validated: 30/30 containers · 0 swap</text>
   <text x="1380" y="74" class="status">✓ IS-IS · SR-MPLS · PE7/PE8 dual-RR</text>
@@ -188,6 +209,8 @@ def render() -> str:
   <text x="75" y="685" class="zone-label">Provider edge · dual-homed PEs · VPN service foundation</text>
   <rect x="45" y="890" width="1710" height="210" rx="24" class="zone"/>
   <text x="65" y="920" class="zone-label">Customer edge · single/dual-homed CE · L2VPN/L3VPN/EVPN practice</text>
+  <rect x="45" y="1290" width="1710" height="450" rx="24" class="zone"/>
+  <text x="65" y="1320" class="zone-label">ISP-2 · AS65002 · manual OSPFv2/OSPFv3 Area 0 study domain</text>
   <path d="M238 150 H330" stroke="#64748b" stroke-width="2" stroke-dasharray="6 6"/>
   <rect x="330" y="122" width="220" height="56" rx="28" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
   <text x="440" y="146" class="node-role">Management network</text>
@@ -195,10 +218,10 @@ def render() -> str:
   {''.join(lines)}
   {''.join(node_shapes)}
   {''.join(legend)}
-  <rect x="310" y="1315" width="48" height="20" rx="10" fill="#f97316"/>
-  <text x="334" y="1329" class="expansion-label">NEW</text>
-  <text x="370" y="1330" class="legend">2026 expansion: P7, P8, PE7 and PE8 · links L040-L047</text>
-  <text x="55" y="1360" class="subtitle">Source of truth: inventory/nodes.csv + inventory/links.csv · generated by tools/render_topology.py</text>
+  <rect x="220" y="1850" width="48" height="20" rx="10" fill="#f97316"/>
+  <text x="244" y="1864" class="expansion-label">NEW</text>
+  <text x="280" y="1865" class="legend">Structural expansion: ISP-2 nodes and links L048-L057; not yet deployed</text>
+  <text x="55" y="1888" class="subtitle">Source of truth: inventory/nodes.csv + inventory/links.csv · generated by tools/render_topology.py</text>
 </svg>
 """
 

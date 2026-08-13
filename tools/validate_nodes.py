@@ -45,10 +45,15 @@ def validate(row: dict[str, str]) -> dict[str, str]:
             "command": "show version | include Cisco IOS Software|Version",
         }
     else:
+        command = (
+            "python3 --version"
+            if name == "SOURCE1"
+            else "python3 --version && ansible --version | head -1"
+        )
         params = {
             "device_type": "linux",
             **connection_credentials(kind),
-            "command": "python3 --version && ansible --version | head -1",
+            "command": command,
         }
 
     command = params.pop("command")

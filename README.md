@@ -46,7 +46,7 @@ service layers.
 
 | Profile | Scale | Validated foundation | Intended study scope |
 |---|---:|---|---|
-| [**Master ISP**](profiles/master/README.md) | 30 nodes, 47 data links | Dual-stack IS-IS, SR-MPLS, redundant RR foundation, EVPN control-plane milestone, and PIM-SM/BSR/RP multicast milestone | MPLS, MP-BGP, L3VPN, L2VPN, EVPN, multicast, SR-TE/PCE, QoS, security, assurance, and failure drills |
+| [**Master ISP**](profiles/master/README.md) | 38 nodes, 57 data links declared; 30/47 active | Validated ISP-1 runtime plus offline-only ISP-2 structural definition | Existing ISP-1 studies plus future manual OSPF and Inter-AS study phases |
 | [**Inter-AS**](profiles/inter-as/README.md) | 23 nodes, 35 links | Generated topology, management and CLI access, base addressing, AS separation, and physical connectivity | eBGP/iBGP, routing policy, labeled unicast, route reflection, and Inter-AS Options A, B, and C |
 | [**SRv6**](profiles/srv6/README.md) | 21 nodes, 33 links | Full deployment, base configuration, IS-IS, IPv6 loopback reachability, SRv6 locators, and `66/66` directed IPv6 link tests | SRv6 SID design, endpoint behaviors, SRv6-TE policies, VPN services, uSID, resiliency, and automation |
 | [**Full Dataplane**](profiles/full-dataplane/README.md) | 30 nodes, 42 links | Prepared artifacts: 10 XRd vRouter forwarding nodes, redundant P/PE/RR design and dual-homed CE access | Staged live acceptance, then PCE, SRv6, EVPN, VPN, RPKI, AAA, multicast, QoS and telemetry |
@@ -65,6 +65,8 @@ configuration artifacts, diagram, operating procedure, and acceptance boundary.
 - Nine CE routers: `CE1-CE9`.
 - Two customer test endpoints: `C1-C2`.
 - One automation workstation: `AUTO1`.
+- Offline-only ISP-2 structure: `ASBR-ISP2`, `RR-ISP2`, five IOL routers and
+  `SOURCE1` on links `L048-L057`. These nodes are not yet deployed.
 - Expanded nodes `P7`, `P8`, `PE7`, and `PE8` use links `L040-L047`.
 - The 30-node topology has completed runtime readiness with `30/30` nodes available.
 - The expanded dual-stack IS-IS, SR-MPLS, and route-reflector foundations have
@@ -135,6 +137,9 @@ Profile-specific diagrams:
 | Customer edge | Cisco IOL-XE `17.12.1` | `CE1-CE9` | 9 |
 | Customer test endpoints | Cisco IOL-XE `17.12.1` | `C1-C2` | 2 |
 | Automation workstation | Ubuntu-based container | `AUTO1` | 1 |
+| ISP-2 ASBR and RR | Cisco XRd Control Plane `24.2.11` | `ASBR-ISP2`, `RR-ISP2` | 2 |
+| ISP-2 core/service edge | Cisco IOL-XE `17.12.1` | `ISP2-P1`–`ISP2-P5` | 5 |
+| Traffic source | Ubuntu-based container | `SOURCE1` | 1 |
 
 The Master backbone uses two longitudinal planes, three inter-plane rungs, and
 two diagonal paths. Every PE is dual-homed to a pair of P routers. `RR1` and

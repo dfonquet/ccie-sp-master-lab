@@ -62,10 +62,42 @@ def connect_params(node: dict[str, str]) -> dict[str, object]:
             "device_type": "cisco_xr",
             **connection_credentials(node["kind"]),
         }
+    if node["kind"] == "cisco_iol":
+        return {
+            "device_type": "cisco_ios",
+            **connection_credentials(node["kind"]),
+        }
     return {
-        "device_type": "cisco_ios",
+        "device_type": "linux",
         **connection_credentials(node["kind"]),
     }
+
+
+def ping_command(node: dict[str, str], family: str, destination: str) -> str:
+    if node["kind"] == "linux":
+        binary = "ping -6" if family == "ipv6" else "ping"
+        return f"{binary} -c 3 -W 1 {destination}"
+    if family == "ipv6" and node["kind"] == "cisco_xrd":
+        return f"ping ipv6 {destination} count 3 timeout 1"
+    if family == "ipv6":
+        return f"ping ipv6 {destination} repeat 3 timeout 1"
+    if node["kind"] == "cisco_xrd":
+        return f"ping {destination} count 3 timeout 1"
+    return f"ping {destination} repeat 3 timeout 1"
+
+
+def ping_succeeded(node: dict[str, str], output: str) -> bool:
+    if node["kind"] == "linux":
+        return "0% packet loss" in output
+    return "Success rate is 100 percent" in output
+
+
+def ping_summary(node: dict[str, str], output: str) -> str:
+    marker = "packet loss" if node["kind"] == "linux" else "Success rate is"
+    return next(
+        (line.strip() for line in output.splitlines() if marker in line),
+        f"no {marker} line",
+    )
 
 
 def select_link_sources(
@@ -119,28 +151,12 @@ def validate_source(
         for family in families:
             for link in links:
                 destination = link[f"destination_{family}"].split("/", 1)[0]
-                if family == "ipv6" and node["kind"] == "cisco_xrd":
-                    command = f"ping ipv6 {destination} count 3 timeout 1"
-                elif family == "ipv6":
-                    command = f"ping ipv6 {destination} repeat 3 timeout 1"
-                elif node["kind"] == "cisco_xrd":
-                    command = f"ping {destination} count 3 timeout 1"
-                else:
-                    command = f"ping {destination} repeat 3 timeout 1"
+                command = ping_command(node, family, destination)
                 output = session.send_command(command, read_timeout=20)
-                if "Success rate is 100 percent" not in output:
+                if not ping_succeeded(node, output):
                     output = session.send_command(command, read_timeout=20)
-                status = (
-                    "ok" if "Success rate is 100 percent" in output else "failed"
-                )
-                summary = next(
-                    (
-                        line.strip()
-                        for line in output.splitlines()
-                        if "Success rate is" in line
-                    ),
-                    "no success-rate line",
-                )
+                status = "ok" if ping_succeeded(node, output) else "failed"
+                summary = ping_summary(node, output)
                 results.append(
                     {
                         "id": link["id"],
