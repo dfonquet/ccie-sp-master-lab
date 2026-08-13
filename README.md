@@ -1,4 +1,7 @@
-# CCIE Service Provider v5.1 Multi-Profile Lab
+
+<h1 align="center">
+  CCIE Service Provider v5.1 Multi-Profile Lab
+</h1>
 
 <div align="center">
 
@@ -43,7 +46,7 @@ service layers.
 
 | Profile | Scale | Validated foundation | Intended study scope |
 |---|---:|---|---|
-| [**Master ISP**](profiles/master/README.md) | 30 nodes, 47 data links | Dual-stack addressing, IS-IS, SR-MPLS, redundant RR foundation, expanded P/PE topology | MPLS, MP-BGP, L3VPN, L2VPN, EVPN, multicast, SR-TE/PCE, QoS, security, assurance, and failure drills |
+| [**Master ISP**](profiles/master/README.md) | 30 nodes, 47 data links | Dual-stack IS-IS, SR-MPLS, redundant RR foundation, EVPN control-plane milestone, and PIM-SM/BSR/RP multicast milestone | MPLS, MP-BGP, L3VPN, L2VPN, EVPN, multicast, SR-TE/PCE, QoS, security, assurance, and failure drills |
 | [**Inter-AS**](profiles/inter-as/README.md) | 23 nodes, 35 links | Generated topology, management and CLI access, base addressing, AS separation, and physical connectivity | eBGP/iBGP, routing policy, labeled unicast, route reflection, and Inter-AS Options A, B, and C |
 | [**SRv6**](profiles/srv6/README.md) | 21 nodes, 33 links | Full deployment, base configuration, IS-IS, IPv6 loopback reachability, SRv6 locators, and `66/66` directed IPv6 link tests | SRv6 SID design, endpoint behaviors, SRv6-TE policies, VPN services, uSID, resiliency, and automation |
 | [**Full Dataplane**](profiles/full-dataplane/README.md) | 30 nodes, 42 links | Prepared artifacts: 10 XRd vRouter forwarding nodes, redundant P/PE/RR design and dual-homed CE access | Staged live acceptance, then PCE, SRv6, EVPN, VPN, RPKI, AAA, multicast, QoS and telemetry |
@@ -54,7 +57,7 @@ configuration artifacts, diagram, operating procedure, and acceptance boundary.
 
 ## Current implementation status
 
-### Master ISP
+### Master ISP — Renovated v1
 
 - Eight P routers: `P1-P8`.
 - Eight PE routers: `PE1-PE8`.
@@ -63,8 +66,18 @@ configuration artifacts, diagram, operating procedure, and acceptance boundary.
 - Two customer test endpoints: `C1-C2`.
 - One automation workstation: `AUTO1`.
 - Expanded nodes `P7`, `P8`, `PE7`, and `PE8` use links `L040-L047`.
+- The 30-node topology has completed runtime readiness with `30/30` nodes available.
 - The expanded dual-stack IS-IS, SR-MPLS, and route-reflector foundations have
   been validated.
+- EVPN E-LAN control-plane study has been validated with EVI `500`, redundant
+  RR propagation, MAC advertisement, EVPN Route Type 2, and Route Type 3/IMET state.
+- IPv4 PIM Sparse Mode study has been validated with dynamic BSR/RP discovery,
+  IGMP receiver interest, RPF validation, FHR/LHR behavior, PIM Register,
+  `(*,G)`, and `(S,G)` state.
+- XRd Control Plane forwarding limitations are treated separately from
+  protocol/control-plane validation.
+- Advanced EVPN, multicast VPN, dataplane, and automation exercises remain
+  progressive study work.
 
 ### Inter-AS
 
@@ -92,10 +105,15 @@ phase has already been solved or accepted.
 
 ## Topology
 
-The Master diagram below is generated from the authoritative node and link
-inventories. Orange `NEW` markers identify the validated expansion.
+The Master diagram below represents the current **Renovated v1** study
+topology and highlights the EVPN and multicast service paths currently used
+during protocol validation.
 
 ![CCIE SP Master topology](docs/topology.svg)
+
+The authoritative topology continues to be generated from the node and link
+inventories. The diagram is a study and documentation view; inventories remain
+the source of truth.
 
 Profile-specific diagrams:
 
@@ -140,9 +158,112 @@ Depending on the selected profile, the starting point includes:
 - IPv4 and IPv6 point-to-point connectivity.
 - Dual-stack IS-IS where required.
 - SR-MPLS foundations in the Master profile.
+- Redundant MP-BGP route-reflector foundations in the Master profile.
+- EVPN control-plane validation milestones in the Master profile.
+- IPv4 PIM-SM, BSR/RP, RPF, and multicast-state validation milestones in the
+  Master profile.
 - Autonomous-system separation in the Inter-AS profile.
 - Operational IS-IS and SRv6 locators in the SRv6 profile.
 - Backup, validation, rollback, and automation tooling through `AUTO1`.
+
+### Master EVPN control-plane milestone
+
+The Master profile has been exercised with an EVPN E-LAN service using EVI
+`500`.
+
+Validated behavior includes:
+
+- BGP `l2vpn evpn` sessions through redundant `RR1` and `RR2`.
+- EVI and bridge-domain association.
+- Route-target import/export.
+- MAC advertisement through EVPN Route Type 2.
+- Remote PE next-hop learning.
+- Route Type 3 / IMET participation for the EVI.
+- Correlation between customer-side MAC addresses and BGP EVPN MAC routes.
+
+```text
+Customer / CE
+     |
+Attachment Circuit
+     |
+Bridge Domain
+     |
+   EVI 500
+     |
+BGP L2VPN EVPN
+     |
+ RR1 / RR2
+     |
+ Remote PE
+```
+
+This validates the EVPN signaling workflow. It does not imply that every EVPN
+dataplane feature, IRB mode, multihoming mode, or forwarding scenario has been
+accepted.
+
+### Master multicast milestone
+
+The Master profile has also been exercised with IPv4 PIM Sparse Mode using
+dynamic BSR/RP discovery.
+
+```text
+Receiver side                         Source side
+CE4                                   CE7
+ |                                     |
+PE3 = LHR                              PE5 = FHR
+ |                                     |
+P3                                     | PIM Register
+ |                                     |
+ +------------ RR1 --------------------+
+              BSR + RP
+              10.0.0.13
+```
+
+Validated behavior includes:
+
+- PIMv2 neighbor formation.
+- Dynamic BSR operation and Candidate-RP advertisement.
+- Group-to-RP mapping for `239.0.0.0/8`.
+- IGMP joins for `239.1.1.1` and `239.1.1.2`.
+- Receiver-side `(*,G)` and source-side `(S,G)` creation.
+- RPF validation toward the RP and multicast source.
+- First-Hop Router and Last-Hop Router behavior.
+- PIM Register signaling.
+- `Encapstunnel0` and `Decapstunnel0` control-plane state.
+- MRIB outgoing-interface state toward the receiver.
+
+```text
+CE7 / 10.255.0.67
+        |
+        v
+    PE5 / FHR
+      (S,G)
+        |
+   PIM Register
+        |
+        v
+    RR1 / RP
+    10.0.0.13
+        |
+   Shared Tree
+        |
+        v
+    PE3 / LHR
+        |
+        v
+       CE4
+```
+
+At the RP, both receiver and source state were observed:
+
+```text
+(*,239.1.1.1)
+(10.255.0.67,239.1.1.1)
+```
+
+This is a protocol/control-plane validation milestone. Full multicast
+forwarding remains subject to the forwarding capabilities of the virtual
+platform used by each profile.
 
 ## Study and implementation boundary
 
@@ -156,7 +277,10 @@ fully solved and accepted configuration is shipped in every profile.
 - Advanced MP-BGP address families and routing policy.
 - MPLS L3VPN and L2VPN services.
 - EVPN, IRB, and EVPN multihoming.
+- EVPN Route Type 1/4, ESI, DF election, aliasing, and mass-withdrawal study.
 - Multicast routing and multicast VPN services.
+- PIM-SM design variants, RP redundancy, SPT behavior, mLDP, Tree-SID, and
+  NG-mVPN.
 - SR-MPLS Traffic Engineering and policy steering.
 - PCC/PCE, affinity, disjointness, and SRLG exercises.
 - QoS and traffic-management policy.
@@ -274,6 +398,11 @@ not use a fixed five-minute sleep. A clean destroy/redeploy therefore restores
 the accepted `00-base`, `10-isis`, `15-provider-standard`, and `20-sr-mpls`
 foundation. Advanced study phases remain manual and incremental.
 
+> [!NOTE]
+> Runtime study configurations such as the current EVPN and multicast
+> exercises are not assumed to persist after a clean destroy/redeploy unless
+> they are deliberately promoted into the generated configuration workflow.
+
 ## Addressing and management
 
 | Profile | Management subnet | Docker network |
@@ -307,8 +436,8 @@ the profile-specific inventories for authoritative values.
 | `30-bgp-rr` | Redundant RR, iBGP, VPNv4, VPNv6, and routing policy | Progressive |
 | `40-l3vpn` | VRFs, RD/RT, PE-CE routing, shared services, and extranets | Progressive |
 | `50-sr-te-pce` | SR policies, PCC/PCE, affinity, disjointness, and SRLG | Progressive |
-| `60-multicast` | PIM, RP designs, mLDP, Tree-SID, and NG-mVPN | Progressive |
-| `70-l2vpn-evpn` | VPWS, VPLS, EVPN, IRB, and multihoming | Progressive |
+| `60-multicast` | PIM, RP designs, mLDP, Tree-SID, and NG-mVPN | Progressive; PIM-SM/BSR/RP milestone validated manually |
+| `70-l2vpn-evpn` | VPWS, VPLS, EVPN, IRB, and multihoming | Progressive; EVI 500 control-plane milestone validated manually |
 | `80-security-assurance` | AAA, LPTS, RPKI, telemetry, gNMI, and TWAMP | Progressive |
 | `90-failure-drills` | TI-LFA, BGP-PIC, PCE failover, and controlled faults | Progressive |
 
@@ -380,9 +509,75 @@ Start with:
 ## Platform boundaries
 
 Cisco XRd Control Plane is suitable for the routing, MPLS, Segment Routing,
-VPN control plane, PCE, security, and model-driven management portions of this
-project. It is not a substitute for every forwarding ASIC, line card, optical
-system, or physical interface behavior.
+VPN control plane, PCE, security, model-driven management, EVPN signaling, and
+PIM control-plane portions of this project.
+
+It is not a substitute for every forwarding ASIC, line card, optical system, or
+physical interface behavior.
+
+### Control-plane versus dataplane validation
+
+The Master profile intentionally distinguishes successful signaling from
+successful packet forwarding.
+
+The following behaviors have been observed successfully in XRd Control Plane:
+
+- IS-IS adjacency and routing state.
+- SR-MPLS control-plane state.
+- MP-BGP and route-reflector operation.
+- BGP L2VPN EVPN signaling, including Route Types 2 and 3.
+- PIM-SM neighbor state and BSR/RP mapping.
+- IGMP-driven receiver interest and RPF calculations.
+- PIM Register signaling.
+- `(*,G)` and `(S,G)` multicast state.
+- MRIB and outgoing-interface state.
+
+These states do not guarantee complete CE-to-CE forwarding for every service:
+
+```text
+EVPN signaling            -> validated
+EVPN CE-to-CE dataplane   -> platform-dependent / limited
+
+PIM control plane         -> validated
+Multicast state           -> validated
+End-to-end multicast data -> platform-dependent / limited
+```
+
+Full packet-level forwarding validation should be performed with a
+dataplane-capable platform, such as the dedicated EVE-NG environment or an
+appropriate XRd vRouter/full virtual-router profile.
+
+### XRd vRouter laboratory findings
+
+Dataplane-capable XRd vRouter testing remains useful, but the larger forwarding
+profiles introduce a different engineering trade-off.
+
+During lab evaluation:
+
+- An 8-node XRd vRouter topology placed substantial CPU pressure on the
+  available virtual-machine resources.
+- Reducing the topology to 6 XRd vRouter nodes improved the resource profile.
+- The tested XRd vRouter release exposed limitations in the EVPN
+  E-LAN/bridge-domain workflow required by that specific exercise.
+- The experiment was therefore retained as a platform-study datapoint rather
+  than replacing the 30-node XRd Control Plane Master profile.
+
+The resulting lab strategy is deliberately hybrid:
+
+```text
+30-node XRd Control Plane Master
+    -> scale
+    -> protocol/control-plane
+    -> troubleshooting
+    -> automation
+    -> failure studies
+
+Dataplane-capable environment
+    -> packet forwarding
+    -> forwarding-specific EVPN behavior
+    -> multicast data delivery
+    -> dataplane counters and packet validation
+```
 
 The following areas may require design study, an on-demand XRv9k image, or
 physical equipment:
@@ -398,6 +593,41 @@ physical equipment:
 
 Documented limitations are laboratory boundaries, not successful feature
 validation.
+
+### IOS XR multicast implementation note
+
+A configuration lesson captured during the Master Renovated v1 multicast
+exercise is that defining PIM interface attributes alone does not enable
+multicast forwarding on an IOS XR interface.
+
+For example:
+
+```text
+router pim
+ address-family ipv4
+  interface GigabitEthernet0/0/0/2
+   dr-priority 100
+```
+
+must be paired with multicast-routing enablement:
+
+```text
+multicast-routing
+ address-family ipv4
+  interface GigabitEthernet0/0/0/2
+   enable
+```
+
+Without the `enable` statement, the interface can appear in the PIM
+configuration while operational output still reports:
+
+```text
+PIM off
+Nbr Count 0
+```
+
+This distinction is part of the troubleshooting workflow rather than merely a
+configuration syntax note.
 
 ## Repository safety and licensing boundary
 
