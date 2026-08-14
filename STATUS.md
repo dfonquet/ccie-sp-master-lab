@@ -2,6 +2,18 @@
 
 Date: 2026-07-31
 
+## ISP-2 structural expansion — not deployed
+
+- The repository now declares 38 nodes and 57 links.
+- Runtime acceptance below continues to describe the active 30-node/47-link
+  ISP-1 Master; it does not claim that ISP-2 is running.
+- Planned ISP-2 is AS65002 with two XRd Control Plane nodes, five IOL routers
+  and Linux `SOURCE1` on L048-L057.
+- No OSPF, BGP, MPLS, VPN, EVPN or multicast configuration is automated for
+  the new nodes. Protocol configuration remains a manual study activity.
+- Runtime study configuration remains authoritative and must be captured before
+  any controlled redeploy.
+
 ## Master profile validated baseline
 
 - 30 of 30 master-lab containers running.

@@ -142,6 +142,40 @@ topology:
         CCIE_IOL_PASSWORD: ${CCIE_IOL_PASSWORD}
       binds:
         - ../automation:/workspace
+    ASBR-ISP2:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.151
+      startup-delay: 270
+    RR-ISP2:
+      kind: cisco_xrd
+      mgmt-ipv4: 10.201.255.152
+      startup-delay: 285
+    ISP2-P1:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.153
+      startup-delay: 300
+    ISP2-P2:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.154
+      startup-delay: 315
+    ISP2-P3:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.155
+      startup-delay: 330
+    ISP2-P4:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.156
+      startup-delay: 345
+    ISP2-P5:
+      kind: cisco_iol
+      mgmt-ipv4: 10.201.255.157
+      startup-delay: 360
+    SOURCE1:
+      kind: linux
+      image: ccie-sp-automation:1.0
+      mgmt-ipv4: 10.201.255.158
+      env:
+        AUTO1_PASSWORD: ${CCIE_AUTO_PASSWORD}
 
   links:
     - endpoints: ["P1:Gi0-0-0-0", "P3:Gi0-0-0-0"]
@@ -191,3 +225,13 @@ topology:
     - endpoints: ["PE7:Gi0-0-0-1", "P7:Gi0-0-0-3"]
     - endpoints: ["PE8:Gi0-0-0-0", "P6:Gi0-0-0-7"]
     - endpoints: ["PE8:Gi0-0-0-1", "P8:Gi0-0-0-3"]
+    - endpoints: ["P1:Gi0-0-0-5", "ASBR-ISP2:Gi0-0-0-0"]
+    - endpoints: ["ASBR-ISP2:Gi0-0-0-1", "ISP2-P1:Ethernet0/1"]
+    - endpoints: ["ASBR-ISP2:Gi0-0-0-2", "ISP2-P2:Ethernet0/1"]
+    - endpoints: ["ISP2-P1:Ethernet0/2", "ISP2-P3:Ethernet0/1"]
+    - endpoints: ["ISP2-P2:Ethernet0/2", "ISP2-P5:Ethernet0/1"]
+    - endpoints: ["ISP2-P3:Ethernet0/2", "ISP2-P4:Ethernet0/1"]
+    - endpoints: ["ISP2-P4:Ethernet0/2", "ISP2-P5:Ethernet0/2"]
+    - endpoints: ["ISP2-P3:Ethernet0/3", "RR-ISP2:Gi0-0-0-0"]
+    - endpoints: ["ISP2-P4:Ethernet0/3", "RR-ISP2:Gi0-0-0-1"]
+    - endpoints: ["ISP2-P5:Ethernet0/3", "SOURCE1:eth1"]

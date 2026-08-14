@@ -49,7 +49,9 @@ def load_expected() -> tuple[
         newline="", encoding="utf-8"
     ) as file:
         nodes = [
-            row for row in csv.DictReader(file) if row["kind"] == "cisco_xrd"
+            row
+            for row in csv.DictReader(file)
+            if row["kind"] == "cisco_xrd" and row.get("isis_net")
         ]
 
     interfaces: dict[str, list[tuple[str, str]]] = defaultdict(list)

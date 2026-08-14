@@ -17,7 +17,12 @@ credentials = types.ModuleType("credentials")
 credentials.connection_credentials = lambda _kind: {}
 sys.modules.setdefault("credentials", credentials)
 
-from tools.validate_links import load_data, select_link_sources  # noqa: E402
+from tools.validate_links import (  # noqa: E402
+    load_data,
+    ping_command,
+    ping_succeeded,
+    select_link_sources,
+)
 
 
 class DirectedLinkSelectionTests(unittest.TestCase):
@@ -25,9 +30,9 @@ class DirectedLinkSelectionTests(unittest.TestCase):
         nodes, grouped = load_data("master")
         selected = select_link_sources(nodes, grouped, None)
         directed = [test for tests in selected.values() for test in tests]
-        self.assertEqual(94, len(directed))
-        self.assertEqual(47, sum(test["direction"] == "a-to-b" for test in directed))
-        self.assertEqual(47, sum(test["direction"] == "b-to-a" for test in directed))
+        self.assertEqual(114, len(directed))
+        self.assertEqual(57, sum(test["direction"] == "a-to-b" for test in directed))
+        self.assertEqual(57, sum(test["direction"] == "b-to-a" for test in directed))
 
     def test_inter_as_cardinality_is_bidirectional(self) -> None:
         nodes, grouped = load_data("inter-as")
@@ -49,6 +54,20 @@ class DirectedLinkSelectionTests(unittest.TestCase):
         nodes, grouped = load_data("master")
         with self.assertRaisesRegex(ValueError, "UNKNOWN"):
             select_link_sources(nodes, grouped, "UNKNOWN")
+
+    def test_linux_ipv4_ping_command(self) -> None:
+        node = {"kind": "linux"}
+        self.assertEqual("ping -c 3 -W 1 10.255.0.112", ping_command(node, "ipv4", "10.255.0.112"))
+
+    def test_linux_ipv6_ping_command(self) -> None:
+        node = {"kind": "linux"}
+        self.assertEqual(
+            "ping -6 -c 3 -W 1 2001:db8:1000:157::",
+            ping_command(node, "ipv6", "2001:db8:1000:157::"),
+        )
+
+    def test_linux_ping_success_parser(self) -> None:
+        self.assertTrue(ping_succeeded({"kind": "linux"}, "3 packets transmitted, 3 received, 0% packet loss"))
 
 
 if __name__ == "__main__":
