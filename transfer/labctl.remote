@@ -1,0 +1,103 @@
+#!/usr/bin/env bash
+set -euo pipefail
+
+ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"
+ACTION="${1:-status}"
+PROFILE="${2:-}"
+PYTHON="${CCIE_SP_PYTHON:-/srv/netlab/venvs/ccie-sp/bin/python}"
+
+[[ -x "$PYTHON" ]] || PYTHON="python3"
+
+load_environment() {
+  if [[ -f "$ROOT/.env" ]]; then
+    set -a
+    # shellcheck disable=SC1091
+    source "$ROOT/.env"
+    set +a
+  fi
+  export CCIE_XRD_USERNAME="${CCIE_XRD_USERNAME:-clab}"
+  export CCIE_IOL_USERNAME="${CCIE_IOL_USERNAME:-admin}"
+  export CCIE_AUTO_USERNAME="${CCIE_AUTO_USERNAME:-student}"
+}
+
+declare -A TOPOLOGIES=(
+  [master]="topology/ccie-sp-master.clab.yml"
+  [inter-as]="topology/ccie-sp-inter-as.clab.yml"
+  [srv6]="topology/ccie-sp-srv6.clab.yml"
+)
+
+usage() {
+  echo "Usage: ./labctl {status|canary|deploy|destroy|inspect} {master|inter-as|srv6}"
+}
+
+active_labs() {
+  docker ps --format '{{.Names}}' |
+    sed -n 's/^clab-\(ccie-sp-[^-]*\).*/\1/p' |
+    sort -u
+}
+
+[[ "$ACTION" == "status" ]] && {
+  active_labs
+  exit 0
+}
+
+[[ -n "$PROFILE" && -n "${TOPOLOGIES[$PROFILE]:-}" ]] || {
+  usage
+  exit 2
+}
+
+TOPOLOGY="$ROOT/${TOPOLOGIES[$PROFILE]}"
+[[ -f "$TOPOLOGY" ]] || {
+  echo "Profile '$PROFILE' is documented but its topology has not been generated."
+  exit 3
+}
+
+case "$ACTION" in
+  canary)
+    [[ "$PROFILE" == "srv6" ]] || {
+      echo "The canary action is available only for the srv6 profile."
+      exit 5
+    }
+    mapfile -t active < <(active_labs)
+    if ((${#active[@]})); then
+      echo "Refusing canary: active lab node(s): ${active[*]}"
+      exit 4
+    fi
+    sudo containerlab deploy -t "$TOPOLOGY" --node-filter P1
+    ;;
+  deploy)
+    mapfile -t active < <(active_labs)
+    if ((${#active[@]})); then
+      echo "Refusing deploy: active lab(s): ${active[*]}"
+      echo "Destroy the active profile first."
+      exit 4
+    fi
+    load_environment
+    if [[ "$PROFILE" == "master" ]]; then
+      : "${CCIE_XRD_PASSWORD:?Set CCIE_XRD_PASSWORD in .env or the environment}"
+      : "${CCIE_IOL_PASSWORD:?Set CCIE_IOL_PASSWORD in .env or the environment}"
+      : "${CCIE_AUTO_PASSWORD:?Set CCIE_AUTO_PASSWORD in .env or the environment}"
+      "$PYTHON" "$ROOT/tools/iol_nvram.py" prepare
+    fi
+    sudo --preserve-env=CCIE_XRD_USERNAME,CCIE_XRD_PASSWORD,CCIE_IOL_USERNAME,CCIE_IOL_PASSWORD,CCIE_AUTO_USERNAME,CCIE_AUTO_PASSWORD \
+      containerlab deploy -t "$TOPOLOGY" --max-workers 4 --timeout 5m
+    if [[ "$PROFILE" == "master" ]]; then
+      "$PYTHON" "$ROOT/tools/wait_ready.py" \
+        --inventory "$ROOT/inventory/nodes.csv"
+    fi
+    ;;
+  destroy)
+    if [[ "$PROFILE" == "master" ]]; then
+      "$PYTHON" "$ROOT/tools/iol_nvram.py" backup \
+        --label pre-master-destroy
+    fi
+    sudo containerlab destroy -t "$TOPOLOGY"
+    ;;
+  inspect)
+    containerlab inspect -t "$TOPOLOGY"
+    ;;
+  *)
+    usage
+    exit 2
+    ;;
+esac

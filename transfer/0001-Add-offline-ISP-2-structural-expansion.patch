@@ -1,0 +1,980 @@
+From 08372053985f2918cec0414ffdb72a6ad2009381 Mon Sep 17 00:00:00 2001
+From: "Daniel F.T" <55598243+dfonquet@users.noreply.github.com>
+Date: Thu, 13 Aug 2026 17:29:47 -0500
+Subject: [PATCH] Add offline ISP-2 structural expansion
+
+---
+ OPERATIONS.md                        |  18 +++-
+ README.md                            |   7 +-
+ STATUS.md                            |  12 +++
+ docs/ADDRESSING.md                   |  27 +++++
+ docs/ISP2-STRUCTURAL-DESIGN.md       |  41 ++++++++
+ docs/VALIDATION.md                   |  16 ++-
+ inventory/links.csv                  |  10 ++
+ inventory/nodes.csv                  |   8 ++
+ tests/test_validate_links.py         |  27 ++++-
+ tools/render_topology.py             |  47 ++++++---
+ tools/validate_documentation.py      |  29 +++---
+ tools/validate_links.py              |  58 +++++++----
+ tools/validate_master_structure.py   | 150 +++++++++++++++++++++++++++
+ tools/validate_nodes.py              |   7 +-
+ tools/validate_provider_standard.py  |   4 +-
+ topology/ccie-sp-master.clab.yml     |  44 ++++++++
+ topology/startup/ASBR-ISP2.cfg       |  17 +++
+ topology/startup/ISP2-P1.partial.cfg |   3 +
+ topology/startup/ISP2-P2.partial.cfg |   3 +
+ topology/startup/ISP2-P3.partial.cfg |   3 +
+ topology/startup/ISP2-P4.partial.cfg |   3 +
+ topology/startup/ISP2-P5.partial.cfg |   3 +
+ topology/startup/RR-ISP2.cfg         |  17 +++
+ 23 files changed, 497 insertions(+), 57 deletions(-)
+ create mode 100644 docs/ISP2-STRUCTURAL-DESIGN.md
+ create mode 100644 tools/validate_master_structure.py
+ create mode 100644 topology/startup/ASBR-ISP2.cfg
+ create mode 100644 topology/startup/ISP2-P1.partial.cfg
+ create mode 100644 topology/startup/ISP2-P2.partial.cfg
+ create mode 100644 topology/startup/ISP2-P3.partial.cfg
+ create mode 100644 topology/startup/ISP2-P4.partial.cfg
+ create mode 100644 topology/startup/ISP2-P5.partial.cfg
+ create mode 100644 topology/startup/RR-ISP2.cfg
+
+diff --git a/OPERATIONS.md b/OPERATIONS.md
+index 2801542..009f365 100644
+--- a/OPERATIONS.md
++++ b/OPERATIONS.md
+@@ -11,6 +11,15 @@
+ | C1-C2 | `10.201.255.141-142` | `CCIE_IOL_USERNAME` | `CCIE_IOL_PASSWORD` |
+ | AUTO1 | `10.201.255.150` | `CCIE_AUTO_USERNAME` | `CCIE_AUTO_PASSWORD` |
+ 
++The following entries are declared offline and are not reachable until a
++separately approved deployment window:
++
++| Planned nodes | Management addresses | Username source | Password source |
++|---|---|---|---|
++| ASBR-ISP2, RR-ISP2 | `10.201.255.151-152` | `CCIE_XRD_USERNAME` | `CCIE_XRD_PASSWORD` |
++| ISP2-P1–ISP2-P5 | `10.201.255.153-157` | `CCIE_IOL_USERNAME` | `CCIE_IOL_PASSWORD` |
++| SOURCE1 | `10.201.255.158` | `CCIE_AUTO_USERNAME` | `CCIE_AUTO_PASSWORD` |
++
+ Create the ignored runtime credential file before operating the lab:
+ 
+ ```bash
+@@ -58,7 +67,8 @@ Validate all management sessions:
+ /srv/netlab/venvs/ccie-sp/bin/python tools/validate_nodes.py --workers 2
+ ```
+ 
+-Validate all 47 directly connected links with IPv4 and IPv6:
++Validate the 47 active ISP-1 links with IPv4 and IPv6 before the expansion.
++After manual ISP-2 addressing, the same validator targets all 57 links:
+ 
+ ```bash
+ /srv/netlab/venvs/ccie-sp/bin/python tools/validate_links.py --family both
+@@ -66,13 +76,17 @@ Validate all 47 directly connected links with IPv4 and IPv6:
+ 
+ ## Rebuild the generated files
+ 
++Do not run the Master generator while runtime-only study configuration has not
++been captured and reconciled. It can regenerate topology and startup artifacts
++that are intentionally not authoritative for the current runtime.
++
+ ```bash
+ /srv/netlab/venvs/ccie-sp/bin/python tools/build_lab.py
+ ```
+ 
+ ## Baseline restoration and manual phases
+ 
+-`python3 tools/build_lab.py` generates deploy-safe files under
++Historically, `python3 tools/build_lab.py` generates deploy-safe files under
+ `topology/startup/`. `./labctl deploy master` uses them automatically and
+ waits for all 30 nodes to pass real SSH/CLI readiness. XRd receives the final
+ cumulative provider baseline; IOL receives a partial startup configuration so
+diff --git a/README.md b/README.md
+index 2b786bd..2d0e866 100644
+--- a/README.md
++++ b/README.md
+@@ -46,7 +46,7 @@ service layers.
+ 
+ | Profile | Scale | Validated foundation | Intended study scope |
+ |---|---:|---|---|
+-| [**Master ISP**](profiles/master/README.md) | 30 nodes, 47 data links | Dual-stack IS-IS, SR-MPLS, redundant RR foundation, EVPN control-plane milestone, and PIM-SM/BSR/RP multicast milestone | MPLS, MP-BGP, L3VPN, L2VPN, EVPN, multicast, SR-TE/PCE, QoS, security, assurance, and failure drills |
++| [**Master ISP**](profiles/master/README.md) | 38 nodes, 57 data links declared; 30/47 active | Validated ISP-1 runtime plus offline-only ISP-2 structural definition | Existing ISP-1 studies plus future manual OSPF and Inter-AS study phases |
+ | [**Inter-AS**](profiles/inter-as/README.md) | 23 nodes, 35 links | Generated topology, management and CLI access, base addressing, AS separation, and physical connectivity | eBGP/iBGP, routing policy, labeled unicast, route reflection, and Inter-AS Options A, B, and C |
+ | [**SRv6**](profiles/srv6/README.md) | 21 nodes, 33 links | Full deployment, base configuration, IS-IS, IPv6 loopback reachability, SRv6 locators, and `66/66` directed IPv6 link tests | SRv6 SID design, endpoint behaviors, SRv6-TE policies, VPN services, uSID, resiliency, and automation |
+ | [**Full Dataplane**](profiles/full-dataplane/README.md) | 30 nodes, 42 links | Prepared artifacts: 10 XRd vRouter forwarding nodes, redundant P/PE/RR design and dual-homed CE access | Staged live acceptance, then PCE, SRv6, EVPN, VPN, RPKI, AAA, multicast, QoS and telemetry |
+@@ -65,6 +65,8 @@ configuration artifacts, diagram, operating procedure, and acceptance boundary.
+ - Nine CE routers: `CE1-CE9`.
+ - Two customer test endpoints: `C1-C2`.
+ - One automation workstation: `AUTO1`.
++- Offline-only ISP-2 structure: `ASBR-ISP2`, `RR-ISP2`, five IOL routers and
++  `SOURCE1` on links `L048-L057`. These nodes are not yet deployed.
+ - Expanded nodes `P7`, `P8`, `PE7`, and `PE8` use links `L040-L047`.
+ - The 30-node topology has completed runtime readiness with `30/30` nodes available.
+ - The expanded dual-stack IS-IS, SR-MPLS, and route-reflector foundations have
+@@ -135,6 +137,9 @@ Profile-specific diagrams:
+ | Customer edge | Cisco IOL-XE `17.12.1` | `CE1-CE9` | 9 |
+ | Customer test endpoints | Cisco IOL-XE `17.12.1` | `C1-C2` | 2 |
+ | Automation workstation | Ubuntu-based container | `AUTO1` | 1 |
++| ISP-2 ASBR and RR | Cisco XRd Control Plane `24.2.11` | `ASBR-ISP2`, `RR-ISP2` | 2 |
++| ISP-2 core/service edge | Cisco IOL-XE `17.12.1` | `ISP2-P1`–`ISP2-P5` | 5 |
++| Traffic source | Ubuntu-based container | `SOURCE1` | 1 |
+ 
+ The Master backbone uses two longitudinal planes, three inter-plane rungs, and
+ two diagonal paths. Every PE is dual-homed to a pair of P routers. `RR1` and
+diff --git a/STATUS.md b/STATUS.md
+index 5ed86ba..2f57d05 100644
+--- a/STATUS.md
++++ b/STATUS.md
+@@ -2,6 +2,18 @@
+ 
+ Date: 2026-07-31
+ 
++## ISP-2 structural expansion — not deployed
++
++- The repository now declares 38 nodes and 57 links.
++- Runtime acceptance below continues to describe the active 30-node/47-link
++  ISP-1 Master; it does not claim that ISP-2 is running.
++- Planned ISP-2 is AS65002 with two XRd Control Plane nodes, five IOL routers
++  and Linux `SOURCE1` on L048-L057.
++- No OSPF, BGP, MPLS, VPN, EVPN or multicast configuration is automated for
++  the new nodes. Protocol configuration remains a manual study activity.
++- Runtime study configuration remains authoritative and must be captured before
++  any controlled redeploy.
++
+ ## Master profile validated baseline
+ 
+ - 30 of 30 master-lab containers running.
+diff --git a/docs/ADDRESSING.md b/docs/ADDRESSING.md
+index c3e5918..d6c90e3 100644
+--- a/docs/ADDRESSING.md
++++ b/docs/ADDRESSING.md
+@@ -7,6 +7,7 @@ Docker network: ccie-sp-master-mgmt
+ Subnet:         10.201.255.0/24
+ Windows route:  10.201.255.0/24 via 192.168.192.10
+ AUTO1:          10.201.255.150
++ISP-2 planned:  10.201.255.151-158
+ ```
+ 
+ Management addresses for every node are recorded in `inventory/nodes.csv`.
+@@ -35,6 +36,22 @@ IPv4: 10.100.0.<node-id>/32
+ IPv6: 2001:db8:100::<node-id>/128
+ ```
+ 
++## ISP-2 loopbacks (offline structural plan)
++
++ISP-2 is AS65002 and remains separate from the AS500 IS-IS/SR-MPLS domain.
++
++| Node | IPv4 / OSPF router ID | IPv6 |
++|---|---|---|
++| ASBR-ISP2 | `10.65.2.1/32` | `2001:db8:6502::1/128` |
++| ISP2-P1 | `10.65.2.2/32` | `2001:db8:6502::2/128` |
++| ISP2-P2 | `10.65.2.3/32` | `2001:db8:6502::3/128` |
++| ISP2-P3 | `10.65.2.4/32` | `2001:db8:6502::4/128` |
++| ISP2-P4 | `10.65.2.5/32` | `2001:db8:6502::5/128` |
++| ISP2-P5 | `10.65.2.6/32` | `2001:db8:6502::6/128` |
++| RR-ISP2 | `10.65.2.7/32` | `2001:db8:6502::7/128` |
++
++The ISP-2 IPv6 loopback allocation belongs to `2001:db8:6502::/48`.
++
+ ## Point-to-point links
+ 
+ Provider IPv4 links use consecutive `/31` networks beginning at:
+@@ -56,6 +73,16 @@ Customer/access IPv6 links keep their separate deterministic
+ 
+ The authoritative endpoint-level table is `inventory/links.csv`.
+ 
++The offline ISP-2 expansion continues the point-to-point plan with L048-L057:
++
++```text
++IPv4: 10.255.0.94/31 through 10.255.0.112/31
++IPv6: 2001:db8:1000:148::/127 through 2001:db8:1000:157::/127
++```
++
++These links are declared structurally but are not active yet. L048 is excluded
++from ISP-1 IS-IS/SR-MPLS. ISP-2 OSPFv2/OSPFv3 configuration is manual.
++
+ ## IS-IS
+ 
+ ```text
+diff --git a/docs/ISP2-STRUCTURAL-DESIGN.md b/docs/ISP2-STRUCTURAL-DESIGN.md
+new file mode 100644
+index 0000000..d8fbd2e
+--- /dev/null
++++ b/docs/ISP2-STRUCTURAL-DESIGN.md
+@@ -0,0 +1,41 @@
++# ISP-2 offline structural design
++
++## Authority boundary
++
++The repository is authoritative for physical structure, node identity,
++management addressing and link addressing. The active routers are authoritative
++for study configuration. Generated Master startup files must not be used to
++replace uncaptured runtime EVPN, multicast, VPN or policy configuration.
++
++ISP-2 is declared but not deployed. Its routing configuration is intentionally
++manual and no generator supplies OSPF or BGP.
++
++## Nodes and roles
++
++| Node | Platform | Initial role |
++|---|---|---|
++| ASBR-ISP2 | XRd Control Plane | AS65002 boundary; eBGP belongs to phase 2 |
++| RR-ISP2 | XRd Control Plane | Reachability target in phase 1; RR configuration is later |
++| ISP2-P1, ISP2-P2 | IOL-XE | Core P routers |
++| ISP2-P3, ISP2-P4 | IOL-XE | Transit routers and separate RR attachments |
++| ISP2-P5 | IOL-XE | PE/service edge for SOURCE1 |
++| SOURCE1 | Linux | Traffic source and capture host |
++
++All IOL endpoints are restricted to `Ethernet0/1-3`. L055 attaches RR-ISP2 to
++ISP2-P3, L056 attaches it to ISP2-P4, and L057 attaches SOURCE1 to ISP2-P5.
++
++## Manual study sequence
++
++1. Manually configure interfaces, loopbacks, OSPFv2 and OSPFv3 area 0.
++2. Validate internal dual-stack connectivity, RR reachability and SOURCE1.
++3. In a separate phase, configure IPv4/IPv6 eBGP between AS500 and AS65002.
++4. Study iBGP/RR, labeled-unicast and Inter-AS VPN options independently.
++
++L048 must never participate in ISP-1 IS-IS or SR-MPLS. AUTO1 remains unchanged.
++
++## Deployment boundary
++
++No deploy, destroy or restart is authorized by this structural change. Before a
++future deployment, capture the active running configurations and reconcile them
++with persistent startup state. XRd Control Plane forwarding and SOURCE1 tool
++availability remain explicit acceptance gates.
+diff --git a/docs/VALIDATION.md b/docs/VALIDATION.md
+index d4b6bf1..da1c3dd 100644
+--- a/docs/VALIDATION.md
++++ b/docs/VALIDATION.md
+@@ -5,7 +5,7 @@
+ 
+ ## 1. Scope
+ 
+-The current Master source of truth contains:
++The currently active Master runtime baseline contains:
+ 
+ | Component | Inventory source | Current count |
+ |---|---|---:|
+@@ -19,7 +19,19 @@ For a complete dual-stack link-validation run, the calculated test cardinality
+ is therefore:
+ 
+ ```text
+-47 links × 2 directions × 2 address families = 188 directed tests
++47 active links × 2 directions × 2 address families = 188 directed tests
++```
++
++The offline structural inventory additionally declares ISP-2. It must not be
++counted as runtime acceptance before the approved deployment and manual
++configuration phases:
++
++```text
++structural_nodes=38
++structural_links=57
++active_nodes=30
++active_links=47
++active_directed_dual_stack_tests=188
+ ```
+ 
+ This number verifies test **coverage**, not reachability. Do not publish a pass
+diff --git a/inventory/links.csv b/inventory/links.csv
+index ff2dbd8..b14c793 100644
+--- a/inventory/links.csv
++++ b/inventory/links.csv
+@@ -46,3 +46,13 @@ L044,PE7:Gi0-0-0-0,10.255.0.86/31,2001:db8:1000:144::/127,P5:Gi0-0-0-6,10.255.0.
+ L045,PE7:Gi0-0-0-1,10.255.0.88/31,2001:db8:1000:145::/127,P7:Gi0-0-0-3,10.255.0.89/31,2001:db8:1000:145::1/127,pe-core,10,214
+ L046,PE8:Gi0-0-0-0,10.255.0.90/31,2001:db8:1000:146::/127,P6:Gi0-0-0-7,10.255.0.91/31,2001:db8:1000:146::1/127,pe-core,10,215
+ L047,PE8:Gi0-0-0-1,10.255.0.92/31,2001:db8:1000:147::/127,P8:Gi0-0-0-3,10.255.0.93/31,2001:db8:1000:147::1/127,pe-core,10,216
++L048,P1:Gi0-0-0-5,10.255.0.94/31,2001:db8:1000:148::/127,ASBR-ISP2:Gi0-0-0-0,10.255.0.95/31,2001:db8:1000:148::1/127,inter-as,10,650
++L049,ASBR-ISP2:Gi0-0-0-1,10.255.0.96/31,2001:db8:1000:149::/127,ISP2-P1:Ethernet0/1,10.255.0.97/31,2001:db8:1000:149::1/127,isp2-core,10,651
++L050,ASBR-ISP2:Gi0-0-0-2,10.255.0.98/31,2001:db8:1000:150::/127,ISP2-P2:Ethernet0/1,10.255.0.99/31,2001:db8:1000:150::1/127,isp2-core,10,652
++L051,ISP2-P1:Ethernet0/2,10.255.0.100/31,2001:db8:1000:151::/127,ISP2-P3:Ethernet0/1,10.255.0.101/31,2001:db8:1000:151::1/127,isp2-core,10,653
++L052,ISP2-P2:Ethernet0/2,10.255.0.102/31,2001:db8:1000:152::/127,ISP2-P5:Ethernet0/1,10.255.0.103/31,2001:db8:1000:152::1/127,isp2-core,10,654
++L053,ISP2-P3:Ethernet0/2,10.255.0.104/31,2001:db8:1000:153::/127,ISP2-P4:Ethernet0/1,10.255.0.105/31,2001:db8:1000:153::1/127,isp2-core,10,655
++L054,ISP2-P4:Ethernet0/2,10.255.0.106/31,2001:db8:1000:154::/127,ISP2-P5:Ethernet0/2,10.255.0.107/31,2001:db8:1000:154::1/127,isp2-core,10,656
++L055,ISP2-P3:Ethernet0/3,10.255.0.108/31,2001:db8:1000:155::/127,RR-ISP2:Gi0-0-0-0,10.255.0.109/31,2001:db8:1000:155::1/127,isp2-rr,10,657
++L056,ISP2-P4:Ethernet0/3,10.255.0.110/31,2001:db8:1000:156::/127,RR-ISP2:Gi0-0-0-1,10.255.0.111/31,2001:db8:1000:156::1/127,isp2-rr,10,658
++L057,ISP2-P5:Ethernet0/3,10.255.0.112/31,2001:db8:1000:157::/127,SOURCE1:eth1,10.255.0.113/31,2001:db8:1000:157::1/127,source-access,10,659
+diff --git a/inventory/nodes.csv b/inventory/nodes.csv
+index 469cb73..dc6ee62 100644
+--- a/inventory/nodes.csv
++++ b/inventory/nodes.csv
+@@ -29,3 +29,11 @@ CE9,CE,cisco_iol,vrnetlab/cisco_iol:17.12.01,10.201.255.139,10.100.0.9/32,2001:d
+ C1,CLIENT,cisco_iol,vrnetlab/cisco_iol:17.12.01,10.201.255.141,10.100.0.10/32,2001:db8:100::10/128,,,
+ C2,CLIENT,cisco_iol,vrnetlab/cisco_iol:17.12.01,10.201.255.142,10.100.0.11/32,2001:db8:100::11/128,,,
+ AUTO1,AUTOMATION,linux,ccie-sp-automation:1.0,10.201.255.150,,,,,
++ASBR-ISP2,ASBR-ISP2,cisco_xrd,ios-xr/xrd-control-plane:24.2.11,10.201.255.151,10.65.2.1/32,2001:db8:6502::1/128,,,
++RR-ISP2,RR-ISP2,cisco_xrd,ios-xr/xrd-control-plane:24.2.11,10.201.255.152,10.65.2.7/32,2001:db8:6502::7/128,,,
++ISP2-P1,P-ISP2,cisco_iol,vrnetlab/cisco_iol:17.12.01,10.201.255.153,10.65.2.2/32,2001:db8:6502::2/128,,,
++ISP2-P2,P-ISP2,cisco_iol,vrnetlab/cisco_iol:17.12.01,10.201.255.154,10.65.2.3/32,2001:db8:6502::3/128,,,
++ISP2-P3,TRANSIT-ISP2,cisco_iol,vrnetlab/cisco_iol:17.12.01,10.201.255.155,10.65.2.4/32,2001:db8:6502::4/128,,,
++ISP2-P4,TRANSIT-ISP2,cisco_iol,vrnetlab/cisco_iol:17.12.01,10.201.255.156,10.65.2.5/32,2001:db8:6502::5/128,,,
++ISP2-P5,PE-SERVICE-EDGE,cisco_iol,vrnetlab/cisco_iol:17.12.01,10.201.255.157,10.65.2.6/32,2001:db8:6502::6/128,,,
++SOURCE1,TRAFFIC-SOURCE,linux,ccie-sp-automation:1.0,10.201.255.158,,,,,
+diff --git a/tests/test_validate_links.py b/tests/test_validate_links.py
+index 3a86865..7ca883c 100644
+--- a/tests/test_validate_links.py
++++ b/tests/test_validate_links.py
+@@ -17,7 +17,12 @@ credentials = types.ModuleType("credentials")
+ credentials.connection_credentials = lambda _kind: {}
+ sys.modules.setdefault("credentials", credentials)
+ 
+-from tools.validate_links import load_data, select_link_sources  # noqa: E402
++from tools.validate_links import (  # noqa: E402
++    load_data,
++    ping_command,
++    ping_succeeded,
++    select_link_sources,
++)
+ 
+ 
+ class DirectedLinkSelectionTests(unittest.TestCase):
+@@ -25,9 +30,9 @@ class DirectedLinkSelectionTests(unittest.TestCase):
+         nodes, grouped = load_data("master")
+         selected = select_link_sources(nodes, grouped, None)
+         directed = [test for tests in selected.values() for test in tests]
+-        self.assertEqual(94, len(directed))
+-        self.assertEqual(47, sum(test["direction"] == "a-to-b" for test in directed))
+-        self.assertEqual(47, sum(test["direction"] == "b-to-a" for test in directed))
++        self.assertEqual(114, len(directed))
++        self.assertEqual(57, sum(test["direction"] == "a-to-b" for test in directed))
++        self.assertEqual(57, sum(test["direction"] == "b-to-a" for test in directed))
+ 
+     def test_inter_as_cardinality_is_bidirectional(self) -> None:
+         nodes, grouped = load_data("inter-as")
+@@ -50,6 +55,20 @@ class DirectedLinkSelectionTests(unittest.TestCase):
+         with self.assertRaisesRegex(ValueError, "UNKNOWN"):
+             select_link_sources(nodes, grouped, "UNKNOWN")
+ 
++    def test_linux_ipv4_ping_command(self) -> None:
++        node = {"kind": "linux"}
++        self.assertEqual("ping -c 3 -W 1 10.255.0.112", ping_command(node, "ipv4", "10.255.0.112"))
++
++    def test_linux_ipv6_ping_command(self) -> None:
++        node = {"kind": "linux"}
++        self.assertEqual(
++            "ping -6 -c 3 -W 1 2001:db8:1000:157::",
++            ping_command(node, "ipv6", "2001:db8:1000:157::"),
++        )
++
++    def test_linux_ping_success_parser(self) -> None:
++        self.assertTrue(ping_succeeded({"kind": "linux"}, "3 packets transmitted, 3 received, 0% packet loss"))
++
+ 
+ if __name__ == "__main__":
+     unittest.main()
+diff --git a/tools/render_topology.py b/tools/render_topology.py
+index 321cf69..485e704 100644
+--- a/tools/render_topology.py
++++ b/tools/render_topology.py
+@@ -14,9 +14,12 @@ LINKS_CSV = ROOT / "inventory" / "links.csv"
+ OUTPUT = ROOT / "docs" / "topology.svg"
+ 
+ WIDTH = 1800
+-HEIGHT = 1380
++HEIGHT = 1900
+ 
+-EXPANSION_NODES = {"P7", "P8", "PE7", "PE8"}
++EXPANSION_NODES = {
++    "P7", "P8", "PE7", "PE8", "ASBR-ISP2", "RR-ISP2",
++    "ISP2-P1", "ISP2-P2", "ISP2-P3", "ISP2-P4", "ISP2-P5", "SOURCE1",
++}
+ 
+ POSITIONS = {
+     "AUTO1": (150, 150),
+@@ -49,6 +52,14 @@ POSITIONS = {
+     "CE9": (1640, 1000),
+     "C1": (120, 1210),
+     "C2": (1640, 1210),
++    "ASBR-ISP2": (350, 1400),
++    "ISP2-P1": (650, 1350),
++    "ISP2-P2": (650, 1550),
++    "ISP2-P3": (950, 1350),
++    "ISP2-P4": (1200, 1450),
++    "ISP2-P5": (950, 1550),
++    "RR-ISP2": (1450, 1450),
++    "SOURCE1": (1250, 1650),
+ }
+ 
+ GROUP_STYLE = {
+@@ -61,6 +72,10 @@ GROUP_STYLE = {
+     "customer": ("#16a34a", 2, ""),
+     "customer-dual": ("#65a30d", 3, "7 5"),
+     "client": ("#ea580c", 2, ""),
++    "inter-as": ("#dc2626", 4, "10 6"),
++    "isp2-core": ("#0f766e", 3, ""),
++    "isp2-rr": ("#7c3aed", 3, "7 5"),
++    "source-access": ("#ea580c", 3, ""),
+ }
+ 
+ ROLE_STYLE = {
+@@ -71,6 +86,12 @@ ROLE_STYLE = {
+     "CE-DUAL": ("#ecfccb", "#4d7c0f"),
+     "CLIENT": ("#ffedd5", "#c2410c"),
+     "AUTOMATION": ("#e2e8f0", "#334155"),
++    "ASBR-ISP2": ("#fee2e2", "#b91c1c"),
++    "RR-ISP2": ("#f3e8ff", "#7e22ce"),
++    "P-ISP2": ("#ccfbf1", "#0f766e"),
++    "TRANSIT-ISP2": ("#d1fae5", "#047857"),
++    "PE-SERVICE-EDGE": ("#cffafe", "#0e7490"),
++    "TRAFFIC-SOURCE": ("#ffedd5", "#c2410c"),
+ }
+ 
+ 
+@@ -104,7 +125,7 @@ def node_element(node: dict[str, str]) -> str:
+     name = node["name"]
+     x, y = POSITIONS[name]
+     fill, stroke = ROLE_STYLE[node["role"]]
+-    width = 150 if name != "AUTO1" else 175
++    width = 175 if name in {"AUTO1", "ASBR-ISP2", "RR-ISP2", "SOURCE1"} else 150
+     height = 86
+     left = x - width / 2
+     top = y - height / 2
+@@ -145,17 +166,17 @@ def render() -> str:
+     ]
+     legend = []
+     for index, (label, color, dash) in enumerate(legend_items):
+-        x = 310 + index * 225
++        x = 220 + index * 250
+         dash_attr = f' stroke-dasharray="{dash}"' if dash else ""
+         legend.append(
+-            f'<line x1="{x}" y1="1270" x2="{x + 55}" y2="1270" '
++            f'<line x1="{x}" y1="1810" x2="{x + 55}" y2="1810" '
+             f'stroke="{color}" stroke-width="4"{dash_attr}/>'
+-            f'<text x="{x + 65}" y="1276" class="legend">{esc(label)}</text>'
++            f'<text x="{x + 65}" y="1816" class="legend">{esc(label)}</text>'
+         )
+ 
+     return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{WIDTH}" height="{HEIGHT}" viewBox="0 0 {WIDTH} {HEIGHT}" role="img" aria-labelledby="title desc">
+   <title id="title">CCIE Service Provider master lab topology</title>
+-  <desc id="desc">Validated thirty-node dual-plane service provider topology with eight P routers, eight PE routers, two route reflectors and PCEs, nine customer edges, two clients and one automation workstation. P7, P8, PE7 and PE8 are the expansion nodes.</desc>
++  <desc id="desc">Structural 38-node topology containing the validated ISP-1 Master and the offline ISP-2 AS65002 expansion. Runtime routing configuration remains manual.</desc>
+   <style>
+     .background {{ fill: #f8fafc; }}
+     .zone {{ fill: none; stroke: #cbd5e1; stroke-width: 2; stroke-dasharray: 8 8; }}
+@@ -173,7 +194,7 @@ def render() -> str:
+   </style>
+   <rect class="background" width="100%" height="100%"/>
+   <text x="55" y="48" class="title">CCIE SP v5.1 Master Lab</text>
+-  <text x="55" y="76" class="subtitle">30 nodes | 18 XRd + 11 IOL + AUTO1 | 47 links | expanded underlay validated 2026-07-30</text>
++  <text x="55" y="76" class="subtitle">{len(nodes)} nodes | 20 XRd + 16 IOL + 2 Linux | {len(links)} links | ISP-2 structural definition only</text>
+   <rect x="1360" y="30" width="385" height="58" rx="16" fill="#dcfce7" stroke="#16a34a" stroke-width="2"/>
+   <text x="1380" y="54" class="status">✓ Validated: 30/30 containers · 0 swap</text>
+   <text x="1380" y="74" class="status">✓ IS-IS · SR-MPLS · PE7/PE8 dual-RR</text>
+@@ -188,6 +209,8 @@ def render() -> str:
+   <text x="75" y="685" class="zone-label">Provider edge · dual-homed PEs · VPN service foundation</text>
+   <rect x="45" y="890" width="1710" height="210" rx="24" class="zone"/>
+   <text x="65" y="920" class="zone-label">Customer edge · single/dual-homed CE · L2VPN/L3VPN/EVPN practice</text>
++  <rect x="45" y="1290" width="1710" height="450" rx="24" class="zone"/>
++  <text x="65" y="1320" class="zone-label">ISP-2 · AS65002 · manual OSPFv2/OSPFv3 Area 0 study domain</text>
+   <path d="M238 150 H330" stroke="#64748b" stroke-width="2" stroke-dasharray="6 6"/>
+   <rect x="330" y="122" width="220" height="56" rx="28" fill="#e2e8f0" stroke="#64748b" stroke-width="2"/>
+   <text x="440" y="146" class="node-role">Management network</text>
+@@ -195,10 +218,10 @@ def render() -> str:
+   {''.join(lines)}
+   {''.join(node_shapes)}
+   {''.join(legend)}
+-  <rect x="310" y="1315" width="48" height="20" rx="10" fill="#f97316"/>
+-  <text x="334" y="1329" class="expansion-label">NEW</text>
+-  <text x="370" y="1330" class="legend">2026 expansion: P7, P8, PE7 and PE8 · links L040-L047</text>
+-  <text x="55" y="1360" class="subtitle">Source of truth: inventory/nodes.csv + inventory/links.csv · generated by tools/render_topology.py</text>
++  <rect x="220" y="1850" width="48" height="20" rx="10" fill="#f97316"/>
++  <text x="244" y="1864" class="expansion-label">NEW</text>
++  <text x="280" y="1865" class="legend">Structural expansion: ISP-2 nodes and links L048-L057; not yet deployed</text>
++  <text x="55" y="1888" class="subtitle">Source of truth: inventory/nodes.csv + inventory/links.csv · generated by tools/render_topology.py</text>
+ </svg>
+ """
+ 
+diff --git a/tools/validate_documentation.py b/tools/validate_documentation.py
+index 0db8c5d..bafa0a5 100644
+--- a/tools/validate_documentation.py
++++ b/tools/validate_documentation.py
+@@ -160,8 +160,10 @@ def main() -> int:
+         failures.append("tools/build_lab.py: contradictory AS65000 constant found")
+ 
+     ipv4_indexes, ipv6_indexes = prefix_sid_indexes()
+-    expected_ipv4 = list(range(1, master["xrd"] + 1))
+-    expected_ipv6 = list(range(601, 601 + master["xrd"]))
++    master_nodes = csv_rows("inventory/nodes.csv")
++    isp1_sr_nodes = sum(bool(row["isis_net"]) for row in master_nodes)
++    expected_ipv4 = list(range(1, isp1_sr_nodes + 1))
++    expected_ipv6 = list(range(601, 601 + isp1_sr_nodes))
+     if ipv4_indexes != expected_ipv4:
+         failures.append(f"IPv4 Prefix-SID indexes: expected {expected_ipv4}, got {ipv4_indexes}")
+     if ipv6_indexes != expected_ipv6:
+@@ -206,9 +208,9 @@ def main() -> int:
+     ):
+         require(readme, marker, "README.md", failures)
+     for marker in (
+-        f"{master['nodes']} of {master['nodes']} master-lab containers running",
+-        f"{master['xrd']} Cisco XRd nodes",
+-        f"{master['iol']} Cisco IOL nodes",
++        "30 of 30 master-lab containers running",
++        "18 Cisco XRd nodes",
++        "11 Cisco IOL nodes",
+         f"IPv6 Prefix-SIDs `{facts['ipv6_label_range']}`",
+         f"`{facts['ipv6_index_range']}`",
+         "Full 30-node management acceptance remains pending after the AUTO1 rebuild.",
+@@ -223,11 +225,11 @@ def main() -> int:
+         failures,
+     )
+     for marker in (
+-        f"nodes={master['nodes']}",
+-        f"xrd_nodes={master['xrd']}",
+-        f"links={master['links']}",
+-        f"directed_dual_stack_tests={master['tests']}",
+-        f"SUMMARY tests={master['tests']} families=ipv4,ipv6 passed={master['tests']} failed=0",
++        f"structural_nodes={master['nodes']}",
++        f"structural_links={master['links']}",
++        "active_nodes=30",
++        "active_links=47",
++        "active_directed_dual_stack_tests=188",
+     ):
+         require(validation, marker, "docs/VALIDATION.md", failures)
+     require(profiles, f"AS {facts['master_as']}", "profiles/README.md", failures)
+@@ -238,15 +240,16 @@ def main() -> int:
+     ):
+         require(inter_as_readme, marker, "profiles/inter-as/README.md", failures)
+     for marker in (
+-        f"complete {master['nodes']}-node management and {master['tests']}-test Master acceptance remains pending",
++        "complete 30-node management and 188-test Master acceptance remains pending",
+         f"Current bidirectional target: {inter_as['tests']}/{inter_as['tests']} tests",
+     ):
+         require(operating_guide, marker, "docs/LAB-OPERATING-GUIDE.md", failures)
+ 
+     markdown = tracked_markdown()
+     for document in markdown:
+-        first_line = document.read_text(encoding="utf-8").splitlines()[0]
+-        if not first_line.startswith("# "):
++        lines = document.read_text(encoding="utf-8").splitlines()
++        first_line = next((line.strip() for line in lines if line.strip()), "")
++        if not (first_line.startswith("# ") or first_line.startswith("<h1")):
+             failures.append(f"{document.relative_to(ROOT)}: first line must be one H1")
+     failures.extend(f"broken local link: {item}" for item in local_markdown_links(markdown))
+ 
+diff --git a/tools/validate_links.py b/tools/validate_links.py
+index d14aba2..0ff92e3 100644
+--- a/tools/validate_links.py
++++ b/tools/validate_links.py
+@@ -62,12 +62,44 @@ def connect_params(node: dict[str, str]) -> dict[str, object]:
+             "device_type": "cisco_xr",
+             **connection_credentials(node["kind"]),
+         }
++    if node["kind"] == "cisco_iol":
++        return {
++            "device_type": "cisco_ios",
++            **connection_credentials(node["kind"]),
++        }
+     return {
+-        "device_type": "cisco_ios",
++        "device_type": "linux",
+         **connection_credentials(node["kind"]),
+     }
+ 
+ 
++def ping_command(node: dict[str, str], family: str, destination: str) -> str:
++    if node["kind"] == "linux":
++        binary = "ping -6" if family == "ipv6" else "ping"
++        return f"{binary} -c 3 -W 1 {destination}"
++    if family == "ipv6" and node["kind"] == "cisco_xrd":
++        return f"ping ipv6 {destination} count 3 timeout 1"
++    if family == "ipv6":
++        return f"ping ipv6 {destination} repeat 3 timeout 1"
++    if node["kind"] == "cisco_xrd":
++        return f"ping {destination} count 3 timeout 1"
++    return f"ping {destination} repeat 3 timeout 1"
++
++
++def ping_succeeded(node: dict[str, str], output: str) -> bool:
++    if node["kind"] == "linux":
++        return "0% packet loss" in output
++    return "Success rate is 100 percent" in output
++
++
++def ping_summary(node: dict[str, str], output: str) -> str:
++    marker = "packet loss" if node["kind"] == "linux" else "Success rate is"
++    return next(
++        (line.strip() for line in output.splitlines() if marker in line),
++        f"no {marker} line",
++    )
++
++
+ def select_link_sources(
+     nodes: dict[str, dict[str, str]],
+     links_by_source: dict[str, list[dict[str, str]]],
+@@ -119,28 +151,12 @@ def validate_source(
+         for family in families:
+             for link in links:
+                 destination = link[f"destination_{family}"].split("/", 1)[0]
+-                if family == "ipv6" and node["kind"] == "cisco_xrd":
+-                    command = f"ping ipv6 {destination} count 3 timeout 1"
+-                elif family == "ipv6":
+-                    command = f"ping ipv6 {destination} repeat 3 timeout 1"
+-                elif node["kind"] == "cisco_xrd":
+-                    command = f"ping {destination} count 3 timeout 1"
+-                else:
+-                    command = f"ping {destination} repeat 3 timeout 1"
++                command = ping_command(node, family, destination)
+                 output = session.send_command(command, read_timeout=20)
+-                if "Success rate is 100 percent" not in output:
++                if not ping_succeeded(node, output):
+                     output = session.send_command(command, read_timeout=20)
+-                status = (
+-                    "ok" if "Success rate is 100 percent" in output else "failed"
+-                )
+-                summary = next(
+-                    (
+-                        line.strip()
+-                        for line in output.splitlines()
+-                        if "Success rate is" in line
+-                    ),
+-                    "no success-rate line",
+-                )
++                status = "ok" if ping_succeeded(node, output) else "failed"
++                summary = ping_summary(node, output)
+                 results.append(
+                     {
+                         "id": link["id"],
+diff --git a/tools/validate_master_structure.py b/tools/validate_master_structure.py
+new file mode 100644
+index 0000000..0d22c95
+--- /dev/null
++++ b/tools/validate_master_structure.py
+@@ -0,0 +1,150 @@
++#!/usr/bin/env python3
++"""Validate the offline 38-node Master/ISP-2 structural definition."""
++
++from __future__ import annotations
++
++import csv
++import ipaddress
++from pathlib import Path
++
++
++ROOT = Path(__file__).resolve().parents[1]
++NODES_PATH = ROOT / "inventory" / "nodes.csv"
++LINKS_PATH = ROOT / "inventory" / "links.csv"
++TOPOLOGY_PATH = ROOT / "topology" / "ccie-sp-master.clab.yml"
++
++EXPECTED_ISP2_NODES = {
++    "ASBR-ISP2": ("ASBR-ISP2", "cisco_xrd", "10.201.255.151", "10.65.2.1/32", "2001:db8:6502::1/128"),
++    "RR-ISP2": ("RR-ISP2", "cisco_xrd", "10.201.255.152", "10.65.2.7/32", "2001:db8:6502::7/128"),
++    "ISP2-P1": ("P-ISP2", "cisco_iol", "10.201.255.153", "10.65.2.2/32", "2001:db8:6502::2/128"),
++    "ISP2-P2": ("P-ISP2", "cisco_iol", "10.201.255.154", "10.65.2.3/32", "2001:db8:6502::3/128"),
++    "ISP2-P3": ("TRANSIT-ISP2", "cisco_iol", "10.201.255.155", "10.65.2.4/32", "2001:db8:6502::4/128"),
++    "ISP2-P4": ("TRANSIT-ISP2", "cisco_iol", "10.201.255.156", "10.65.2.5/32", "2001:db8:6502::5/128"),
++    "ISP2-P5": ("PE-SERVICE-EDGE", "cisco_iol", "10.201.255.157", "10.65.2.6/32", "2001:db8:6502::6/128"),
++    "SOURCE1": ("TRAFFIC-SOURCE", "linux", "10.201.255.158", "", ""),
++}
++
++EXPECTED_LINK_ENDPOINTS = {
++    "L048": ("P1:Gi0-0-0-5", "ASBR-ISP2:Gi0-0-0-0"),
++    "L049": ("ASBR-ISP2:Gi0-0-0-1", "ISP2-P1:Ethernet0/1"),
++    "L050": ("ASBR-ISP2:Gi0-0-0-2", "ISP2-P2:Ethernet0/1"),
++    "L051": ("ISP2-P1:Ethernet0/2", "ISP2-P3:Ethernet0/1"),
++    "L052": ("ISP2-P2:Ethernet0/2", "ISP2-P5:Ethernet0/1"),
++    "L053": ("ISP2-P3:Ethernet0/2", "ISP2-P4:Ethernet0/1"),
++    "L054": ("ISP2-P4:Ethernet0/2", "ISP2-P5:Ethernet0/2"),
++    "L055": ("ISP2-P3:Ethernet0/3", "RR-ISP2:Gi0-0-0-0"),
++    "L056": ("ISP2-P4:Ethernet0/3", "RR-ISP2:Gi0-0-0-1"),
++    "L057": ("ISP2-P5:Ethernet0/3", "SOURCE1:eth1"),
++}
++
++FORBIDDEN_BOOTSTRAP = (
++    "router ospf", "router ospfv3", "router bgp", "router isis",
++    "segment-routing", "mpls", "evpn", "pim", "multicast-routing", "vrf ",
++)
++
++
++def rows(path: Path) -> list[dict[str, str]]:
++    with path.open(newline="", encoding="utf-8") as handle:
++        return list(csv.DictReader(handle))
++
++
++def fail(message: str) -> None:
++    raise SystemExit(f"FAIL: {message}")
++
++
++def main() -> int:
++    nodes = rows(NODES_PATH)
++    links = rows(LINKS_PATH)
++    node_map = {row["name"]: row for row in nodes}
++    link_map = {row["id"]: row for row in links}
++
++    if len(nodes) != 38 or len(node_map) != 38:
++        fail(f"expected 38 unique nodes, got rows={len(nodes)} unique={len(node_map)}")
++    if len(links) != 57 or len(link_map) != 57:
++        fail(f"expected 57 unique links, got rows={len(links)} unique={len(link_map)}")
++    if [row["id"] for row in links] != [f"L{index:03d}" for index in range(1, 58)]:
++        fail("link IDs are not contiguous L001-L057")
++
++    management = [ipaddress.ip_address(row["mgmt_ipv4"]) for row in nodes]
++    if len(management) != len(set(management)):
++        fail("duplicate management address")
++    if any(address not in ipaddress.ip_network("10.201.255.0/24") for address in management):
++        fail("management address outside 10.201.255.0/24")
++
++    for name, expected in EXPECTED_ISP2_NODES.items():
++        row = node_map.get(name)
++        if not row:
++            fail(f"missing node {name}")
++        actual = tuple(row[key] for key in ("role", "kind", "mgmt_ipv4", "loopback_ipv4", "loopback_ipv6"))
++        if actual != expected:
++            fail(f"{name} expected {expected}, got {actual}")
++        if row["isis_net"] or row["prefix_sid_index"] or row["ipv6_prefix_sid_index"]:
++            fail(f"{name} must not inherit ISP-1 IS-IS/SR identifiers")
++
++    endpoints: set[str] = set()
++    networks4: list[tuple[str, ipaddress.IPv4Network]] = []
++    networks6: list[tuple[str, ipaddress.IPv6Network]] = []
++    for link in links:
++        for side in ("a", "b"):
++            endpoint = link[f"endpoint_{side}"]
++            if endpoint in endpoints:
++                fail(f"duplicate endpoint {endpoint}")
++            endpoints.add(endpoint)
++            if endpoint.split(":", 1)[0] not in node_map:
++                fail(f"unknown node in endpoint {endpoint}")
++        a4 = ipaddress.ip_interface(link["endpoint_a_ipv4"])
++        b4 = ipaddress.ip_interface(link["endpoint_b_ipv4"])
++        a6 = ipaddress.ip_interface(link["endpoint_a_ipv6"])
++        b6 = ipaddress.ip_interface(link["endpoint_b_ipv6"])
++        if a4.network != b4.network or a4.network.prefixlen != 31:
++            fail(f"{link['id']} invalid IPv4 /31 pair")
++        if a6.network != b6.network or a6.network.prefixlen != 127:
++            fail(f"{link['id']} invalid IPv6 /127 pair")
++        networks4.append((link["id"], a4.network))
++        networks6.append((link["id"], a6.network))
++
++    for networks in (networks4, networks6):
++        for index, (left_id, left) in enumerate(networks):
++            for right_id, right in networks[index + 1:]:
++                if left.overlaps(right):
++                    fail(f"overlap {left_id} {left} with {right_id} {right}")
++
++    for link_id, expected in EXPECTED_LINK_ENDPOINTS.items():
++        row = link_map.get(link_id)
++        actual = (row["endpoint_a"], row["endpoint_b"]) if row else None
++        if actual != expected:
++            fail(f"{link_id} expected endpoints {expected}, got {actual}")
++        expected_index = int(link_id[1:])
++        if ipaddress.ip_interface(row["endpoint_a_ipv4"]).ip != ipaddress.ip_address(f"10.255.0.{2 * (expected_index - 1)}"):
++            fail(f"{link_id} does not continue the deterministic IPv4 plan")
++        if ipaddress.ip_interface(row["endpoint_a_ipv6"]).network != ipaddress.ip_network(f"2001:db8:1000:{100 + expected_index}::/127"):
++            fail(f"{link_id} does not continue the deterministic IPv6 plan")
++
++    iol_endpoints = [endpoint for endpoint in endpoints if endpoint.split(":", 1)[0].startswith("ISP2-P")]
++    if any(endpoint.rsplit(":", 1)[1] not in {"Ethernet0/1", "Ethernet0/2", "Ethernet0/3"} for endpoint in iol_endpoints):
++        fail("ISP-2 IOL endpoint outside Ethernet0/1-3")
++
++    topology = TOPOLOGY_PATH.read_text(encoding="utf-8")
++    for name, expected in EXPECTED_ISP2_NODES.items():
++        if f"    {name}:" not in topology or f"      mgmt-ipv4: {expected[2]}" not in topology:
++            fail(f"topology missing node or management address for {name}")
++    for endpoint_a, endpoint_b in EXPECTED_LINK_ENDPOINTS.values():
++        if f'["{endpoint_a}", "{endpoint_b}"]' not in topology:
++            fail(f"topology missing link {endpoint_a}--{endpoint_b}")
++
++    startup = ROOT / "topology" / "startup"
++    for name in ("ASBR-ISP2", "RR-ISP2"):
++        text = (startup / f"{name}.cfg").read_text(encoding="utf-8").lower()
++        if any(token in text for token in FORBIDDEN_BOOTSTRAP):
++            fail(f"{name} bootstrap contains a forbidden routing/service token")
++    for name in ("ISP2-P1", "ISP2-P2", "ISP2-P3", "ISP2-P4", "ISP2-P5"):
++        text = (startup / f"{name}.partial.cfg").read_text(encoding="utf-8").lower()
++        if any(token in text for token in FORBIDDEN_BOOTSTRAP):
++            fail(f"{name} bootstrap contains a forbidden routing/service token")
++
++    print("PASS: 38 nodes, 57 links, L048-L057, unique addressing and bootstrap policy")
++    return 0
++
++
++if __name__ == "__main__":
++    raise SystemExit(main())
+diff --git a/tools/validate_nodes.py b/tools/validate_nodes.py
+index 695b4da..a219dfe 100644
+--- a/tools/validate_nodes.py
++++ b/tools/validate_nodes.py
+@@ -45,10 +45,15 @@ def validate(row: dict[str, str]) -> dict[str, str]:
+             "command": "show version | include Cisco IOS Software|Version",
+         }
+     else:
++        command = (
++            "python3 --version"
++            if name == "SOURCE1"
++            else "python3 --version && ansible --version | head -1"
++        )
+         params = {
+             "device_type": "linux",
+             **connection_credentials(kind),
+-            "command": "python3 --version && ansible --version | head -1",
++            "command": command,
+         }
+ 
+     command = params.pop("command")
+diff --git a/tools/validate_provider_standard.py b/tools/validate_provider_standard.py
+index a099cdf..257e7f7 100644
+--- a/tools/validate_provider_standard.py
++++ b/tools/validate_provider_standard.py
+@@ -49,7 +49,9 @@ def load_expected() -> tuple[
+         newline="", encoding="utf-8"
+     ) as file:
+         nodes = [
+-            row for row in csv.DictReader(file) if row["kind"] == "cisco_xrd"
++            row
++            for row in csv.DictReader(file)
++            if row["kind"] == "cisco_xrd" and row.get("isis_net")
+         ]
+ 
+     interfaces: dict[str, list[tuple[str, str]]] = defaultdict(list)
+diff --git a/topology/ccie-sp-master.clab.yml b/topology/ccie-sp-master.clab.yml
+index 5d9ec17..939c6ce 100644
+--- a/topology/ccie-sp-master.clab.yml
++++ b/topology/ccie-sp-master.clab.yml
+@@ -142,6 +142,40 @@ topology:
+         CCIE_IOL_PASSWORD: ${CCIE_IOL_PASSWORD}
+       binds:
+         - ../automation:/workspace
++    ASBR-ISP2:
++      kind: cisco_xrd
++      mgmt-ipv4: 10.201.255.151
++      startup-delay: 270
++    RR-ISP2:
++      kind: cisco_xrd
++      mgmt-ipv4: 10.201.255.152
++      startup-delay: 285
++    ISP2-P1:
++      kind: cisco_iol
++      mgmt-ipv4: 10.201.255.153
++      startup-delay: 300
++    ISP2-P2:
++      kind: cisco_iol
++      mgmt-ipv4: 10.201.255.154
++      startup-delay: 315
++    ISP2-P3:
++      kind: cisco_iol
++      mgmt-ipv4: 10.201.255.155
++      startup-delay: 330
++    ISP2-P4:
++      kind: cisco_iol
++      mgmt-ipv4: 10.201.255.156
++      startup-delay: 345
++    ISP2-P5:
++      kind: cisco_iol
++      mgmt-ipv4: 10.201.255.157
++      startup-delay: 360
++    SOURCE1:
++      kind: linux
++      image: ccie-sp-automation:1.0
++      mgmt-ipv4: 10.201.255.158
++      env:
++        AUTO1_PASSWORD: ${CCIE_AUTO_PASSWORD}
+ 
+   links:
+     - endpoints: ["P1:Gi0-0-0-0", "P3:Gi0-0-0-0"]
+@@ -191,3 +225,13 @@ topology:
+     - endpoints: ["PE7:Gi0-0-0-1", "P7:Gi0-0-0-3"]
+     - endpoints: ["PE8:Gi0-0-0-0", "P6:Gi0-0-0-7"]
+     - endpoints: ["PE8:Gi0-0-0-1", "P8:Gi0-0-0-3"]
++    - endpoints: ["P1:Gi0-0-0-5", "ASBR-ISP2:Gi0-0-0-0"]
++    - endpoints: ["ASBR-ISP2:Gi0-0-0-1", "ISP2-P1:Ethernet0/1"]
++    - endpoints: ["ASBR-ISP2:Gi0-0-0-2", "ISP2-P2:Ethernet0/1"]
++    - endpoints: ["ISP2-P1:Ethernet0/2", "ISP2-P3:Ethernet0/1"]
++    - endpoints: ["ISP2-P2:Ethernet0/2", "ISP2-P5:Ethernet0/1"]
++    - endpoints: ["ISP2-P3:Ethernet0/2", "ISP2-P4:Ethernet0/1"]
++    - endpoints: ["ISP2-P4:Ethernet0/2", "ISP2-P5:Ethernet0/2"]
++    - endpoints: ["ISP2-P3:Ethernet0/3", "RR-ISP2:Gi0-0-0-0"]
++    - endpoints: ["ISP2-P4:Ethernet0/3", "RR-ISP2:Gi0-0-0-1"]
++    - endpoints: ["ISP2-P5:Ethernet0/3", "SOURCE1:eth1"]
+diff --git a/topology/startup/ASBR-ISP2.cfg b/topology/startup/ASBR-ISP2.cfg
+new file mode 100644
+index 0000000..1c49626
+--- /dev/null
++++ b/topology/startup/ASBR-ISP2.cfg
+@@ -0,0 +1,17 @@
++hostname ASBR-ISP2
++!
++username ${CCIE_XRD_USERNAME}
++ group root-lr
++ group cisco-support
++ secret ${CCIE_XRD_PASSWORD}
++!
++line default
++ transport input ssh
++!
++router static
++ address-family ipv4 unicast
++  0.0.0.0/0 MgmtEth0/RP0/CPU0/0 10.201.255.1
++ !
++!
++ssh server v2
++end
+diff --git a/topology/startup/ISP2-P1.partial.cfg b/topology/startup/ISP2-P1.partial.cfg
+new file mode 100644
+index 0000000..4ef54a9
+--- /dev/null
++++ b/topology/startup/ISP2-P1.partial.cfg
+@@ -0,0 +1,3 @@
++hostname ISP2-P1
++no ip domain lookup
++end
+diff --git a/topology/startup/ISP2-P2.partial.cfg b/topology/startup/ISP2-P2.partial.cfg
+new file mode 100644
+index 0000000..aa16611
+--- /dev/null
++++ b/topology/startup/ISP2-P2.partial.cfg
+@@ -0,0 +1,3 @@
++hostname ISP2-P2
++no ip domain lookup
++end
+diff --git a/topology/startup/ISP2-P3.partial.cfg b/topology/startup/ISP2-P3.partial.cfg
+new file mode 100644
+index 0000000..9a4c677
+--- /dev/null
++++ b/topology/startup/ISP2-P3.partial.cfg
+@@ -0,0 +1,3 @@
++hostname ISP2-P3
++no ip domain lookup
++end
+diff --git a/topology/startup/ISP2-P4.partial.cfg b/topology/startup/ISP2-P4.partial.cfg
+new file mode 100644
+index 0000000..b05aac1
+--- /dev/null
++++ b/topology/startup/ISP2-P4.partial.cfg
+@@ -0,0 +1,3 @@
++hostname ISP2-P4
++no ip domain lookup
++end
+diff --git a/topology/startup/ISP2-P5.partial.cfg b/topology/startup/ISP2-P5.partial.cfg
+new file mode 100644
+index 0000000..96deff7
+--- /dev/null
++++ b/topology/startup/ISP2-P5.partial.cfg
+@@ -0,0 +1,3 @@
++hostname ISP2-P5
++no ip domain lookup
++end
+diff --git a/topology/startup/RR-ISP2.cfg b/topology/startup/RR-ISP2.cfg
+new file mode 100644
+index 0000000..3966f36
+--- /dev/null
++++ b/topology/startup/RR-ISP2.cfg
+@@ -0,0 +1,17 @@
++hostname RR-ISP2
++!
++username ${CCIE_XRD_USERNAME}
++ group root-lr
++ group cisco-support
++ secret ${CCIE_XRD_PASSWORD}
++!
++line default
++ transport input ssh
++!
++router static
++ address-family ipv4 unicast
++  0.0.0.0/0 MgmtEth0/RP0/CPU0/0 10.201.255.1
++ !
++!
++ssh server v2
++end
+-- 
+2.55.0.windows.3
+
