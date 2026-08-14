@@ -1,14 +1,17 @@
-# Professional CCIE SP Multi-Profile Lab Operating Guide
+<h1 align="center">
+
+Professional CCIE SP Multi-Profile Lab Operating Guide
+</h1>
 
 <div align="center">
 
 **Step-by-step operations for the Master ISP, Inter-AS, and SRv6 profiles**
 
-[Preparation](#6-server-readiness) ·
-[Generation](#7-reproducible-generation) ·
-[Deployment](#8-safe-lifecycle) ·
-[Configuration](#10-phase-based-configuration) ·
-[Validation](#12-validation) ·
+[Preparation](#6-server-readiness) —
+[Generation](#7-reproducible-generation) —
+[Deployment](#8-safe-lifecycle) —
+[Configuration](#10-phase-based-configuration) —
+[Validation](#12-validation) —
 [Recovery](#16-troubleshooting-and-recovery)
 
 </div>
@@ -75,78 +78,116 @@ and ensures that every exercise starts from a known state.
 
 ```text
 ccie-sp-master-lab/
-├── README.md                    Project entry point and summary
-├── labctl                       Safe lifecycle controller
-├── inventory/                   Authoritative Lab 1 inventory
-├── profiles/
-│   ├── master/                  Lab 1 design and operating guide
-│   ├── inter-as/                Lab 2 inventory and operating guide
-│   └── srv6/                    Lab 3 full study profile and acceptance gates
-├── tools/                       Generators and validators
-├── templates/                   Jinja2 templates
-├── configs/                     Phase-based rendered configurations
-├── topology/                    Generated Containerlab topologies
-├── automation/                  AUTO1 image and examples
-└── docs/                        Architecture, operations, and troubleshooting
+|-- README.md                    Project entry point and summary
+|-- labctl                       Safe lifecycle and IOL persistence controller
+|-- inventory/                   Authoritative Master node/link inventory
+|-- profiles/
+|   |-- master/                  Master design and operating documentation
+|   |-- inter-as/                Inter-AS inventory and operating guide
+|   `-- srv6/                    SRv6 profile and acceptance gates
+|-- tools/                       Generators, validators, readiness, and NVRAM tools
+|-- templates/                   Jinja2 templates
+|-- configs/                     Phase-based rendered configurations
+|-- topology/                    Containerlab topologies, startup bootstrap, runtime labdirs
+|-- automation/                  AUTO1 image and examples
+`-- docs/                        Architecture, operations, persistence, and troubleshooting
 ```
 
 Profile-specific entry points:
 
-- [Lab 1 — Master ISP](../profiles/master/README.md)
-- [Lab 2 — Inter-AS](../profiles/inter-as/README.md)
-- [Lab 3 — SRv6](../profiles/srv6/README.md)
+- [Lab 1 â€” Master ISP](../profiles/master/README.md)
+- [Lab 2 â€” Inter-AS](../profiles/inter-as/README.md)
+- [Lab 3 â€” SRv6](../profiles/srv6/README.md)
 - [Acceptance status](../STATUS.md)
 - [Blueprint matrix](../BLUEPRINT-MATRIX.md)
-
 ## 3. Source of truth and change flow
 
-The design follows this chain:
+The Master uses two complementary authorities:
+
+| State | Authority | Meaning |
+|---|---|---|
+| **REPO** | Topology, inventories, addressing, scripts, bootstrap, validators, and documentation | Structural source of truth |
+| **RUNTIME ACTUAL** | Running configuration on the active routers | Source of truth for manual study state |
+| **IOL NVRAM** | Complete binary startup state saved by IOS | Persistent IOL configuration across destroy/deploy |
+
+The structural design follows this chain:
 
 ```text
 Inventories + generator + templates
-                 ↓
-       rendered configurations
-                 ↓
+                 â†“
+       reviewable repository artifacts
+                 â†“
        Containerlab topology
-                 ↓
-       deployment and validation
+                 â†“
+       controlled deployment and validation
 ```
 
-For `master`, the primary sources are `tools/build_lab.py`,
-`inventory/nodes.csv`, and `inventory/links.csv`. For `inter-as`, they are
-`tools/build_inter_as.py`, `profiles/inter-as/nodes.csv`, and
-`profiles/inter-as/links.csv`. For `srv6`, they are
-`tools/build_srv6_capability.py`, `profiles/srv6/nodes.csv`, and
-`profiles/srv6/links.csv`.
+For `master`, the structural sources include `inventory/nodes.csv`,
+`inventory/links.csv`, `tools/build_lab.py`, `tools/render_topology.py`, and
+the related templates. Inter-AS and SRv6 use their profile-specific inventory
+and generator files.
 
-Do not manually edit generated files to make a persistent change. Update the
-inventory, generator, or template, then render and inspect the diff. This keeps
-the following artifacts aligned:
+> [!IMPORTANT]
+> The active Master may contain manual EVPN, multicast, BSR/RP, L3VPN, VRF,
+> MP-BGP, eBGP PE-CE, dual-homing, route-policy, Local Preference,
+> `as-override`, IPv4, and IPv6 study configuration that has not been promoted
+> into generators or startup files.
 
-- Diagram.
-- Topology.
-- Addressing.
-- Interface descriptions.
-- Phase-based configurations.
-- Documentation.
+Do not run `tools/build_lab.py`, regenerate Master startup configurations, or
+deploy generated protocol phases merely to preserve live study work. A
+generator is a deliberate offline repository operation, not a runtime backup
+mechanism.
 
+When structural automation is intentionally changed, update its authoritative
+input, render offline, inspect the complete diff, and deploy only during an
+approved window. This keeps diagrams, topology, addressing, interfaces,
+configuration artifacts, and documentation aligned without treating generated
+files as a complete copy of runtime.
 ## 4. Profiles and architecture
 
-### 4.1 Lab 1 — Master ISP
+### 4.1 Lab 1 â€” Master ISP
 
-Lab 1 contains 30 nodes and 47 links:
+Lab 1 contains **38 nodes and 57 links** split into two provider domains.
 
-- P1-P8: transit routers.
-- PE1-PE8: provider edge and service termination.
-- RR1-RR2: redundant Route Reflectors and PCE nodes.
-- CE1-CE9 and C1-C2: customers and test endpoints.
-- AUTO1: Ubuntu automation workstation.
+#### ISP-1 / AS500
 
-Its underlay uses dual-stack IS-IS Level 2 and SR-MPLS. Separating the
-underlay, RR/iBGP, and services makes it possible to practice failures without
-mixing root causes. See the
-[Master diagram and addressing guide](../profiles/master/README.md).
+- `P1-P8`: provider transit routers.
+- `PE1-PE8`: provider edge and service termination.
+- `RR1-RR2`: redundant Route Reflectors and PCE nodes.
+- `CE1-CE9` and `C1-C2`: customer routers and endpoints.
+- `AUTO1`: Linux automation workstation.
+- Dual-stack IS-IS Level 2 and SR-MPLS foundation.
+- Progressive MP-BGP, L3VPN, EVPN, multicast, and failure study.
 
+`RR1` retains its RR, PCE, BSR, and RP study roles. CE2 uses PE1 as its eBGP
+primary and PE2 as backup; CE5 uses PE4 as primary and PE3 as backup.
+
+#### ISP-2 / AS65002
+
+- `ASBR-ISP2`: XRd Control Plane ASBR.
+- `RR-ISP2`: XRd Control Plane future route reflector.
+- `ISP2-P1` and `ISP2-P2`: Cisco IOL P routers.
+- `ISP2-P3` and `ISP2-P4`: Cisco IOL transit routers.
+- `ISP2-P5`: Cisco IOL PE/service edge.
+- `SOURCE1`: Linux IPv4/IPv6 traffic generator connected to `ISP2-P5`.
+- Links `L048-L057`.
+- OSPFv2 and OSPFv3 Area 0, configured manually during the first study phase.
+
+The ISP-2 expansion uses no XRd vRouter/full dataplane. Its protocols are not
+automatically generated: internal OSPF, eBGP, iBGP/RR, labeled unicast, and
+Inter-AS services remain explicit manual study phases.
+
+Platform totals:
+
+```text
+20 XRd Control Plane
+16 Cisco IOL
+ 2 Linux containers (AUTO1 and SOURCE1)
+---------------------------------------
+38 nodes / 57 links
+```
+
+See the [Master diagram and addressing guide](../profiles/master/README.md).
 ### 4.2 Lab 2 — Inter-AS
 
 Lab 2 contains 23 nodes and 35 links:
@@ -193,17 +234,23 @@ profiles.
 The `master` profile uses:
 
 ```text
-Management:          10.201.255.0/24
-IPv4 loopbacks:      10.0.0.<id>/32
-IPv4 links:          10.255.0.0/31 onward
-IPv6 loopbacks:      2001:db8:500:abcd::<id>/128
-IPv6 core links:     2001:db8:1000:<link-id>::/127
+Management:              10.201.255.0/24
+ISP-1 IPv4 loopbacks:    10.0.0.<id>/32
+ISP-1 IPv4 links:        10.255.0.0/31 onward
+ISP-1 IPv6 loopbacks:    2001:db8:500:abcd::<id>/128
+ISP-1 IPv6 core links:   2001:db8:1000:<link-id>::/127
+
+ISP-2 ASN:               65002
+ISP-2 IPv4 loopbacks:    10.65.2.1/32 through 10.65.2.7/32
+ISP-2 IPv4 P2P links:    /31
+ISP-2 IPv6 aggregate:    2001:db8:6502::/48
+ISP-2 IPv6 P2P links:    /127
+ISP-2 IGP:               OSPFv2 + OSPFv3 Area 0
 ```
 
-The `/31` and `/127` prefixes represent point-to-point links without wasting
-addresses. Loopbacks remain stable and serve as router IDs, BGP endpoints,
-Prefix-SIDs, and convergence-test destinations.
-
+Management additions are `10.201.255.151-158` for `ASBR-ISP2`, `RR-ISP2`,
+`ISP2-P1-P5`, and `SOURCE1`. The `/31` and `/127` prefixes represent efficient
+point-to-point links. Loopbacks remain stable router IDs and protocol endpoints.
 The `srv6` profile uses:
 
 ```text
@@ -225,7 +272,7 @@ space and makes locator summarization, policy, and troubleshooting explicit.
 Operate from a clean, known repository revision:
 
 ```bash
-cd /srv/netlab/labs/ccie-sp-master
+cd /srv/netlab/labs/ccie-sp-startup-repair
 pwd
 git status --short --branch
 git branch --show-current
@@ -331,7 +378,7 @@ done
 Run the host checks:
 
 ```bash
-cd /srv/netlab/labs/ccie-sp-master
+cd /srv/netlab/labs/ccie-sp-startup-repair
 docker ps --format '{{.Names}}' | grep '^clab-ccie-sp-' || \
   echo "No active labs"
 free -h
@@ -369,6 +416,17 @@ Proceed only when all checks below pass:
 
 ## 7. Reproducible generation
 
+Generation is an **offline structural workflow**, not part of normal daily
+startup and not a method for preserving manual runtime configuration.
+
+> [!WARNING]
+> If the Master is active and contains manual study configuration, do not run
+> `tools/build_lab.py` or regenerate its startup configurations. First capture
+> evidence and backups, schedule a controlled window, and review the intended
+> structural scope.
+
+When generation is explicitly intended:
+
 ### Master
 
 ```bash
@@ -399,41 +457,23 @@ git diff --check
 git diff -- inventory profiles topology configs docs
 ```
 
-An unexpected change across many files usually indicates a modified global
-rule. Review the diff before applying any configuration.
+For unchanged inputs, generation should be deterministic. Review every file;
+never use reset/restore merely to hide an unexplained difference.
 
 ### 7.1 Generation acceptance
-
-For an unchanged source of truth, a second generation run should be
-deterministic:
-
-```bash
-python3 tools/build_lab.py
-python3 tools/build_inter_as.py
-python3 tools/build_srv6_capability.py
-git diff --check
-git status --short
-```
-
-Review every reported file. Do not use `git restore`, `git checkout --`, or a
-hard reset merely to hide an unexplained generated difference.
-
-### 7.2 What to review in a generated diff
 
 | Artifact | Questions to answer |
 |---|---|
 | Node inventory | Are names, roles, platforms, IDs, and management addresses unique? |
-| Link inventory | Are both endpoints, interfaces, link IDs, and prefixes correct? |
-| Topology YAML | Do images, startup delays, management networks, and links match the selected profile? |
-| Base configuration | Are only intended interfaces enabled and addressed? |
-| IGP phase | Are passive interfaces, metrics, levels, and address families correct? |
-| Diagram | Does the visual topology match the CSV inventories? |
+| Link inventory | Are endpoints, interfaces, link IDs, `/31`, and `/127` allocations correct? |
+| Topology YAML | Do images, mounts, bootstrap, management, and links match the profile? |
+| Bootstrap | Does it contain only the intended minimum or accepted automated baseline? |
+| Protocol phase | Is it approved for automation, or must it remain manual? |
+| Diagram | Does the visual topology match inventory and link IDs? |
 
 > [!CAUTION]
-> A successful Python exit code proves that generation completed. It does not
-> prove that the design decision was correct. Human diff review remains part of
-> the acceptance process.
-
+> A successful generator exit code proves only that generation completed.
+> Human semantic review remains an acceptance requirement.
 ## 8. Safe lifecycle
 
 ### Check active profiles
@@ -478,8 +518,43 @@ but the command returns as soon as all nodes are ready.
 ./labctl destroy srv6
 ```
 
-Destroying a lab removes its ephemeral containers and links. Source files,
-generated configurations, and documentation remain in the repository.
+Destroying a lab removes its ephemeral containers and links. Source files and
+documentation remain in the repository. For `master`, `labctl` first captures
+and backs up complete IOL NVRAM, allowing IOS configuration saved with
+`write memory` to survive the next controlled deploy.
+
+
+### 8.1 Complete Cisco IOL persistence
+
+The Master preserves complete binary NVRAM for `CE1-CE9`, `C1-C2`, and
+`ISP2-P1-P5`. Save normally from IOS:
+
+```text
+CE2# copy running-config startup-config
+```
+
+Containerlab stores native IOL NVRAM under a PID-based filename. Because that
+PID may change after topology edits, the repository wrapper mirrors each
+binary to a stable node-centric location:
+
+```text
+topology/persistent/iol/<node>/nvram
+```
+
+Before Master destroy, `labctl` captures and backs up the complete NVRAM.
+Before deploy, it restores the binary using the PID expected by Containerlab.
+This preserves usernames, management, interfaces, SSH/HTTP, routing protocols,
+ACLs, route maps, VRFs, and every other saved IOS configuration without
+filtering `show running-config`.
+
+```bash
+python3 tools/iol_nvram.py status
+python3 tools/iol_nvram.py backup --label before-study-change
+```
+
+Files under `topology/startup/*.partial.cfg` are first-boot bootstrap only.
+Never use `containerlab destroy --cleanup` when persistent state must survive.
+Use `labctl` rather than raw Containerlab lifecycle commands for the Master.
 
 ## 9. First deployment runbook
 
@@ -609,19 +684,36 @@ Record at minimum:
 - Host CPU, RAM, swap, load, and disk state.
 - Any warning, workaround, or platform limitation.
 
-For a clean Master deployment, the accepted foundation is already restored by
-the generated startup files under `topology/startup/`. Only advanced or
-experimental phases should be applied after these checks. Inter-AS and SRv6
-retain their documented staged phase workflows.
+For a Master redeployment, saved IOL NVRAM is restored by `labctl`. XRd and
+Linux bootstrap behavior follows the topology and documented profile workflow.
+Generated startup files must not be assumed to contain every manual runtime
+study configuration. Validate the actual runtime before applying any
+additional phase. Inter-AS and SRv6 retain their documented staged workflows.
 
-## 10. Phase-based configuration
+## 10. Phase-based and manual configuration
 
-Never apply every advanced or experimental phase at once. Start with one or two
-canary nodes, validate them, and only then expand the same phase. The Master
-startup baseline is deliberately different: it is the generated, already
-accepted cumulative state for phases `00`, `10`, `15`, and `20`.
+Never apply every advanced phase at once. The existing ISP-1 automated
+foundation and the new ISP-2 manual workflow have different boundaries.
 
-Inter-AS example:
+| Scope | Operating boundary |
+|---|---|
+| ISP-1 structural/accepted baseline | Repository-managed where documented |
+| ISP-1 EVPN, multicast, L3VPN, PE-CE, and policy studies | May exist only in runtime; verify before automation |
+| ISP-2 nodes, links, management, and minimum bootstrap | Repository-managed structure |
+| ISP-2 OSPFv2/OSPFv3 | Manual phase 1 |
+| ISP-2 eBGP IPv4/IPv6 and policies | Manual phase 2 |
+| ISP-2 iBGP/RR, LU, and Inter-AS L3VPN | Future independent manual sessions |
+| AUTO1 | Preserved; no automatic ISP-2 protocol deployment yet |
+
+The ISP-2 workflow is:
+
+```text
+design â†’ offline validation â†’ controlled deploy â†’ manual configuration
+       â†’ troubleshooting â†’ write memory â†’ validation â†’ later automation review
+```
+
+For other profiles, continue to use documented phase-based canaries.
+Inter-AS example:Inter-AS example:
 
 ```bash
 python3 tools/apply_phase.py 00-base \
@@ -874,34 +966,23 @@ Recommended validation order:
 
 ### 12.4 Accepted evidence
 
-The current validated Master baseline includes:
+The current Master structural baseline includes:
 
-- 30-node generated topology with 47 data-plane links.
-- Expanded nodes `P7`, `P8`, `PE7`, and `PE8` on links `L040-L047`.
-- Base IPv4 and IPv6 addressing.
-- Expanded dual-stack IS-IS foundation.
-- SR-MPLS foundation.
-- Redundant route-reflector control-plane foundation.
-- Historical 26-node management and 39-link connectivity evidence exists. The
-  complete 30-node management and 188-test Master acceptance remains pending.
+- 38 declared nodes and 57 links.
+- 20 XRd Control Plane, 16 Cisco IOL, and two Linux containers.
+- ISP-1 `P1-P8`, `PE1-PE8`, `RR1-RR2`, `CE1-CE9`, `C1-C2`, and `AUTO1`.
+- ISP-2 `ASBR-ISP2`, `RR-ISP2`, `ISP2-P1-P5`, and `SOURCE1`.
+- ISP-2 structural links `L048-L057` and management `.151-.158`.
+- Complete node-centric IOL NVRAM capture for all 16 IOL nodes.
+- Established ISP-1 IS-IS/SR-MPLS, RR, EVPN, multicast, L3VPN, and PE-CE
+  study milestones, some of which may remain manual runtime state.
 
-The current validated Inter-AS baseline is:
+Do not interpret structural presence as automatic protocol completion in
+ISP-2. OSPF, eBGP, iBGP/RR, LU, and Inter-AS services follow the approved
+manual phases and require their own evidence.
 
-- 23/23 running nodes.
-- Historical one-way validation: 70/70 IPv4/IPv6 tests.
-- Current bidirectional target: 140/140 tests; live acceptance remains pending.
-- IS-IS, OSPFv2, and OSPFv3 counts matching the inventory.
-- RR-based iBGP at 6/6, 4/4, and 4/4 per VPN address family.
-- eBGP at 10/10 IPv4 and 10/10 IPv6 endpoints.
-
-The current validated SRv6 baseline is:
-
-- 21/21 running nodes: 14 XRd, six IOL-XE, and AUTO1.
-- 20/20 router management and CLI sessions operational.
-- 66/66 directional IPv6 directly connected link tests passed.
-- IPv6 IS-IS applied successfully to all 14 provider and RR nodes.
-- Zero container restarts, OOM events, or swap use during validation.
-
+The Inter-AS and SRv6 acceptance evidence remains profile-specific and is
+maintained in `STATUS.md` and their validation documents.
 ## 13. Inter-AS practice workflow
 
 Preserve a known-good logical baseline before testing each option:
@@ -956,8 +1037,8 @@ The detailed process is documented in
 Troubleshoot from the lowest layer upward:
 
 ```text
-container → interface → addressing → IGP → labels/next hop
-→ iBGP/RR → eBGP/policy → VPN/service
+container ? interface ? addressing ? IGP ? labels/next hop
+? iBGP/RR ? eBGP/policy ? VPN/service
 ```
 
 Documented failure modes include:
@@ -1020,11 +1101,19 @@ configurations containing secrets in public evidence.
 
 ### 16.3 Clean redeployment
 
-Use a clean redeployment when ephemeral runtime state is no longer trustworthy:
+Use clean redeployment only when the selected profile lifecycle is understood
+and relevant evidence has been preserved. For Master IOL nodes, first save IOS:
+
+```text
+copy running-config startup-config
+```
+
+Then use the wrapper:
 
 ```bash
-PROFILE=srv6
+PROFILE=master
 
+python3 tools/iol_nvram.py status
 ./labctl destroy "$PROFILE"
 
 docker ps --format '{{.Names}}' | grep '^clab-' || \
@@ -1034,11 +1123,12 @@ free -h
 uptime
 
 ./labctl deploy "$PROFILE"
+python3 tools/iol_nvram.py status
 ```
 
-Destroying a profile is not a substitute for understanding a configuration
-failure. Preserve relevant evidence first.
-
+Do not use `--cleanup`. Destroy/redeploy is not a substitute for understanding
+a configuration failure, and XRd/Linux manual runtime state requires its own
+documented backup strategy.
 ## 17. Professional Git workflow
 
 From AUTO1 or the server:
