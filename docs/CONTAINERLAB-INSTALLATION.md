@@ -1,4 +1,12 @@
-# Containerlab Host, Image, and AUTO1 Build Guide
+<h1 align="center">
+  Containerlab Host, Image, and AUTO1 Build Guide
+</h1>
+
+<div align="center">
+
+**A beginner-friendly, technically complete path from a clean Ubuntu server to a validated CCIE Service Provider lab host**
+
+</div>
 
 
 
@@ -8,13 +16,13 @@
 
 **From a Windows workstation to a validated multi-profile Containerlab host**
 
-[Architecture](#2-validated-architecture) ·
-[Docker](#5-docker-engine-installation) ·
-[Containerlab](#7-containerlab-installation) ·
-[Transfer images](#8-transfer-licensed-images-from-windows) ·
-[XRd](#9-import-the-cisco-xrd-image) ·
-[IOL-XE](#10-build-the-cisco-iol-xe-vrnetlab-image) ·
-[AUTO1](#12-build-auto1) ·
+[Architecture](#2-validated-architecture) —
+[Docker](#5-docker-engine-installation) —
+[Containerlab](#7-containerlab-installation) —
+[Transfer images](#8-transfer-licensed-images-from-windows) —
+[XRd](#9-import-the-cisco-xrd-image) —
+[IOL-XE](#10-build-the-cisco-iol-xe-vrnetlab-image) —
+[AUTO1](#12-build-auto1) —
 [Acceptance](#15-acceptance-checklist)
 
 </div>
@@ -36,6 +44,76 @@ and the operational controls used to protect the workstation.
 > are concrete examples. Confirm the current username, VM address, filenames,
 > and disk layout before executing them on another installation.
 
+## 0. Read this first
+
+This guide is intentionally written in two layers:
+
+- **Simple explanation:** what the step means and why it exists.
+- **Technical procedure:** exact commands, expected output, and stop conditions.
+
+You do not need to memorize every command. Copy one block at a time, read its
+output, and continue only when the checkpoint says **PASS**.
+
+### 0.1 What you are building
+
+Think of the environment as four boxes inside one another:
+
+```text
+Windows computer
+  `-- VMware Workstation
+      `-- Ubuntu Server VM (netlab-core)
+          |-- Docker Engine
+          |-- Containerlab
+          |-- Network containers: XRd and IOL
+          `-- Linux automation containers: AUTO1 and SOURCE1
+```
+
+- **Ubuntu Server** is the machine that does the work.
+- **Docker** starts and stops containers.
+- **Containerlab** reads a YAML topology and connects container interfaces.
+- **XRd/IOL** are the virtual routers.
+- **AUTO1** is the automation workstation.
+- **SOURCE1** is the Linux traffic generator used by ISP-2.
+
+### 0.2 What this guide will not do
+
+This guide does not provide Cisco software, licenses, keys, or passwords. It
+also does not automate the manual ISP-2 study protocols. Obtain every
+proprietary artifact from an authorized source.
+
+### 0.3 Safe learning rule
+
+When a command begins with `sudo`, it can change the host. Read it before
+pressing Enter. Never replace a specific path with `/`, `$HOME`, or a guessed
+directory. Never run broad cleanup commands copied from the Internet.
+
+### 0.4 Installation roadmap
+
+```mermaid
+flowchart TD
+    A[Check Ubuntu and KVM] --> B[Create /srv/netlab directories]
+    B --> C[Install Docker Engine]
+    C --> D[Test Docker with hello-world]
+    D --> E[Install Containerlab]
+    E --> F[Deploy a two-Linux practice lab]
+    F --> G[Transfer authorized images]
+    G --> H[Import XRd and build IOL]
+    H --> I[Build and test AUTO1]
+    I --> J[Clone and validate the real repository]
+```
+
+### 0.5 Fast checklist
+
+- [ ] Ubuntu is supported and updated.
+- [ ] `/dev/kvm` exists.
+- [ ] Docker reports both client and server versions.
+- [ ] `hello-world` exits successfully.
+- [ ] `containerlab version` works.
+- [ ] The two-Linux example can ping across `eth1`.
+- [ ] Cisco artifacts remain outside Git.
+- [ ] XRd, IOL, and AUTO1 canaries pass.
+- [ ] Only one heavy profile is active at a time.
+
 ## 1. Why Containerlab
 
 Containerlab was selected for topology-as-code, deterministic Linux wiring,
@@ -51,15 +129,15 @@ licenses.
 
 ```text
 Windows workstation
-└── VMware Workstation
-    └── Ubuntu Server VM: netlab-core
-        ├── nested AMD-V/KVM
-        ├── Docker Engine with overlay2
-        ├── Containerlab 0.77.0
-        ├── /srv/netlab/docker      Docker data root
-        ├── /srv/netlab/images      licensed local image staging
-        ├── /srv/netlab/labs        Git working copies and topologies
-        └── /srv/netlab/backups     repository and device backups
++-- VMware Workstation
+    +-- Ubuntu Server VM: netlab-core
+        +-- nested AMD-V/KVM
+        +-- Docker Engine with overlay2
+        +-- Containerlab 0.77.0
+        +-- /srv/netlab/docker      Docker data root
+        +-- /srv/netlab/images      licensed local image staging
+        +-- /srv/netlab/labs        Git working copies and topologies
+        +-- /srv/netlab/backups     repository and device backups
 ```
 
 Ubuntu Server was selected instead of the desktop Arch VM because the lab host
@@ -115,16 +193,66 @@ control.
 
 ## 5. Docker Engine installation
 
-Install Docker Engine from Docker's official Ubuntu repository:
+Docker is the service that creates containers. Containerlab asks Docker to
+create routers and Linux nodes, but Containerlab cannot work if Docker is
+missing or stopped.
+
+The commands below follow Docker's official Ubuntu APT-repository method.
+
+### 5.1 Remove conflicting packages
+
+On a new host, remove packages that can conflict with Docker CE. It is safe if
+APT says a package is not installed:
+
+```bash
+for package in docker.io docker-doc docker-compose docker-compose-v2 \
+  podman-docker containerd runc; do
+  sudo apt-get remove -y "$package"
+done
+```
+
+This does not delete a separately configured Docker data directory. On an
+existing Docker host, stop and inventory workloads before changing packages.
+
+### 5.2 Update Ubuntu and install repository tools
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y ca-certificates curl
+```
+
+What this does:
+
+- `apt-get update` refreshes Ubuntu's package catalog.
+- `ca-certificates` lets the host verify HTTPS certificates.
+- `curl` downloads Docker's signing key.
+
+Checkpoint:
+
+```bash
+curl --version
+```
+
+### 5.3 Add Docker's official signing key
+
+```bash
 sudo install -m 0755 -d /etc/apt/keyrings
 sudo curl -fsSL https://download.docker.com/linux/ubuntu/gpg \
   -o /etc/apt/keyrings/docker.asc
 sudo chmod a+r /etc/apt/keyrings/docker.asc
+```
 
+Verify that the file exists and is not empty:
+
+```bash
+test -s /etc/apt/keyrings/docker.asc && \
+  echo 'PASS: Docker signing key exists' || \
+  echo 'STOP: Docker signing key missing'
+```
+
+### 5.4 Add Docker's Ubuntu repository
+
+```bash
 sudo tee /etc/apt/sources.list.d/docker.sources >/dev/null <<EOF
 Types: deb
 URIs: https://download.docker.com/linux/ubuntu
@@ -133,23 +261,104 @@ Components: stable
 Architectures: $(dpkg --print-architecture)
 Signed-By: /etc/apt/keyrings/docker.asc
 EOF
+```
 
+Read the file before continuing:
+
+```bash
+cat /etc/apt/sources.list.d/docker.sources
+```
+
+The suite should match the Ubuntu codename and the architecture should match
+`dpkg --print-architecture`.
+
+### 5.5 Install Docker Engine
+
+```bash
 sudo apt-get update
-sudo apt-get install -y docker-ce docker-ce-cli containerd.io \
-  docker-buildx-plugin docker-compose-plugin
+sudo apt-get install -y \
+  docker-ce \
+  docker-ce-cli \
+  containerd.io \
+  docker-buildx-plugin \
+  docker-compose-plugin
+```
+
+Package meanings:
+
+| Package | Purpose |
+|---|---|
+| `docker-ce` | Docker daemon/service |
+| `docker-ce-cli` | `docker` command |
+| `containerd.io` | Container runtime used by Docker |
+| `docker-buildx-plugin` | Modern image builder |
+| `docker-compose-plugin` | `docker compose` command |
+
+### 5.6 Start Docker at boot
+
+```bash
 sudo systemctl enable --now docker
+sudo systemctl is-active docker
+sudo systemctl is-enabled docker
+```
+
+Expected result:
+
+```text
+active
+enabled
+```
+
+If Docker is not active:
+
+```bash
+sudo systemctl status docker --no-pager
+sudo journalctl -u docker -n 100 --no-pager
+```
+
+### 5.7 Run the official functional test
+
+```bash
 sudo docker run --rm hello-world
 ```
 
-Optional non-root access:
+Docker downloads a tiny public image, creates one container, prints a success
+message, and removes the container. This proves the daemon, image pull, local
+storage, and basic container execution work.
+
+### 5.8 Optional non-root access
 
 ```bash
 sudo usermod -aG docker "$USER"
 ```
 
-Log out and back in before testing `docker version`. Membership in the Docker
-group grants root-equivalent control of the host; add only trusted operators.
+Log out of Ubuntu and log back in, then run:
 
+```bash
+id
+docker version
+docker run --rm hello-world
+```
+
+> [!WARNING]
+> Membership in the `docker` group is effectively root-level access. Add only
+> trusted lab administrators.
+
+### 5.9 Docker acceptance checkpoint
+
+```bash
+docker version
+docker info --format 'root={{.DockerRootDir}} driver={{.Driver}}'
+docker system df
+```
+
+Continue only when:
+
+- both Docker Client and Server are shown;
+- the daemon is active;
+- `hello-world` passed;
+- the storage driver is suitable, normally `overlay2`;
+- the Docker root is on a filesystem with enough free space.
 ## 6. Dedicated Docker storage
 
 Large NOS layers must not fill the Ubuntu root filesystem. On a new host,
@@ -184,17 +393,259 @@ and verify the new root before removing the old data. The validated result was
 
 ## 7. Containerlab installation
 
-The environment was validated with Containerlab `0.77.0`. The reproducible
-choice is to request that version explicitly:
+Containerlab is a single Linux program plus supporting package files. It reads
+files ending in `.clab.yml` or `.clab.yaml` and asks Docker to create the lab.
+
+The validated project version is `0.77.0`. Pinning the version makes results
+more reproducible than silently installing an unknown future release.
+
+### 7.1 Confirm prerequisites
 
 ```bash
-bash -c "$(curl -sL https://get.containerlab.dev)" -- -v 0.77.0
-containerlab version
+docker version
+curl --version
+uname -m
 ```
 
-Review remote installation scripts before executing them. Containerlab also
-publishes deb/rpm packages for controlled package-based installation.
+Expected architecture for the validated images:
 
+```text
+x86_64
+```
+
+### 7.2 Review and install the pinned release
+
+The official installer supports a specific `-v` argument:
+
+```bash
+curl -sL https://get.containerlab.dev -o /tmp/get-containerlab.sh
+less /tmp/get-containerlab.sh
+sudo bash /tmp/get-containerlab.sh -v 0.77.0
+```
+
+Why download first? It lets you read the script before executing it.
+
+Verify installation:
+
+```bash
+command -v containerlab
+containerlab version
+clab version
+```
+
+Expected result: `containerlab` is available, usually under `/usr/bin`, and
+the reported version is `0.77.0`.
+
+### 7.3 Alternative: official quick setup on a disposable host
+
+Containerlab documents an all-in-one setup command:
+
+```bash
+curl -sL https://containerlab.dev/setup | sudo -E bash -s "all"
+```
+
+This can install Docker, Docker Compose, Containerlab, and GitHub CLI. It is
+convenient for a new disposable VM, but the explicit Docker and pinned
+Containerlab procedures above are easier to audit and reproduce.
+
+### 7.4 Understand privileges
+
+Recent Containerlab packages can configure a `clab_admins` group and SUID
+operation for privileged commands. Both `docker` and privileged Containerlab
+access are effectively administrative access.
+
+Inspect the current state:
+
+```bash
+ls -l "$(command -v containerlab)"
+id
+getent group clab_admins || true
+```
+
+Follow the official security model for the installed version. Do not grant
+these groups to untrusted users.
+
+### 7.5 Containerlab acceptance checkpoint
+
+```bash
+containerlab version
+containerlab help | head -20
+docker version
+```
+
+Installation is complete when all three commands return normally.
+
+## 7A. First practice lab — two Linux nodes
+
+This test does not require Cisco images. It proves that YAML parsing, Docker,
+Containerlab node creation, link wiring, Linux interfaces, and cleanup work.
+
+### 7A.1 Create a safe practice directory
+
+```bash
+mkdir -p ~/containerlab-practice/two-linux
+cd ~/containerlab-practice/two-linux
+pwd
+```
+
+Expected path ends in:
+
+```text
+containerlab-practice/two-linux
+```
+
+### 7A.2 Create the topology YAML
+
+Create `two-linux.clab.yml`:
+
+```bash
+nano two-linux.clab.yml
+```
+
+Paste exactly this content:
+
+```yaml
+name: two-linux
+
+topology:
+  nodes:
+    pc1:
+      kind: linux
+      image: alpine:3.20
+      cmd: sleep infinity
+
+    pc2:
+      kind: linux
+      image: alpine:3.20
+      cmd: sleep infinity
+
+  links:
+    - endpoints: ["pc1:eth1", "pc2:eth1"]
+```
+
+Save in Nano with `Ctrl+O`, Enter, then exit with `Ctrl+X`.
+
+### 7A.3 Understand every YAML line
+
+| YAML | Meaning |
+|---|---|
+| `name: two-linux` | Gives the lab its name |
+| `topology:` | Starts the topology definition |
+| `nodes:` | Starts the list of containers |
+| `pc1`, `pc2` | Node names |
+| `kind: linux` | Uses ordinary Linux containers |
+| `image: alpine:3.20` | Uses the public Alpine Linux image |
+| `cmd: sleep infinity` | Keeps each container running |
+| `links:` | Starts the cable list |
+| `pc1:eth1`, `pc2:eth1` | Connects each node's `eth1` interface |
+
+YAML uses spaces for indentation. Do not use tabs.
+
+### 7A.4 Read and validate the file
+
+```bash
+sed -n '1,120p' two-linux.clab.yml
+containerlab inspect -t two-linux.clab.yml
+```
+
+Before deployment, `inspect` may report that the lab is not running; the key
+point is that Containerlab accepts the topology path and does not report a YAML
+syntax error.
+
+### 7A.5 Deploy the practice lab
+
+```bash
+sudo containerlab deploy -t two-linux.clab.yml
+```
+
+Container names will be:
+
+```text
+clab-two-linux-pc1
+clab-two-linux-pc2
+```
+
+Verify:
+
+```bash
+containerlab inspect -t two-linux.clab.yml
+docker ps --filter name=clab-two-linux \
+  --format 'table {{.Names}}\t{{.Status}}\t{{.Image}}'
+```
+
+### 7A.6 Install ping tools inside the temporary nodes
+
+Alpine is intentionally tiny, so install only the temporary test tools:
+
+```bash
+docker exec clab-two-linux-pc1 apk add --no-cache iproute2 iputils
+docker exec clab-two-linux-pc2 apk add --no-cache iproute2 iputils
+```
+
+These packages exist only inside these disposable containers.
+
+### 7A.7 Assign addresses
+
+```bash
+docker exec clab-two-linux-pc1 \
+  ip address add 192.0.2.1/30 dev eth1
+
+docker exec clab-two-linux-pc2 \
+  ip address add 192.0.2.2/30 dev eth1
+
+docker exec clab-two-linux-pc1 ip link set eth1 up
+docker exec clab-two-linux-pc2 ip link set eth1 up
+```
+
+Check both nodes:
+
+```bash
+docker exec clab-two-linux-pc1 ip -br address
+docker exec clab-two-linux-pc2 ip -br address
+```
+
+Expected addresses:
+
+```text
+pc1 eth1 192.0.2.1/30
+pc2 eth1 192.0.2.2/30
+```
+
+### 7A.8 Test the virtual cable
+
+```bash
+docker exec clab-two-linux-pc1 ping -c 3 192.0.2.2
+docker exec clab-two-linux-pc2 ping -c 3 192.0.2.1
+```
+
+Expected result: three replies in each direction and `0% packet loss`.
+
+If ping fails:
+
+```bash
+docker exec clab-two-linux-pc1 ip link show eth1
+docker exec clab-two-linux-pc2 ip link show eth1
+docker exec clab-two-linux-pc1 ip route
+docker exec clab-two-linux-pc2 ip route
+```
+
+### 7A.9 Destroy only the practice lab
+
+```bash
+sudo containerlab destroy -t two-linux.clab.yml
+```
+
+Verify removal:
+
+```bash
+docker ps -a --filter name=clab-two-linux \
+  --format '{{.Names}}' | grep . && \
+  echo 'STOP: practice containers remain' || \
+  echo 'PASS: practice lab removed'
+```
+
+Do not use broad Docker cleanup commands. Destroy the lab by its exact topology
+file.
 ## 8. Transfer licensed images from Windows
 
 The authorized source files were stored on Windows under `E:\Cisco-images`.
@@ -221,7 +672,7 @@ Ubuntu image staging — outside Git
 `-- vrnetlab/                         upstream image-build repository
 
 Git working copy — no vendor binaries
-/srv/netlab/labs/ccie-sp-master/
+/srv/netlab/labs/ccie-sp-startup-repair/
 |-- topology/
 |-- configs/
 |-- profiles/
@@ -237,7 +688,7 @@ Docker-managed layers
 | `E:\Cisco-images` | Original authorized Windows media | No |
 | `/srv/netlab/images/cisco` | Immutable Linux staging and hash verification | No |
 | `/srv/netlab/images/vrnetlab` | Temporary/local wrapper build context | No |
-| `/srv/netlab/labs/ccie-sp-master` | Reproducible source code and documentation | Yes, after review |
+| `/srv/netlab/labs/ccie-sp-startup-repair` | Reproducible source code and documentation | Yes, after review |
 | `/srv/netlab/docker` | Docker-managed image and container layers | No |
 
 > [!IMPORTANT]
@@ -548,7 +999,7 @@ Do not discover an image problem during a 20-node deployment. Use the SRv6
 canary lifecycle when no other lab is active:
 
 ```bash
-cd /srv/netlab/labs/ccie-sp-master
+cd /srv/netlab/labs/ccie-sp-startup-repair
 
 ./labctl status
 ./labctl canary srv6
@@ -695,7 +1146,7 @@ docker ps --format '{{.Names}}' | grep '^clab-' && {
 Deploy only `CE1` from the Master topology:
 
 ```bash
-cd /srv/netlab/labs/ccie-sp-master
+cd /srv/netlab/labs/ccie-sp-startup-repair
 
 sudo containerlab deploy \
   -t topology/ccie-sp-master.clab.yml \
@@ -810,7 +1261,7 @@ host keys, and starts `sshd` in the foreground.
 ### 12.2 Review the build context
 
 ```bash
-cd /srv/netlab/labs/ccie-sp-master
+cd /srv/netlab/labs/ccie-sp-startup-repair
 
 sed -n '1,240p' automation/Dockerfile
 sed -n '1,160p' automation/entrypoint.sh
@@ -828,7 +1279,7 @@ image build.
 Never build this dependency-heavy image while a provider profile is running:
 
 ```bash
-cd /srv/netlab/labs/ccie-sp-master
+cd /srv/netlab/labs/ccie-sp-startup-repair
 ./labctl status
 
 docker ps --format '{{.Names}}' | grep '^clab-' && {
@@ -846,7 +1297,7 @@ df -h /srv/netlab
 Build from the repository root so that `automation/` is the explicit context:
 
 ```bash
-cd /srv/netlab/labs/ccie-sp-master
+cd /srv/netlab/labs/ccie-sp-startup-repair
 
 docker build --pull \
   --tag ccie-sp-automation:1.0 \
@@ -926,7 +1377,7 @@ Windows workstation
         |-- Docker Engine
         |   |-- XRd and IOL network nodes
         |   `-- AUTO1 Ubuntu container
-        |-- /srv/netlab/labs/ccie-sp-master/automation
+        |-- /srv/netlab/labs/ccie-sp-startup-repair/automation
         `-- /srv/netlab/docker
 ```
 
@@ -1035,7 +1486,7 @@ delete bind-mounted host files.
 Copy the template and edit only the ignored `.env` file:
 
 ```bash
-cd /srv/netlab/labs/ccie-sp-master
+cd /srv/netlab/labs/ccie-sp-startup-repair
 cp .env.example .env
 chmod 0600 .env
 ${EDITOR:-nano} .env
@@ -1100,7 +1551,7 @@ Run sshd in the foreground
 Before deploying a heavy profile, test only AUTO1 from the selected topology:
 
 ```bash
-cd /srv/netlab/labs/ccie-sp-master
+cd /srv/netlab/labs/ccie-sp-startup-repair
 
 docker ps --format '{{.Names}}' | grep '^clab-' && {
   echo 'ABORT: another lab is active'
@@ -1274,6 +1725,58 @@ Use `inter-as` or `srv6` in place of `master` for the other profiles. `labctl`
 refuses to deploy a second heavy profile while another Containerlab lab is
 active.
 
+## 14A. Current Master profile notes
+
+The operational Master working copy is:
+
+```text
+/srv/netlab/labs/ccie-sp-startup-repair
+```
+
+Its declared topology contains:
+
+- 38 nodes and 57 links.
+- ISP-1 / AS500.
+- ISP-2 / AS65002.
+- 20 XRd Control Plane nodes.
+- 16 Cisco IOL nodes.
+- `AUTO1` and `SOURCE1` Linux containers.
+
+`SOURCE1` is connected to `ISP2-P5`, not to `P5` in ISP-1.
+
+### IOL startup persistence
+
+All 16 IOL nodes use complete binary NVRAM persistence. Save configuration in
+IOS normally:
+
+```text
+copy running-config startup-config
+```
+
+Use the repository wrapper for lifecycle operations:
+
+```bash
+cd /srv/netlab/labs/ccie-sp-startup-repair
+python3 tools/iol_nvram.py status
+./labctl destroy master
+./labctl deploy master
+```
+
+The wrapper captures NVRAM before destroy and prepares it before deploy. Files
+under `topology/startup/*.partial.cfg` are first-boot bootstrap, not a complete
+runtime backup. Do not use `containerlab destroy --cleanup` when saved state
+must survive.
+
+### Manual-study boundary
+
+The repository is the structural source of truth. The active router runtime is
+the source of truth for manual EVPN, multicast, L3VPN, BGP policy, and ISP-2
+study configurations that have not been promoted to automation.
+
+Do not run `tools/build_lab.py` or regenerate Master startup files merely to
+preserve manual configuration. Back up, validate offline, and use a controlled
+maintenance window for structural changes.
+
 ## 15. Acceptance checklist
 
 ```bash
@@ -1314,7 +1817,7 @@ Before considering a deployment accepted, record:
 From the repository root:
 
 ```bash
-cd /srv/netlab/labs/ccie-sp-master
+cd /srv/netlab/labs/ccie-sp-startup-repair
 
 find . -type f \
   \( -iname '*.bin' -o -iname '*.qcow2' -o -iname '*.tgz' \
@@ -1409,3 +1912,4 @@ Acceptance:
 - [Containerlab vrnetlab kinds](https://containerlab.dev/manual/vrnetlab/)
 - [vrnetlab](https://github.com/srl-labs/vrnetlab)
 - [vrnetlab Cisco IOL build instructions](https://github.com/srl-labs/vrnetlab/tree/master/cisco/iol)
+
